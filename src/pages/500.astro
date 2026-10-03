@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+
+export const prerender = false;
+---
+
+<Base
+  title="Error del servidor | JOANIX - GUIDES"
+  description="Algo ha ido mal por nuestra parte. Inténtalo de nuevo en unos minutos."
+  noindex
+>
+  <article class="error-pagina">
+    <p class="admin-shell__eyebrow">Error 500</p>
+    <h1>Algo ha ido mal por nuestra parte</h1>
+    <p>
+      El equipo técnico ya ha sido avisado. Vuelve a intentarlo en unos minutos; si el problema
+      persiste, escríbenos desde el <a href="/aviso-legal/">aviso legal</a>.
+    </p>
+    <div class="admin-acciones">
+      <a class="admin-boton admin-boton--secundario" href="/">Volver al inicio</a>
+      <a class="admin-boton admin-boton--plano" href="/guias/">Ver todas las guías</a>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .error-pagina {
+    background: var(--blanco);
+    border: 1px solid var(--linea);
+    border-left: 0.35rem solid var(--rojo);
+    margin: 0 auto;
+    max-width: 44rem;
+    padding: clamp(1.5rem, 5vw, 3rem);
+  }
+
+  .error-pagina h1 {
+    margin-bottom: var(--espacio-3);
+  }
+
+  .error-pagina p {
+    color: var(--apagado);
+    margin-bottom: var(--espacio-4);
+  }
+</style>

@@ -1,0 +1,40 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDatabase, listarGuiasDeHerramienta } from '../../lib/db.js';
+import { env } from 'cloudflare:workers';
+import '../../styles/guias-listado.css';
+
+export const prerender = false;
+
+const herramienta = Astro.params.herramienta ?? '';
+const database = getDatabase(env);
+const guias = await listarGuiasDeHerramienta(database, herramienta);
+const blue = guias.filter((guia) => guia.equipo === 'blue');
+const red = guias.filter((guia) => guia.equipo === 'red');
+Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+---
+
+<Base title={`${herramienta} | ciberguías`}>
+  <section class="herramienta" aria-labelledby="herramienta-titulo">
+    <p><a href="/guias/">Todas las guías</a> / Herramientas</p>
+    <h1 id="herramienta-titulo">{herramienta}</h1>
+    <div class="herramienta__columnas">
+      <section class="herramienta__equipo herramienta__equipo--blue" aria-labelledby="blue-titulo">
+        <h2 id="blue-titulo">Equipo BLUE</h2>
+        {blue.length > 0 ? (
+          <ul>
+            {blue.map((guia) => <li><a href={`/guias/${guia.slug}/`}>{guia.titulo}</a></li>)}
+          </ul>
+        ) : <p>No hay una guía BLUE publicada todavía.</p>}
+      </section>
+      <section class="herramienta__equipo herramienta__equipo--red" aria-labelledby="red-titulo">
+        <h2 id="red-titulo">Equipo RED</h2>
+        {red.length > 0 ? (
+          <ul>
+            {red.map((guia) => <li><a href={`/guias/${guia.slug}/`}>{guia.titulo}</a></li>)}
+          </ul>
+        ) : <p>No hay una guía RED publicada todavía.</p>}
+      </section>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,131 @@
+---
+import AdminBase from '../../../layouts/AdminBase.astro';
+import { getDatabase, listarGuiasAdmin, listarHerramientasAdmin } from '../../../lib/db.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const parametros = Astro.url.searchParams;
+const filtros = {
+  equipo: parametros.get('equipo') ?? '',
+  herramienta: parametros.get('herramienta') ?? '',
+  estado: parametros.get('estado') ?? '',
+  busqueda: (parametros.get('q') ?? '').trim().slice(0, 80),
+  orden: parametros.get('orden') ?? 'fecha',
+  pagina: Math.max(Number(parametros.get('pagina')) || 1, 1),
+};
+
+const database = getDatabase(env);
+const herramientas = await listarHerramientasAdmin(database);
+const porPagina = 20;
+const { filas, total } = await listarGuiasAdmin(database, {
+  ...filtros,
+  limite: porPagina,
+  desplazamiento: (filtros.pagina - 1) * porPagina,
+});
+const paginas = Math.max(Math.ceil(total / porPagina), 1);
+const paginaAnterior = filtros.pagina > 1 ? filtros.pagina - 1 : null;
+const paginaSiguiente = filtros.pagina < paginas ? filtros.pagina + 1 : null;
+
+const enlacePagina = (pagina: number) => {
+  const query = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(filtros)) {
+    if (valor && !(clave === 'pagina' && pagina === 1)) query.set(clave === 'busqueda' ? 'q' : clave, String(valor));
+  }
+  if (pagina > 1) query.set('pagina', String(pagina));
+  const cadena = query.toString();
+  return cadena ? `/admin/guias/?${cadena}` : '/admin/guias/';
+};
+---
+
+<AdminBase title="Guías | JOANIX - GUIDES">
+  <div class="admin-office">
+    <header class="admin-office__header">
+      <div>
+        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__eyebrow">Biblioteca</p>
+        <h1>Guías</h1>
+        <p class="admin-shell__intro">{total} guía{total === 1 ? '' : 's'} en la base de datos.</p>
+      </div>
+      <a class="admin-office__salir" href="/admin/guia-nueva/">Nueva guía</a>
+    </header>
+
+    <form class="admin-filtros" method="get" action="/admin/guias/">
+      <div class="admin-form__campo">
+        <label for="q">Buscar</label>
+        <input id="q" name="q" type="search" value={filtros.busqueda} placeholder="Título o slug" />
+      </div>
+      <div class="admin-form__campo">
+        <label for="equipo">Equipo</label>
+        <select id="equipo" name="equipo">
+          <option value="">Todos</option>
+          <option value="blue" selected={filtros.equipo === 'blue'}>BLUE</option>
+          <option value="red" selected={filtros.equipo === 'red'}>RED</option>
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="herramienta">Herramienta</label>
+        <select id="herramienta" name="herramienta">
+          <option value="">Todas</option>
+          {herramientas.map((nombre: string) => <option value={nombre} selected={filtros.herramienta === nombre}>{nombre}</option>)}
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="estado">Estado</label>
+        <select id="estado" name="estado">
+          <option value="">Todos</option>
+          <option value="publicada" selected={filtros.estado === 'publicada'}>Publicadas</option>
+          <option value="borrador" selected={filtros.estado === 'borrador'}>Borradores</option>
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="orden">Orden</label>
+        <select id="orden" name="orden">
+          <option value="fecha" selected={filtros.orden === 'fecha'}>Más recientes</option>
+          <option value="actualizado" selected={filtros.orden === 'actualizado'}>Última edición</option>
+          <option value="titulo" selected={filtros.orden === 'titulo'}>Título A-Z</option>
+        </select>
+      </div>
+      <div class="admin-filtros__acciones">
+        <button type="submit">Filtrar</button>
+        <a class="admin-boton admin-boton--plano" href="/admin/guias/">Limpiar</a>
+      </div>
+    </form>
+
+    {filas.length > 0 ? (
+      <div class="admin-tabla-wrap">
+        <table class="admin-tabla">
+          <thead>
+            <tr><th>Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado</th><th>Fecha</th></tr>
+          </thead>
+          <tbody>
+            {filas.map((fila: (typeof filas)[number]) => (
+              <tr>
+                <td><a href={`/admin/guias/${fila.id}/`}>{fila.titulo}</a></td>
+                <td><code>{fila.slug}</code></td>
+                <td><span class={`admin-etiqueta admin-etiqueta--${fila.equipo}`}>{fila.equipo.toUpperCase()}</span></td>
+                <td>{fila.herramienta}</td>
+                <td>{fila.publicada ? 'Publicada' : 'Borrador'}</td>
+                <td>{fila.fecha}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p class="admin-empty">No hay guías que coincidan con el filtro.</p>
+    )}
+
+    {paginas > 1 && (
+      <nav class="admin-paginacion" aria-label="Paginación de guías">
+        {paginaAnterior
+          ? <a class="admin-boton admin-boton--plano" href={enlacePagina(paginaAnterior)} rel="prev">← Anterior</a>
+          : <span class="admin-boton admin-boton--plano admin-boton--inactivo">← Anterior</span>}
+        <span class="admin-paginacion__estado">Página {filtros.pagina} de {paginas}</span>
+        {paginaSiguiente
+          ? <a class="admin-boton admin-boton--plano" href={enlacePagina(paginaSiguiente)} rel="next">Siguiente →</a>
+          : <span class="admin-boton admin-boton--plano admin-boton--inactivo">Siguiente →</span>}
+      </nav>
+    )}
+  </div>
+</AdminBase>

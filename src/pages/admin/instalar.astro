@@ -1,0 +1,63 @@
+---
+import AdminBase from '../../layouts/AdminBase.astro';
+import { getDatabase, contarUsuarios, crearUsuario, registrarAuditoria } from '../../lib/db.js';
+import { hashPassword, secretoValido } from '../../lib/auth.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+let mensaje = '';
+let error = '';
+const database = getDatabase(env);
+const existeAdministrador = await contarUsuarios(database) > 0;
+
+if (Astro.request.method === 'POST' && !existeAdministrador) {
+  const datos = await Astro.request.formData();
+  const token = String(datos.get('token') ?? '');
+  const usuario = String(datos.get('usuario') ?? '').trim().toLowerCase();
+  const password = String(datos.get('password') ?? '');
+  const bootstrap = env.ADMIN_BOOTSTRAP_TOKEN;
+  const usuarioValido = /^[a-z0-9._-]{3,40}$/.test(usuario);
+
+  if (!bootstrap || !await secretoValido(token, bootstrap) || !usuarioValido || password.length < 12) {
+    error = 'No se ha podido completar la instalación. Revisa los datos.';
+  } else {
+    const credenciales = await hashPassword(password);
+    await crearUsuario(database, { usuario, rol: 'admin', ...credenciales });
+    await registrarAuditoria(database, { accion: 'crear', objeto: 'usuario', detalle: `Administrador inicial: ${usuario}` });
+    mensaje = 'Administrador creado. Ya puedes iniciar sesión.';
+  }
+}
+---
+
+<AdminBase title="Instalar | JOANIX - GUIDES">
+  <article class="admin-shell__panel" aria-labelledby="instalar-titulo">
+    <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / SETUP</p>
+    <p class="admin-shell__eyebrow">Configuración inicial</p>
+    <h1 id="instalar-titulo">Crear administrador</h1>
+    {existeAdministrador ? (
+      <p class="admin-status" role="status">La instalación inicial ya se ha completado. <a href="/admin/login">Inicia sesión</a>.</p>
+    ) : (
+      <>
+        <p class="admin-shell__intro">Crea el primer acceso seguro. Esta página se desactiva al terminar.</p>
+        {mensaje && <p class="admin-status" role="status">{mensaje} <a href="/admin/login">Inicia sesión</a>.</p>}
+        {error && <p class="admin-alerta" role="alert">{error}</p>}
+        <form class="admin-form" method="post">
+          <div class="admin-form__campo">
+            <label for="token">Token de instalación</label>
+            <input id="token" name="token" type="password" autocomplete="off" required />
+          </div>
+          <div class="admin-form__campo">
+            <label for="usuario">Usuario</label>
+            <input id="usuario" name="usuario" type="text" autocomplete="username" required />
+          </div>
+          <div class="admin-form__campo">
+            <label for="password">Contraseña (mínimo 12 caracteres)</label>
+            <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required />
+          </div>
+          <button type="submit">Crear administrador</button>
+        </form>
+      </>
+    )}
+  </article>
+</AdminBase>

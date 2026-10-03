@@ -1,0 +1,120 @@
+---
+import AdminBase from '../../layouts/AdminBase.astro';
+import { getDatabase, listarUsuarios } from '../../lib/db.js';
+import { esAdmin } from '../../lib/admin-api.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const sesion = Astro.locals.admin;
+
+if (!esAdmin(sesion)) {
+  return Astro.redirect('/admin/', 302);
+}
+
+const database = getDatabase(env);
+const usuarios = await listarUsuarios(database);
+const miId = sesion?.usuario.usuario_id;
+const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length;
+---
+
+<AdminBase title="Usuarios | JOANIX - GUIDES">
+  <div class="admin-office" data-usuarios data-csrf={sesion?.csrf ?? ''}>
+    <header class="admin-office__header">
+      <div>
+        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__eyebrow">Accesos</p>
+        <h1>Usuarios</h1>
+        <p class="admin-shell__intro">{usuarios.length} cuenta{usuarios.length === 1 ? '' : 's'} registrada{usuarios.length === 1 ? '' : 's'}. No puedes eliminar ni desactivar tu propia cuenta ni al último administrador.</p>
+      </div>
+      <a class="admin-office__salir" href="/admin/">Volver al panel</a>
+    </header>
+
+    <p class="admin-editor__estado" role="status" data-mensaje hidden></p>
+
+    <section class="admin-panel">
+      <header class="admin-panel__header">
+        <h2 class="admin-panel__titulo">Crear usuario</h2>
+        <p class="admin-panel__nota">Elige editor para contenidos BLUE gratuitos y admin para control total.</p>
+      </header>
+      <div class="admin-panel__body">
+        <form class="admin-rejilla" data-form-usuario>
+          <div class="admin-form__campo">
+            <label for="nuevo-usuario">Usuario</label>
+            <input id="nuevo-usuario" name="usuario" type="text" required minlength="3" maxlength="40" pattern="[a-z0-9._\-]+" autocomplete="off" />
+          </div>
+          <div class="admin-form__campo">
+            <label for="nuevo-password">Contraseña</label>
+            <input id="nuevo-password" name="password" type="password" required minlength="12" autocomplete="new-password" />
+          </div>
+          <div class="admin-form__campo">
+            <label for="nuevo-rol">Rol</label>
+            <select id="nuevo-rol" name="rol">
+              <option value="editor">Editor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="admin-filtros__acciones">
+            <button type="button" data-crear>Crear usuario</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <header class="admin-panel__header">
+        <h2 class="admin-panel__titulo">Cuentas existentes</h2>
+      </header>
+      <div class="admin-panel__body admin-tabla-wrap">
+        <table class="admin-tabla" data-tabla-usuarios>
+          <thead>
+            <tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Creada</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {usuarios.map((fila) => (
+              <tr>
+                <td>
+                  {fila.usuario}
+                  {fila.id === miId && <span class="admin-etiqueta">tú</span>}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="admin-boton admin-boton--plano"
+                    data-accion="rol"
+                    data-id={fila.id}
+                    data-rol={fila.rol === 'admin' ? 'editor' : 'admin'}
+                  >
+                    {fila.rol === 'admin' ? 'admin' : 'editor'} →
+                  </button>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="admin-boton admin-boton--plano"
+                    data-accion="estado"
+                    data-id={fila.id}
+                    data-activo={fila.activo ? '0' : '1'}
+                  >
+                    {fila.activo ? 'activo → desactivar' : 'inactivo → activar'}
+                  </button>
+                </td>
+                <td>{fila.creado_en}</td>
+                <td class="admin-acciones">
+                  <button type="button" class="admin-boton admin-boton--plano" data-accion="password" data-id={fila.id}>Resetear contraseña</button>
+                  {fila.id !== miId && !(fila.rol === 'admin' && fila.activo && totalAdmins <= 1) && (
+                    <button type="button" class="admin-boton admin-boton--peligro" data-accion="eliminar" data-id={fila.id}>Eliminar</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</AdminBase>
+
+<script>
+  import '../../scripts/usuarios.js';
+</script>

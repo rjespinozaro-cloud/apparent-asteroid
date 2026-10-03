@@ -1,0 +1,268 @@
+.listado,
+.herramienta,
+.portada {
+  max-width: var(--ancho-contenido);
+}
+
+.listado > p,
+.herramienta > p,
+.portada > p {
+  max-width: var(--ancho-lectura);
+}
+
+.portada {
+  border-left: 0.4rem solid var(--tinta);
+  box-shadow: var(--sombra-sutil);
+  padding: var(--espacio-5) var(--espacio-5) var(--espacio-5) var(--espacio-4);
+  position: relative;
+}
+
+.portada::before {
+  color: var(--apagado);
+  content: 'JOANIX GUIDE / INFORME 01';
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--espacio-4);
+}
+
+.portada::after {
+  border: 1px solid var(--linea-fuerte);
+  content: 'LAB';
+  color: var(--apagado);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.4rem;
+  position: absolute;
+  right: var(--espacio-4);
+  top: var(--espacio-4);
+}
+
+.portada {
+  padding-bottom: var(--espacio-4);
+  padding-top: var(--espacio-4);
+}
+
+.portada > p:first-child,
+.listado > p:first-child,
+.herramienta > p:first-child {
+  color: var(--apagado);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portada h1 {
+  margin-bottom: var(--espacio-4);
+}
+
+.portada__accesos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-3);
+  margin-top: var(--espacio-5);
+}
+
+.portada__accesos a {
+  border-bottom: 2px solid currentColor;
+  font-weight: 600;
+  padding-bottom: var(--espacio-1);
+  text-decoration: none;
+}
+
+.portada__accesos a:first-child {
+  color: var(--azul);
+}
+
+.portada__accesos a:last-child {
+  color: var(--rojo);
+}
+
+.portada__seccion {
+  border-top: 1px solid var(--linea);
+  margin-top: var(--espacio-6);
+  padding-top: var(--espacio-4);
+}
+
+.portada__seccion > h2::before {
+  color: var(--apagado);
+  content: '// ';
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75em;
+}
+
+.portada__seccion h2 {
+  font-size: 1.5rem;
+}
+
+.filtros {
+  align-items: end;
+  border-bottom: 1px solid var(--linea);
+  border-top: 1px solid var(--linea);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-3);
+  margin: var(--espacio-5) 0;
+  padding: var(--espacio-3) 0;
+}
+
+.filtros label {
+  font-weight: 600;
+}
+
+.filtros select {
+  background: var(--blanco);
+  border: 1px solid var(--apagado);
+  color: var(--tinta);
+  min-height: 2.5rem;
+  padding: 0 var(--espacio-2);
+}
+
+.filtros select:hover {
+  border-color: var(--azul);
+}
+
+.lista-guias {
+  display: grid;
+  gap: var(--espacio-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.guia-card {
+  background: rgb(22 33 45 / 0.86);
+  border: 1px solid var(--linea);
+  border-left: 0.3rem solid var(--apagado);
+  padding: var(--espacio-4);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.guia-card::before {
+  color: var(--apagado);
+  content: 'REGISTRO / ';
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--espacio-2);
+}
+
+.guia-card:hover {
+  border-color: var(--linea-fuerte);
+  transform: translateY(-0.15rem);
+}
+
+.guia-card[hidden] {
+  display: none;
+}
+
+.guia-card--blue {
+  border-left-color: var(--azul);
+}
+
+.guia-card--red {
+  border-left-color: var(--rojo);
+}
+
+.guia-card h2 {
+  font-size: 1.3rem;
+}
+
+.guia-card h3 {
+  font-size: 1.25rem;
+}
+
+.guia-card h2 a {
+  color: inherit;
+}
+
+.guia-card p {
+  margin-bottom: 0;
+}
+
+.guia-card__equipo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.guia-card--blue .guia-card__equipo {
+  color: var(--azul);
+}
+
+.guia-card--red .guia-card__equipo {
+  color: var(--rojo);
+}
+
+.herramienta__columnas {
+  display: grid;
+  gap: var(--espacio-5);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--espacio-5);
+}
+
+.herramienta__equipo {
+  border-top: 0.3rem solid var(--apagado);
+  padding-top: var(--espacio-3);
+}
+
+.herramienta__equipo ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.herramienta__equipo li {
+  border-bottom: 1px solid var(--linea);
+  padding: var(--espacio-2) 0;
+}
+
+.herramienta__equipo li::before {
+  content: '↳ ';
+  color: var(--apagado);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.herramienta__equipo--blue {
+  border-top-color: var(--azul);
+}
+
+.herramienta__equipo--red {
+  border-top-color: var(--rojo);
+}
+
+.herramienta__equipo h2 {
+  font-size: 1.4rem;
+}
+
+@media (max-width: 48rem) {
+  .portada {
+    padding-top: 0;
+  }
+
+  .portada h1 {
+    font-size: 2.5rem;
+  }
+
+  .portada::after {
+    display: none;
+  }
+
+  .herramienta__columnas {
+    display: block;
+  }
+
+  .herramienta__equipo + .herramienta__equipo {
+    margin-top: var(--espacio-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guia-card {
+    transition: none;
+  }
+
+  .guia-card:hover {
+    transform: none;
+  }
+}

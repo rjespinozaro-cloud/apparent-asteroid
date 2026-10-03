@@ -1,0 +1,87 @@
+---
+import '@fontsource/bricolage-grotesque/600.css';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/layout.css';
+import '../styles/components.css';
+import Menu from '../components/Menu.astro';
+import AvisoLegal from '../components/AvisoLegal.astro';
+import EspacioAnuncio from '../components/EspacioAnuncio.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  ogType?: string;
+  noindex?: boolean;
+}
+
+const {
+  title = 'JOANIX GUIDE | ciberguías',
+  description = 'Guías de hacking ético y redes para equipos RED y BLUE.',
+  ogImage = '/og-image.svg',
+  ogType = 'website',
+  noindex = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const imagenOg = new URL(ogImage, Astro.site ?? Astro.url.origin).href;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="JOANIX - GUIDES" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={imagenOg} />
+    <meta property="og:image:alt" content="JOANIX - GUIDES, ciberguías RED y BLUE" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imagenOg} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="marca" href="/" aria-label="JOANIX GUIDE, ciberguides">
+          <img class="marca__logo" src="/logo-joanix-guide.svg" alt="JOANIX GUIDE, ciberguides" width="240" height="60" />
+        </a>
+        <span class="marca__titulo">JOANIX - GUIDES</span>
+        <Menu />
+      </div>
+    </header>
+    <main class="site-main" id="contenido">
+      <slot />
+      <EspacioAnuncio />
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <AvisoLegal />
+      </div>
+    </footer>
+  </body>
+</html>
+
+<script>
+  import '../scripts/copiar-codigo.js';
+  import '../scripts/lightbox.js';
+</script>

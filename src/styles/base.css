@@ -1,0 +1,146 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: 'IBM Plex Sans', sans-serif;
+  line-height: 1.65;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 20rem;
+}
+
+a {
+  color: var(--azul);
+}
+
+a:hover {
+  color: var(--tinta);
+}
+
+a:active {
+  color: var(--azul);
+}
+
+:focus-visible {
+  outline: 3px solid var(--azul);
+  outline-offset: 3px;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+summary {
+  cursor: pointer;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  background: var(--tinta);
+  border: 1px solid var(--tinta);
+  border-radius: var(--radio);
+  color: var(--papel);
+  font-weight: 600;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+}
+
+button:hover {
+  background: var(--azul);
+  border-color: var(--azul);
+}
+
+input,
+select,
+textarea {
+  background: var(--blanco);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  color: var(--tinta);
+  max-width: 100%;
+  padding: 0.55rem 0.7rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--azul);
+  outline: 3px solid rgb(118 181 255 / 0.28);
+  outline-offset: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--tinta);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  line-height: 1.1;
+  margin: 0 0 var(--espacio-3);
+}
+
+h1 {
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  letter-spacing: 0;
+  max-width: 18ch;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--linea);
+  margin: var(--espacio-5) 0;
+}
+
+h2 {
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+}
+
+p,
+ul,
+ol {
+  max-width: var(--ancho-lectura);
+}
+
+code,
+pre {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+::selection {
+  background: var(--azul);
+  color: var(--papel);
+}
+
+.skip-link {
+  background: var(--tinta);
+  color: var(--papel);
+  left: var(--espacio-3);
+  padding: var(--espacio-1) var(--espacio-2);
+  position: absolute;
+  top: -5rem;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: var(--espacio-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

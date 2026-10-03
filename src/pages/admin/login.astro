@@ -1,0 +1,57 @@
+---
+import AdminBase from '../../layouts/AdminBase.astro';
+import { getDatabase, obtenerUsuarioPorNombre } from '../../lib/db.js';
+import { comprobarPassword, claveIntento, claveIntentoIp, limpiarIntentos, loginBloqueado, registrarIntentoFallido, crearSesion, cookieSesion } from '../../lib/auth.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const datos = await Astro.request.formData();
+  const usuario = String(datos.get('usuario') ?? '').trim().toLowerCase();
+  const password = String(datos.get('password') ?? '');
+  const ip = Astro.request.headers.get('CF-Connecting-IP') ?? 'sin-ip';
+  const clave = claveIntento(usuario, ip);
+  const claveIp = claveIntentoIp(ip);
+  const database = getDatabase(env);
+
+  if (await loginBloqueado(database, clave, claveIp)) {
+    error = 'No se ha podido iniciar sesión. Inténtalo de nuevo más tarde.';
+  } else {
+    const cuenta = await obtenerUsuarioPorNombre(database, usuario);
+    const valido = Boolean(cuenta?.activo && await comprobarPassword(password, cuenta.hash, cuenta.sal));
+    if (!valido) {
+      await registrarIntentoFallido(database, clave);
+      await registrarIntentoFallido(database, claveIp);
+      error = 'No se ha podido iniciar sesión. Revisa tus datos.';
+    } else {
+      await limpiarIntentos(database, clave, claveIp);
+      const sesion = await crearSesion(database, cuenta);
+      return new Response(null, { status: 303, headers: { Location: '/admin/', 'Set-Cookie': cookieSesion(sesion.token) } });
+    }
+  }
+}
+---
+
+<AdminBase title="Acceso | JOANIX - GUIDES">
+  <article class="admin-shell__panel" aria-labelledby="login-titulo">
+    <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / ADMIN</p>
+    <p class="admin-shell__eyebrow">Acceso privado</p>
+    <h1 id="login-titulo">Iniciar sesión</h1>
+    <p class="admin-shell__intro">Gestiona tus guías educativas desde el panel de control.</p>
+    {error && <p class="admin-alerta" role="alert">{error}</p>}
+    <form class="admin-form" method="post">
+      <div class="admin-form__campo">
+        <label for="usuario">Usuario</label>
+        <input id="usuario" name="usuario" type="text" autocomplete="username" required />
+      </div>
+      <div class="admin-form__campo">
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit">Entrar</button>
+    </form>
+    <a class="admin-shell__volver" href="/">Volver al portal público</a>
+  </article>
+</AdminBase>

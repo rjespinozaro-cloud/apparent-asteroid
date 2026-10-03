@@ -1,0 +1,69 @@
+---
+import Base from './Base.astro';
+import Candado from '../components/Candado.astro';
+import '../styles/guia.css';
+
+interface Props {
+  titulo: string;
+  herramienta: string;
+  equipo: 'blue' | 'red';
+  nivel: string;
+  acceso: string;
+  enlaceCompra?: string;
+  descripcion?: string;
+  indice?: Array<{ id: string; texto: string }>;
+  noindex?: boolean;
+}
+
+const {
+  titulo,
+  herramienta,
+  equipo,
+  nivel,
+  acceso,
+  enlaceCompra,
+  descripcion,
+  indice = [],
+  noindex = false,
+} = Astro.props;
+---
+
+<Base
+  title={`${titulo} | JOANIX - GUIDES`}
+  description={descripcion ?? `Guía de ${herramienta} para equipos ${equipo === 'blue' ? 'BLUE' : 'RED'} en ${nivel}.`}
+  ogType="article"
+  noindex={noindex}
+>
+  <article class={`guia guia--${equipo}`}>
+    <header class="guia__cabecera">
+      <nav class="guia__migas" aria-label="Migas de pan">
+        <a href="/">Inicio</a> / <a href="/guias/">Guías</a> / {herramienta}
+      </nav>
+      <p>Guía de {herramienta}</p>
+      <h1>{titulo}</h1>
+      <ul class="guia__etiquetas" aria-label="Características de la guía">
+        <li>{equipo === 'blue' ? 'Equipo BLUE' : 'Equipo RED'}</li>
+        <li>{nivel}</li>
+        <li>{acceso === 'gratis' ? 'Gratis' : 'PDF de pago'}</li>
+      </ul>
+      <section class="guia__requisitos" aria-labelledby="requisitos-titulo">
+        <h2 id="requisitos-titulo">Requisitos y laboratorio</h2>
+        <p>Usa un laboratorio propio y una red privada de pruebas. Los ejemplos se mantienen dentro de entornos autorizados.</p>
+      </section>
+    </header>
+
+    {indice.length > 0 && (
+      <aside class="guia__indice" aria-label="Índice de la guía">
+        <h2>En esta guía</h2>
+        <ol>
+          {indice.map((item) => <li><a href={`#${item.id}`}>{item.texto}</a></li>)}
+        </ol>
+      </aside>
+    )}
+
+    <div class="guia__contenido">
+      <slot />
+      {acceso === 'pago' && enlaceCompra && <Candado enlaceCompra={enlaceCompra} />}
+    </div>
+  </article>
+</Base>

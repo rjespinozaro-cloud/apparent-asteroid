@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 180" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">JOANIX GUIDE</title>
+  <desc id="logo-desc">Monograma JG dentro de una retícula técnica</desc>
+  <rect width="720" height="180" fill="#0B111A"/>
+  <path d="M26 26h128v128H26z" fill="none" stroke="#41566B" stroke-width="2"/>
+  <path d="M26 58h128M26 90h128M26 122h128M58 26v128M90 26v128M122 26v128" stroke="#172432" stroke-width="2"/>
+  <path d="M58 54v48c0 22 10 32 28 32s28-10 28-32V54M90 54v48" fill="none" stroke="#E7EEF6" stroke-linecap="square" stroke-width="10"/>
+  <path d="M118 54h18v80h-18M118 94h15" fill="none" stroke="#76B5FF" stroke-linecap="square" stroke-width="10"/>
+  <path d="M190 44h2M190 136h2" stroke="#F07A72" stroke-width="8"/>
+  <text x="220" y="91" fill="#E7EEF6" font-family="Bricolage Grotesque, sans-serif" font-size="52" font-weight="600" letter-spacing="3">JOANIX</text>
+  <text x="224" y="130" fill="#9AAABD" font-family="JetBrains Mono, monospace" font-size="21" letter-spacing="5">GUIDE / CIBERGUIDES</text>
+</svg>

@@ -1,0 +1,134 @@
+---
+import AdminBase from '../../layouts/AdminBase.astro';
+import { getDatabase, listarAuditoria, listarFacetasAuditoria } from '../../lib/db.js';
+import { esAdmin } from '../../lib/admin-api.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+if (!esAdmin(Astro.locals.admin)) {
+  return Astro.redirect('/admin/', 302);
+}
+
+const parametros = Astro.url.searchParams;
+const filtros = {
+  accion: (parametros.get('accion') ?? '').slice(0, 40),
+  objeto: (parametros.get('objeto') ?? '').slice(0, 40),
+  usuario: (parametros.get('usuario') ?? '').slice(0, 40),
+  desde: (parametros.get('desde') ?? '').slice(0, 10),
+  hasta: (parametros.get('hasta') ?? '').slice(0, 10),
+  pagina: Math.max(Number(parametros.get('pagina')) || 1, 1),
+};
+
+const database = getDatabase(env);
+const porPagina = 25;
+const [facetas, { registros, total }] = await Promise.all([
+  listarFacetasAuditoria(database),
+  listarAuditoria(database, {
+    ...filtros,
+    limite: porPagina,
+    desplazamiento: (filtros.pagina - 1) * porPagina,
+  }),
+]);
+
+const paginas = Math.max(Math.ceil(total / porPagina), 1);
+const paginaAnterior = filtros.pagina > 1 ? filtros.pagina - 1 : null;
+const paginaSiguiente = filtros.pagina < paginas ? filtros.pagina + 1 : null;
+
+const enlacePagina = (pagina: number) => {
+  const query = new URLSearchParams();
+  const activos = { ...filtros, pagina: 1 };
+  for (const [clave, valor] of Object.entries(activos)) {
+    if (valor) query.set(clave, String(valor));
+  }
+  if (pagina > 1) query.set('pagina', String(pagina));
+  const cadena = query.toString();
+  return cadena ? `/admin/auditoria/?${cadena}` : '/admin/auditoria/';
+};
+---
+
+<AdminBase title="Auditoría | JOANIX - GUIDES">
+  <div class="admin-office">
+    <header class="admin-office__header">
+      <div>
+        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__eyebrow">Trazabilidad</p>
+        <h1>Auditoría</h1>
+        <p class="admin-shell__intro">{total} acción{total === 1 ? '' : 'es'} registrada{total === 1 ? '' : 's'}. Este registro es de solo lectura.</p>
+      </div>
+      <a class="admin-office__salir" href="/admin/">Volver al panel</a>
+    </header>
+
+    <form class="admin-filtros" method="get" action="/admin/auditoria/">
+      <div class="admin-form__campo">
+        <label for="accion">Acción</label>
+        <select id="accion" name="accion">
+          <option value="">Todas</option>
+          {facetas.acciones.map((valor: string) => <option value={valor} selected={filtros.accion === valor}>{valor}</option>)}
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="objeto">Objeto</label>
+        <select id="objeto" name="objeto">
+          <option value="">Todos</option>
+          {facetas.objetos.map((valor: string) => <option value={valor} selected={filtros.objeto === valor}>{valor}</option>)}
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="usuario">Usuario</label>
+        <select id="usuario" name="usuario">
+          <option value="">Todos</option>
+          {facetas.usuarios.map((valor: string) => <option value={valor} selected={filtros.usuario === valor}>{valor}</option>)}
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="desde">Desde</label>
+        <input id="desde" name="desde" type="date" value={filtros.desde} />
+      </div>
+      <div class="admin-form__campo">
+        <label for="hasta">Hasta</label>
+        <input id="hasta" name="hasta" type="date" value={filtros.hasta} />
+      </div>
+      <div class="admin-filtros__acciones">
+        <button type="submit">Filtrar</button>
+        <a class="admin-boton admin-boton--plano" href="/admin/auditoria/">Limpiar</a>
+      </div>
+    </form>
+
+    {registros.length > 0 ? (
+      <div class="admin-tabla-wrap">
+        <table class="admin-tabla">
+          <thead>
+            <tr><th>#</th><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Objeto</th><th>Detalle</th></tr>
+          </thead>
+          <tbody>
+            {registros.map((registro: (typeof registros)[number]) => (
+              <tr>
+                <td>{registro.id}</td>
+                <td>{registro.fecha}</td>
+                <td>{registro.usuario ?? 'sistema'}</td>
+                <td><code>{registro.accion}</code></td>
+                <td><code>{registro.objeto}</code></td>
+                <td>{registro.detalle ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p class="admin-empty">No hay registros que coincidan con el filtro.</p>
+    )}
+
+    {paginas > 1 && (
+      <nav class="admin-paginacion" aria-label="Paginación de auditoría">
+        {paginaAnterior
+          ? <a class="admin-boton admin-boton--plano" href={enlacePagina(paginaAnterior)} rel="prev">← Anterior</a>
+          : <span class="admin-boton admin-boton--plano admin-boton--inactivo">← Anterior</span>}
+        <span class="admin-paginacion__estado">Página {filtros.pagina} de {paginas}</span>
+        {paginaSiguiente
+          ? <a class="admin-boton admin-boton--plano" href={enlacePagina(paginaSiguiente)} rel="next">Siguiente →</a>
+          : <span class="admin-boton admin-boton--plano admin-boton--inactivo">Siguiente →</span>}
+      </nav>
+    )}
+  </div>
+</AdminBase>

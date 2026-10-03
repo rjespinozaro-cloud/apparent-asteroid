@@ -1,0 +1,49 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDatabase, listarGuias } from '../../lib/db.js';
+import { env } from 'cloudflare:workers';
+import '../../styles/guias-listado.css';
+
+export const prerender = false;
+
+const database = getDatabase(env);
+const guias = await listarGuias(database, { publicadas: true });
+const herramientas = [...new Set(guias.map((guia) => guia.herramienta))].sort();
+Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+---
+
+<Base title="Guías | ciberguías">
+  <section class="listado" aria-labelledby="guias-titulo">
+    <p>Informe de laboratorio</p>
+    <h1 id="guias-titulo">Todas las guías</h1>
+    <p>Consulta las guías por equipo y herramienta. Las guías BLUE son gratuitas; las RED completas se entregan en PDF.</p>
+
+    <form class="filtros" aria-label="Filtrar guías">
+      <label for="filtro-equipo">Equipo</label>
+      <select id="filtro-equipo" data-filtro-equipo>
+        <option value="">Todos los equipos</option>
+        <option value="blue">BLUE</option>
+        <option value="red">RED</option>
+      </select>
+      <label for="filtro-herramienta">Herramienta</label>
+      <select id="filtro-herramienta" data-filtro-herramienta>
+        <option value="">Todas las herramientas</option>
+        {herramientas.map((herramienta) => <option value={herramienta}>{herramienta}</option>)}
+      </select>
+    </form>
+
+    <div class="lista-guias">
+      {guias.map((guia) => (
+        <article class={`guia-card guia-card--${guia.equipo}`} data-guia-card data-equipo={guia.equipo} data-herramienta={guia.herramienta}>
+          <p class="guia-card__equipo">Equipo {guia.equipo.toUpperCase()}</p>
+          <h2><a href={`/guias/${guia.slug}/`}>{guia.titulo}</a></h2>
+          <p>{guia.herramienta} · {guia.nivel} · {guia.acceso === 'gratis' ? 'Gratis' : 'PDF de pago'}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+</Base>
+
+<script>
+  import '../../scripts/filtro-guias.js';
+</script>

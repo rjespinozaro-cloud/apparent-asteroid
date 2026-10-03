@@ -1,0 +1,3 @@
+# Copia este archivo como .dev.vars para desarrollo local.
+MASTER_KEY=
+ADMIN_BOOTSTRAP_TOKEN=

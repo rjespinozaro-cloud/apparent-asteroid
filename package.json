@@ -1,0 +1,28 @@
+{
+  "name": "apparent-asteroid",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/cloudflare": "^14.3.3",
+    "@fontsource/bricolage-grotesque": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "astro": "^7.3.5",
+    "marked": "^18.0.14",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.145.0"
+  },
+  "allowScripts": {
+    "esbuild": true
+  }
+}

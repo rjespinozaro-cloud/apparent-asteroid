@@ -1,0 +1,40 @@
+---
+import Guia from '../../layouts/Guia.astro';
+import { getDatabase, obtenerGuiaPorSlug } from '../../lib/db.js';
+import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const parametroSlug = Astro.params.slug ?? '';
+const slug = Array.isArray(parametroSlug) ? parametroSlug.join('/') : parametroSlug;
+const database = getDatabase(env);
+const guia = await obtenerGuiaPorSlug(database, slug, { publicadas: true });
+
+if (!guia) {
+  Astro.response.status = 404;
+}
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+const html = guia ? markdownAHtml(guia.cuerpo_md) : '<p>La guía no está disponible.</p>';
+const indice = guia ? extraerIndice(guia.cuerpo_md) : [];
+---
+
+{guia ? (
+  <Guia
+    titulo={guia.titulo}
+    herramienta={guia.herramienta}
+    equipo={guia.equipo}
+    nivel={guia.nivel}
+    acceso={guia.acceso}
+    enlaceCompra={guia.enlace_compra}
+    descripcion={guia.cuerpo_md.slice(0, 150).replace(/[#*`>\n]/g, ' ').trim()}
+    indice={indice}
+  >
+    <div set:html={html} />
+  </Guia>
+) : (
+  <Guia titulo="Guía no disponible" herramienta="" equipo="blue" nivel="" acceso="gratis" noindex>
+    <p>La guía solicitada no existe o no está publicada.</p>
+  </Guia>
+)}

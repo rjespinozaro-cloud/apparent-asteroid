@@ -1,0 +1,138 @@
+---
+import AdminBase from '../../layouts/AdminBase.astro';
+import { getDatabase, listarHistorialPrompt, obtenerAjustesIa, consumoMensualIa } from '../../lib/db.js';
+import { esAdmin } from '../../lib/admin-api.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+if (!esAdmin(Astro.locals.admin)) {
+  return Astro.redirect('/admin/', 302);
+}
+
+const database = getDatabase(env);
+const ajustes = await obtenerAjustesIa(database);
+const consumo = await consumoMensualIa(database, new Date().toISOString().slice(0, 7));
+const historial = await listarHistorialPrompt(database, 5);
+const llaveConfigurada = Boolean(env.MASTER_KEY);
+---
+
+<AdminBase title="Ajustes IA | JOANIX - GUIDES">
+  <div class="admin-office" data-ajustes-ia data-csrf={Astro.locals.admin?.csrf ?? ''}>
+    <header class="admin-office__header">
+      <div>
+        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__eyebrow">Asistente</p>
+        <h1>Ajustes IA</h1>
+        <p class="admin-shell__intro">La API key se cifra con AES-256-GCM y nunca se devuelve al navegador.</p>
+      </div>
+      <a class="admin-office__salir" href="/admin/">Volver al panel</a>
+    </header>
+
+    <p class="admin-editor__estado" role="status" data-mensaje hidden></p>
+
+    {!llaveConfigurada && (
+      <p class="admin-alerta" role="alert">
+        Falta el secret <code>MASTER_KEY</code>. Añádelo con <code>npx wrangler secret put MASTER_KEY</code> antes de guardar la API key.
+      </p>
+    )}
+
+    <section class="admin-panel">
+      <header class="admin-panel__header">
+        <h2 class="admin-panel__titulo">Consumo del mes en curso</h2>
+      </header>
+      <div class="admin-panel__body">
+        <div class="admin-metricas admin-metricas--compactas">
+          <article class="admin-metrica admin-metrica--blue">
+            <span class="admin-metrica__valor">{consumo.llamadas}</span>
+            <span class="admin-metrica__etiqueta">Llamadas</span>
+          </article>
+          <article class="admin-metrica">
+            <span class="admin-metrica__valor">{consumo.tokens_entrada.toLocaleString('es-ES')}</span>
+            <span class="admin-metrica__etiqueta">Tokens de entrada</span>
+          </article>
+          <article class="admin-metrica">
+            <span class="admin-metrica__valor">{consumo.tokens_salida.toLocaleString('es-ES')}</span>
+            <span class="admin-metrica__etiqueta">Tokens de salida</span>
+          </article>
+        </div>
+        <p class="admin-panel__nota">
+          Tope mensual configurado: {ajustes?.tope_mensual_tokens ? ajustes.tope_mensual_tokens.toLocaleString('es-ES') : 'sin tope'}.
+          Límite por minuto: 10 peticiones por usuario.
+        </p>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <header class="admin-panel__header">
+        <h2 class="admin-panel__titulo">Proveedor y credenciales</h2>
+      </header>
+      <div class="admin-panel__body">
+        <form class="admin-rejilla" data-form-ajustes>
+          <div class="admin-form__campo">
+            <label for="proveedor">Proveedor</label>
+            <select id="proveedor" name="proveedor">
+              <option value="anthropic" selected={ajustes?.proveedor !== 'openai_compatible'}>Anthropic</option>
+              <option value="openai_compatible" selected={ajustes?.proveedor === 'openai_compatible'}>Compatible con OpenAI</option>
+            </select>
+          </div>
+          <div class="admin-form__campo">
+            <label for="modelo">Modelo</label>
+            <input id="modelo" name="modelo" type="text" required value={ajustes?.modelo ?? 'claude-sonnet-5'} />
+          </div>
+          <div class="admin-form__campo">
+            <label for="urlBase">URL base (opcional)</label>
+            <input id="urlBase" name="urlBase" type="url" placeholder="https://api.openai.com/v1" value={ajustes?.url_base ?? ''} />
+          </div>
+          <div class="admin-form__campo">
+            <label for="temperatura">Temperatura</label>
+            <input id="temperatura" name="temperatura" type="number" step="0.1" min="0" max="1" required value={ajustes?.temperatura ?? 0.2} />
+          </div>
+          <div class="admin-form__campo">
+            <label for="topeMensualTokens">Tope mensual de tokens</label>
+            <input id="topeMensualTokens" name="topeMensualTokens" type="number" min="0" step="1000" required value={ajustes?.tope_mensual_tokens ?? 0} />
+          </div>
+          <div class="admin-form__campo">
+            <label for="apiKey">API key {ajustes?.api_key_cifrada ? `(guardada ····${ajustes.api_key_ultimos4})` : '(sin guardar)'}</label>
+            <input id="apiKey" name="apiKey" type="password" autocomplete="new-password" placeholder="Déjalo vacío para mantener la actual" />
+          </div>
+          <div class="admin-form__campo admin-form__campo--ancho">
+            <label for="promptSistema">Prompt de sistema</label>
+            <textarea id="promptSistema" name="promptSistema" rows="6" required>{ajustes?.prompt_sistema ?? 'Eres un asistente técnico de ciberseguridad. Escribes guías educativas en español, en Markdown, con pasos numerados y comandos verificables. No inventas comandos.'}</textarea>
+          </div>
+          <div class="admin-filtros__acciones">
+            <button type="button" data-guardar>Guardar ajustes</button>
+            {ajustes?.api_key_cifrada && (
+              <button type="button" class="admin-boton admin-boton--peligro" data-borrar-api-key>Borrar API key</button>
+            )}
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <header class="admin-panel__header">
+        <h2 class="admin-panel__titulo">Historial de prompts de sistema</h2>
+        <p class="admin-panel__nota">Últimas {historial.length} versiones guardadas.</p>
+      </header>
+      <div class="admin-panel__body">
+        {historial.length > 0 ? (
+          <ol class="admin-historial">
+            {historial.map((registro: (typeof historial)[number]) => (
+              <li class="admin-historial__item">
+                <p class="admin-historial__meta">
+                  <time>{registro.fecha}</time> · {registro.usuario ?? 'sistema'}
+                </p>
+                <pre class="admin-historial__prompt">{registro.prompt_sistema}</pre>
+              </li>
+            ))}
+          </ol>
+        ) : <p class="admin-empty">Todavía no hay prompts guardados.</p>}
+      </div>
+    </section>
+  </div>
+</AdminBase>
+
+<script>
+  import '../../scripts/ajustes-ia.js';
+</script>

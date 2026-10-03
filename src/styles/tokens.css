@@ -1,0 +1,26 @@
+:root {
+  --papel: #0B111A;
+  --tinta: #E7EEF6;
+  --azul: #76B5FF;
+  --rojo: #F07A72;
+  --terminal-fondo: #050A11;
+  --terminal-texto: #D6E2F0;
+  --apagado: #9AAABD;
+  --aviso: #F0B84B;
+  --linea: #273646;
+  --linea-fuerte: #41566B;
+  --blanco: #16212D;
+  --papel-contraste: #152331;
+  --papel-linea: #172432;
+  --terminal-borde: #31465B;
+  --espacio-1: 0.5rem;
+  --espacio-2: 0.75rem;
+  --espacio-3: 1rem;
+  --espacio-4: 1.5rem;
+  --espacio-5: 2rem;
+  --espacio-6: 3rem;
+  --radio: 0.25rem;
+  --ancho-contenido: 74rem;
+  --ancho-lectura: 78ch;
+  --sombra-sutil: 0 0.5rem 1.5rem rgb(0 0 0 / 0.28);
+}

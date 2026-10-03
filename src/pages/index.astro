@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDatabase, listarGuias, listarHerramientas } from '../lib/db.js';
+import { env } from 'cloudflare:workers';
+import '../styles/guias-listado.css';
+
+export const prerender = false;
+
+const database = getDatabase(env);
+const guias = await listarGuias(database, { publicadas: true });
+const herramientas: string[] = await listarHerramientas(database);
+Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+---
+
+<Base title="JOANIX GUIDE | ciberguías">
+  <section class="portada" aria-labelledby="inicio-titulo">
+    <p>Informe de laboratorio</p>
+    <h1 id="inicio-titulo">Cada herramienta, dos veces: como atacante y como defensor</h1>
+    <p>Guías paso a paso para entender herramientas de hacking ético y redes desde los equipos RED y BLUE.</p>
+    <p class="portada__accesos">
+      <a href="/guias/?equipo=blue">Guías BLUE gratuitas</a>
+      <a href="/guias/?equipo=red">Guías RED en PDF</a>
+    </p>
+  </section>
+
+  <section class="portada__seccion" aria-labelledby="herramientas-titulo">
+    <h2 id="herramientas-titulo">Herramientas</h2>
+    <ul>
+      {herramientas.map((herramienta) => <li><a href={`/herramientas/${herramienta}/`}>{herramienta}</a></li>)}
+    </ul>
+  </section>
+
+  <section class="portada__seccion" aria-labelledby="ultimas-titulo">
+    <h2 id="ultimas-titulo">Últimas guías</h2>
+    <div class="lista-guias">
+      {guias.slice(0, 4).map((guia) => (
+        <article class={`guia-card guia-card--${guia.equipo}`}>
+          <p class="guia-card__equipo">Equipo {guia.equipo.toUpperCase()}</p>
+          <h3><a href={`/guias/${guia.slug}/`}>{guia.titulo}</a></h3>
+          <p>{guia.herramienta} · {guia.acceso === 'gratis' ? 'Gratis' : 'PDF de pago'}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+</Base>

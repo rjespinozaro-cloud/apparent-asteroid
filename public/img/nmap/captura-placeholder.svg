@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="titulo descripcion">
+  <title id="titulo">Aquí va tu captura</title>
+  <desc id="descripcion">Marcador de posición para una captura de Nmap</desc>
+  <rect width="1200" height="675" fill="#0F1B2A"/>
+  <rect x="48" y="48" width="1104" height="579" fill="#14202E" stroke="#D6E2F0" stroke-width="3"/>
+  <text x="600" y="330" fill="#D6E2F0" font-family="monospace" font-size="44" text-anchor="middle">Aquí va tu captura</text>
+  <text x="600" y="390" fill="#8FA6BC" font-family="monospace" font-size="24" text-anchor="middle">laboratorio nmap</text>
+</svg>

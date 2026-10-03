@@ -1,0 +1,40 @@
+---
+import AdminBase from '../../../layouts/AdminBase.astro';
+import EditorGuia from '../../../components/admin/EditorGuia.astro';
+import { getDatabase, listarHerramientasAdmin } from '../../../lib/db.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const sesion = Astro.locals.admin;
+const database = getDatabase(env);
+const herramientas = await listarHerramientasAdmin(database);
+const today = new Date().toISOString().slice(0, 10);
+---
+
+<AdminBase title="Nueva guía | JOANIX - GUIDES">
+  <div class="admin-office">
+    <header class="admin-office__header">
+      <div>
+        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__eyebrow">Biblioteca</p>
+        <h1>Nueva guía</h1>
+        <p class="admin-shell__intro">Redacta el contenido en Markdown y comprueba la vista previa antes de guardar.</p>
+      </div>
+    </header>
+
+    <EditorGuia
+      csrf={sesion?.csrf ?? ''}
+      endpoint="/api/admin/guias"
+      metodo="POST"
+      esAdmin={sesion?.usuario.rol === 'admin'}
+      herramientas={herramientas}
+      today={today}
+      asistente={true}
+    />
+  </div>
+</AdminBase>
+
+<script>
+  import '../../../scripts/editor-guia.js';
+</script>

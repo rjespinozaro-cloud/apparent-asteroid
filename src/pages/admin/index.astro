@@ -1,0 +1,107 @@
+---
+import AdminBase from '../../layouts/AdminBase.astro';
+import { env } from 'cloudflare:workers';
+import { getDatabase, obtenerResumenAdmin } from '../../lib/db.js';
+
+export const prerender = false;
+
+const sesion = Astro.locals.admin;
+const resumen = await obtenerResumenAdmin(getDatabase(env));
+const esAdmin = sesion?.usuario.rol === 'admin';
+---
+
+<AdminBase title="Oficina admin | JOANIX - GUIDES">
+  <div class="admin-office">
+    <header class="admin-office__header">
+      <div>
+        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__eyebrow">Oficina de administración</p>
+        <h1>Tu centro de operaciones</h1>
+        <p class="admin-shell__intro">Hola, {sesion?.usuario.usuario}. Aquí tienes el estado de tus contenidos y las herramientas de gestión.</p>
+      </div>
+      <a class="admin-office__salir" href="/">Ver portal público</a>
+    </header>
+
+    <section class="admin-metricas" aria-label="Resumen del contenido">
+      <article class="admin-metrica admin-metrica--blue">
+        <span class="admin-metrica__valor">{resumen.guias}</span>
+        <span class="admin-metrica__etiqueta">Guías en D1</span>
+      </article>
+      <article class="admin-metrica">
+        <span class="admin-metrica__valor">{resumen.publicadas}</span>
+        <span class="admin-metrica__etiqueta">Publicadas</span>
+      </article>
+      <article class="admin-metrica">
+        <span class="admin-metrica__valor">{resumen.herramientas}</span>
+        <span class="admin-metrica__etiqueta">Herramientas</span>
+      </article>
+    </section>
+
+    <section aria-labelledby="modulos-titulo">
+      <div class="admin-section-heading">
+        <p class="admin-shell__eyebrow">Módulos</p>
+        <h2 id="modulos-titulo">Gestiona tu plataforma</h2>
+      </div>
+      <div class="admin-modulos">
+        <a class="admin-modulo admin-modulo--blue" href="/admin/guias/">
+          <span class="admin-modulo__numero">01</span>
+          <h3>Guías</h3>
+          <p>Busca, filtra y revisa tus contenidos publicados.</p>
+          <span class="admin-modulo__accion">Abrir módulo →</span>
+        </a>
+        <a class="admin-modulo" href="/admin/guia-nueva/">
+          <span class="admin-modulo__numero">02</span>
+          <h3>Nueva guía</h3>
+          <p>Crea un borrador BLUE desde el editor.</p>
+          <span class="admin-modulo__accion">Crear contenido →</span>
+        </a>
+        {esAdmin && (
+          <>
+            <a class="admin-modulo" href="/admin/ajustes-ia/">
+              <span class="admin-modulo__numero">03</span>
+              <h3>Ajustes IA</h3>
+              <p>Configura el prompt, proveedor y límites de uso.</p>
+              <span class="admin-modulo__accion">Configurar IA →</span>
+            </a>
+            <a class="admin-modulo" href="/admin/usuarios/">
+              <span class="admin-modulo__numero">04</span>
+              <h3>Usuarios</h3>
+              <p>Administra accesos, roles y cuentas activas.</p>
+              <span class="admin-modulo__accion">Gestionar usuarios →</span>
+            </a>
+            <a class="admin-modulo" href="/admin/auditoria/">
+              <span class="admin-modulo__numero">05</span>
+              <h3>Auditoría</h3>
+              <p>Consulta las acciones recientes del panel.</p>
+              <span class="admin-modulo__accion">Ver registro →</span>
+            </a>
+          </>
+        )}
+      </div>
+    </section>
+
+    <section class="admin-actividad" aria-labelledby="actividad-titulo">
+      <div class="admin-section-heading">
+        <p class="admin-shell__eyebrow">Trazabilidad</p>
+        <h2 id="actividad-titulo">Actividad reciente</h2>
+      </div>
+      {resumen.auditoria.length > 0 ? (
+        <div class="admin-tabla-wrap">
+          <table class="admin-tabla">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Objeto</th></tr></thead>
+            <tbody>
+              {resumen.auditoria.map((registro) => (
+                <tr>
+                  <td>{registro.fecha}</td>
+                  <td>{registro.usuario ?? 'sistema'}</td>
+                  <td>{registro.accion}</td>
+                  <td>{registro.objeto}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <p class="admin-empty">Todavía no hay acciones registradas.</p>}
+    </section>
+  </div>
+</AdminBase>

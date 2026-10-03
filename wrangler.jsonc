@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "name": "ciberguias",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ciberguias",
+      "database_id": "a595720c-b498-423e-8c6b-21e6b07d5d72",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
