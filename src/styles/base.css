@@ -246,3 +246,28 @@ input[type='radio'] {
     color: #000;
   }
 }
+pre {
+  overflow-x: auto;
+}
+
+code {
+  word-break: break-word;
+}
+
+pre code {
+  white-space: pre;
+}
+
+:focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 2px;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  min-height: 44px;
+  min-width: 44px;
+}
