@@ -1,7 +1,7 @@
 {
-  "name": "apparent-asteroid",
+  "name": "joanix-guides",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -9,7 +9,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "db:migrate": "wrangler d1 migrations apply ciberguias --local",
+    "db:migrate:remote": "wrangler d1 migrations apply ciberguias --remote",
+    "deploy": "astro build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
@@ -24,5 +29,8 @@
   },
   "allowScripts": {
     "esbuild": true
-  }
+  },
+  "description": "Plataforma de guías de ciberseguridad RED y BLUE sobre Astro + Cloudflare Workers + D1",
+  "private": true,
+  "devDependencies": {}
 }

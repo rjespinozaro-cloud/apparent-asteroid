@@ -1,7 +1,10 @@
 ---
 import Guia from '../../layouts/Guia.astro';
-import { getDatabase, obtenerGuiaPorSlug } from '../../lib/db.js';
+import TarjetaGuia from '../../components/TarjetaGuia.astro';
+import { getDatabase, guiasRelacionadas, guiasVecinas, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
+import { descripcionDesdeMarkdown, tiempoLectura } from '../../lib/utils/texto.js';
+import { nombreHerramienta } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -9,32 +12,108 @@ export const prerender = false;
 const parametroSlug = Astro.params.slug ?? '';
 const slug = Array.isArray(parametroSlug) ? parametroSlug.join('/') : parametroSlug;
 const database = getDatabase(env);
-const guia = await obtenerGuiaPorSlug(database, slug, { publicadas: true });
+const guia = slug ? await obtenerGuiaPorSlug(database, slug, { publicadas: true }) : null;
 
-if (!guia) {
-  Astro.response.status = 404;
-}
+if (!guia) Astro.response.status = 404;
 
-Astro.response.headers.set('Cache-Control', 'public, max-age=60');
-const html = guia ? markdownAHtml(guia.cuerpo_md) : '<p>La guía no está disponible.</p>';
+const html = guia ? markdownAHtml(guia.cuerpo_md) : '';
 const indice = guia ? extraerIndice(guia.cuerpo_md) : [];
+const [vecinas, relacionadas] = guia
+  ? await Promise.all([guiasVecinas(database, guia), guiasRelacionadas(database, guia, 4)])
+  : [{ anterior: null, siguiente: null }, []];
+
+const origen = Astro.site ?? Astro.url.origin;
+const jsonLd = guia
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'TechArticle',
+      headline: guia.titulo,
+      description: descripcionDesdeMarkdown(guia.cuerpo_md),
+      datePublished: guia.fecha,
+      dateModified: guia.actualizado_en ?? guia.fecha,
+      inLanguage: 'es-ES',
+      proficiencyLevel: guia.nivel,
+      isAccessibleForFree: guia.acceso === 'gratis',
+      keywords: [nombreHerramienta(guia.herramienta), 'ciberseguridad', guia.equipo === 'blue' ? 'defensa' : 'ofensiva'],
+      mainEntityOfPage: new URL(`/guias/${guia.slug}/`, origen).href,
+      author: { '@type': 'Organization', name: 'JOANIX GUIDES' },
+      publisher: { '@type': 'Organization', name: 'JOANIX GUIDES' },
+    }
+  : undefined;
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
 ---
 
-{guia ? (
-  <Guia
-    titulo={guia.titulo}
-    herramienta={guia.herramienta}
-    equipo={guia.equipo}
-    nivel={guia.nivel}
-    acceso={guia.acceso}
-    enlaceCompra={guia.enlace_compra}
-    descripcion={guia.cuerpo_md.slice(0, 150).replace(/[#*`>\n]/g, ' ').trim()}
-    indice={indice}
-  >
-    <div set:html={html} />
-  </Guia>
-) : (
-  <Guia titulo="Guía no disponible" herramienta="" equipo="blue" nivel="" acceso="gratis" noindex>
-    <p>La guía solicitada no existe o no está publicada.</p>
-  </Guia>
-)}
+{
+  guia ? (
+    <Guia
+      titulo={guia.titulo}
+      herramienta={nombreHerramienta(guia.herramienta)}
+      herramientaSlug={guia.herramienta}
+      equipo={guia.equipo}
+      nivel={guia.nivel}
+      acceso={guia.acceso}
+      enlaceCompra={guia.enlace_compra}
+      descripcion={descripcionDesdeMarkdown(guia.cuerpo_md)}
+      fecha={guia.fecha}
+      tiempoLectura={tiempoLectura(guia.cuerpo_md)}
+      indice={indice}
+      jsonLd={jsonLd}
+    >
+      <div class="markdown" set:html={html} />
+
+      <nav class="guia__vecinas" aria-label="Navegación entre guías">
+        {vecinas.anterior ? (
+          <a class="guia__vecina" href={`/guias/${vecinas.anterior.slug}/`} rel="prev">
+            <span class="guia__vecina-etiqueta">← Guía anterior</span>
+            <span class="guia__vecina-titulo">{vecinas.anterior.titulo}</span>
+          </a>
+        ) : (
+          <span />
+        )}
+        {vecinas.siguiente ? (
+          <a class="guia__vecina guia__vecina--derecha" href={`/guias/${vecinas.siguiente.slug}/`} rel="next">
+            <span class="guia__vecina-etiqueta">Guía siguiente →</span>
+            <span class="guia__vecina-titulo">{vecinas.siguiente.titulo}</span>
+          </a>
+        ) : (
+          <span />
+        )}
+      </nav>
+
+      {relacionadas.length > 0 && (
+        <section class="seccion guia__relacionadas" aria-labelledby="relacionadas-titulo">
+          <div class="seccion__cabecera">
+            <h2 class="seccion__titulo" id="relacionadas-titulo">
+              Guías relacionadas
+            </h2>
+            <a href={`/herramientas/${guia.herramienta}/`}>Ver todo sobre {nombreHerramienta(guia.herramienta)} →</a>
+          </div>
+          <ul class="rejilla-tarjetas">
+            {relacionadas.map((otra) => (
+              <li>
+                <TarjetaGuia guia={otra} mostrarNivel={false} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </Guia>
+  ) : (
+    <Guia
+      titulo="Guía no encontrada"
+      herramienta=""
+      equipo="blue"
+      nivel=""
+      acceso="gratis"
+      noindex
+      descripcion="La guía solicitada no existe o todavía no está publicada."
+    >
+      <p>La guía que buscas no existe, no está publicada o ha cambiado de dirección.</p>
+      <p>
+        <a class="boton" href="/guias/">Ver todas las guías</a>
+        <a class="boton boton--secundario" href="/buscar/">Buscar por texto</a>
+      </p>
+    </Guia>
+  )
+}

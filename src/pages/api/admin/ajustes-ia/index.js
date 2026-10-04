@@ -4,6 +4,7 @@ import {
   consumoMensualIa,
   getDatabase,
   guardarAjustesIa,
+  guardarApiKeyCifrada,
   guardarHistorialPrompt,
   obtenerAjustesIa,
   registrarAuditoria,
@@ -94,45 +95,23 @@ export async function PUT({ request, locals }) {
 
   if (errores.length > 0) return respuestaJson({ error: 'Revisa los datos del formulario.', errores }, 422);
 
+  // La fila de ajustes se crea o se actualiza en una sola sentencia (upsert);
+  // la API key se guarda aparte para poder rotarla sin tocar el resto.
+  await guardarAjustesIa(database, {
+    proveedor,
+    urlBase,
+    modelo,
+    promptSistema,
+    temperatura,
+    topeMensualTokens,
+  });
+
   if (apiKey) {
     const { cifrado, iv } = await cifrar(env, apiKey, { etiqueta: 'api_key' });
-    const existentes = await obtenerAjustesIa(database);
-    if (existentes) {
-      await database.prepare(
-        'UPDATE ajustes_ia SET api_key_cifrada = ?, api_key_iv = ?, api_key_ultimos4 = ?, actualizado_en = CURRENT_TIMESTAMP WHERE id = 1',
-      ).bind(cifrado, iv, ultimosCaracteres(apiKey)).run();
-    } else {
-      // Si no hay fila de ajustes, la creamos con los valores por defecto
-      await guardarAjustesIa(database, {
-        proveedor,
-        urlBase,
-        modelo,
-        promptSistema,
-        temperatura,
-        topeMensualTokens,
-      });
-      await database.prepare(
-        'UPDATE ajustes_ia SET api_key_cifrada = ?, api_key_iv = ?, api_key_ultimos4 = ?, actualizado_en = CURRENT_TIMESTAMP WHERE id = 1',
-      ).bind(cifrado, iv, ultimosCaracteres(apiKey)).run();
-    }
+    await guardarApiKeyCifrada(database, { cifrada: cifrado, iv, ultimos4: ultimosCaracteres(apiKey) });
   }
 
-  const actuales = await obtenerAjustesIa(database);
-  if (actuales) {
-    await database.prepare(
-      `UPDATE ajustes_ia SET proveedor = ?, url_base = ?, modelo = ?, prompt_sistema = ?, temperatura = ?,
-       tope_mensual_tokens = ?, actualizado_en = CURRENT_TIMESTAMP WHERE id = 1`,
-    ).bind(proveedor, urlBase, modelo, promptSistema, temperatura, topeMensualTokens).run();
-  } else {
-    await guardarAjustesIa(database, {
-      proveedor,
-      urlBase,
-      modelo,
-      promptSistema,
-      temperatura,
-      topeMensualTokens,
-    });
-  }
+  const claveGuardada = await obtenerAjustesIa(database);
 
   await guardarHistorialPrompt(database, { promptSistema, usuarioId: locals.admin.usuario.usuario_id });
   await registrarAuditoria(database, {
@@ -142,7 +121,7 @@ export async function PUT({ request, locals }) {
     detalle: `proveedor=${proveedor}, modelo=${modelo}${apiKey ? ', api_key actualizada' : ''}`,
   });
 
-  return respuestaJson({ ok: true, apiKeyGuardada: Boolean(apiKey) || Boolean(actuales?.api_key_cifrada) });
+  return respuestaJson({ ok: true, apiKeyGuardada: Boolean(claveGuardada?.api_key_cifrada) });
 }
 
 export function ALL() {

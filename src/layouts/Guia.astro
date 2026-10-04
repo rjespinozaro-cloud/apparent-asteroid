@@ -6,64 +6,95 @@ import '../styles/guia.css';
 interface Props {
   titulo: string;
   herramienta: string;
+  /** Slug legible de la herramienta, para las migas. */
+  herramientaSlug?: string;
   equipo: 'blue' | 'red';
   nivel: string;
   acceso: string;
-  enlaceCompra?: string;
+  enlaceCompra?: string | null;
   descripcion?: string;
-  indice?: Array<{ id: string; texto: string }>;
+  fecha?: string;
+  tiempoLectura?: number;
+  indice?: Array<{ id: string; texto: string; nivel?: number }>;
+  /** Datos estructurados de la guía (JSON-LD). */
+  jsonLd?: Record<string, unknown>;
   noindex?: boolean;
 }
 
 const {
   titulo,
   herramienta,
+  herramientaSlug = herramienta,
   equipo,
   nivel,
   acceso,
-  enlaceCompra,
+  enlaceCompra = null,
   descripcion,
+  fecha,
+  tiempoLectura,
   indice = [],
+  jsonLd,
   noindex = false,
 } = Astro.props;
 ---
 
 <Base
-  title={`${titulo} | JOANIX - GUIDES`}
-  description={descripcion ?? `Guía de ${herramienta} para equipos ${equipo === 'blue' ? 'BLUE' : 'RED'} en ${nivel}.`}
+  title={`${titulo} | JOANIX GUIDES`}
+  description={descripcion ?? `Guía de ${herramienta} para el equipo ${equipo === 'blue' ? 'BLUE (defensa)' : 'RED (ofensiva)'}, nivel ${nivel}.`}
   ogType="article"
   noindex={noindex}
 >
-  <article class={`guia guia--${equipo}`}>
+  {jsonLd && (
+    <script type="application/ld+json" slot="cabecera" set:html={JSON.stringify(jsonLd)} />
+  )}
+
+  <article class:list={['guia', `guia--${equipo}`]}>
     <header class="guia__cabecera">
-      <nav class="guia__migas" aria-label="Migas de pan">
-        <a href="/">Inicio</a> / <a href="/guias/">Guías</a> / {herramienta}
+      <nav aria-label="Migas de pan">
+        <ol class="migas">
+          <li><a href="/">Inicio</a></li>
+          <li><a href="/guias/">Guías</a></li>
+          <li><a href={`/herramientas/${herramientaSlug}/`}>{herramienta}</a></li>
+          <li aria-current="page">{titulo}</li>
+        </ol>
       </nav>
-      <p>Guía de {herramienta}</p>
+
+      <p class="eyebrow">Guía de {herramienta}</p>
       <h1>{titulo}</h1>
+
       <ul class="guia__etiquetas" aria-label="Características de la guía">
-        <li>{equipo === 'blue' ? 'Equipo BLUE' : 'Equipo RED'}</li>
-        <li>{nivel}</li>
-        <li>{acceso === 'gratis' ? 'Gratis' : 'PDF de pago'}</li>
+        <li><span class:list={['etiqueta', `etiqueta--${equipo}`]}>{equipo === 'blue' ? 'BLUE' : 'RED'}</span></li>
+        <li><span class="etiqueta etiqueta--neutro">{nivel}</span></li>
+        <li><span class="etiqueta etiqueta--neutro">{acceso === 'pago' ? 'PDF de pago' : 'Gratis'}</span></li>
+        {fecha && <li><time class="etiqueta etiqueta--neutro" datetime={fecha}>{fecha}</time></li>}
+        {tiempoLectura && <li><span class="etiqueta etiqueta--neutro">{tiempoLectura} min de lectura</span></li>}
       </ul>
-      <section class="guia__requisitos" aria-labelledby="requisitos-titulo">
-        <h2 id="requisitos-titulo">Requisitos y laboratorio</h2>
-        <p>Usa un laboratorio propio y una red privada de pruebas. Los ejemplos se mantienen dentro de entornos autorizados.</p>
-      </section>
+
+      <p class="guia__aviso">
+        Material educativo. Ejecuta los comandos solo en tu laboratorio o en sistemas para los que tengas autorización expresa.
+      </p>
     </header>
 
-    {indice.length > 0 && (
-      <aside class="guia__indice" aria-label="Índice de la guía">
-        <h2>En esta guía</h2>
-        <ol>
-          {indice.map((item) => <li><a href={`#${item.id}`}>{item.texto}</a></li>)}
-        </ol>
-      </aside>
-    )}
+    <div class="guia__cuerpo">
+      {indice.length > 0 && (
+        <aside class="guia__indice" aria-labelledby="indice-titulo">
+          <h2 id="indice-titulo">En esta guía</h2>
+          <ol>
+            {indice.map((item) => (
+              <li class:list={['guia__indice-item', item.nivel === 3 && 'guia__indice-item--sub']}>
+                <a href={`#${item.id}`}>{item.texto}</a>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      )}
 
-    <div class="guia__contenido">
-      <slot />
-      {acceso === 'pago' && enlaceCompra && <Candado enlaceCompra={enlaceCompra} />}
+      <div class="guia__contenido">
+        <slot />
+        {acceso === 'pago' && <Candado enlaceCompra={enlaceCompra} />}
+      </div>
     </div>
   </article>
+
+  <slot name="pie" />
 </Base>

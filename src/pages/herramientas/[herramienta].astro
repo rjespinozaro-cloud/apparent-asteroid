@@ -1,40 +1,111 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getDatabase, listarGuiasDeHerramienta } from '../../lib/db.js';
+import TarjetaGuia from '../../components/TarjetaGuia.astro';
+import { getDatabase, listarGuiasDeHerramienta, existeHerramientaPublicada } from '../../lib/db.js';
+import { plural } from '../../lib/utils/texto.js';
+import { nombreHerramienta } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
-import '../../styles/guias-listado.css';
 
 export const prerender = false;
 
-const herramienta = Astro.params.herramienta ?? '';
+const herramienta = (Astro.params.herramienta ?? '').toLowerCase();
 const database = getDatabase(env);
-const guias = await listarGuiasDeHerramienta(database, herramienta);
+const existe = /^[a-z0-9][a-z0-9-]{1,39}$/.test(herramienta)
+  ? await existeHerramientaPublicada(database, herramienta)
+  : false;
+
+// Sin guías publicadas la ruta no existe: responder 404 en lugar de una página vacía.
+if (!existe) Astro.response.status = 404;
+
+const guias = existe ? await listarGuiasDeHerramienta(database, herramienta) : [];
 const blue = guias.filter((guia) => guia.equipo === 'blue');
 const red = guias.filter((guia) => guia.equipo === 'red');
-Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+const titulo = nombreHerramienta(herramienta);
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
 
-<Base title={`${herramienta} | ciberguías`}>
-  <section class="herramienta" aria-labelledby="herramienta-titulo">
-    <p><a href="/guias/">Todas las guías</a> / Herramientas</p>
-    <h1 id="herramienta-titulo">{herramienta}</h1>
-    <div class="herramienta__columnas">
-      <section class="herramienta__equipo herramienta__equipo--blue" aria-labelledby="blue-titulo">
-        <h2 id="blue-titulo">Equipo BLUE</h2>
-        {blue.length > 0 ? (
-          <ul>
-            {blue.map((guia) => <li><a href={`/guias/${guia.slug}/`}>{guia.titulo}</a></li>)}
-          </ul>
-        ) : <p>No hay una guía BLUE publicada todavía.</p>}
+{
+  existe ? (
+    <Base
+      title={`Guías de ${titulo} | JOANIX GUIDES`}
+      description={`Guías de ${titulo} para equipos RED y BLUE: ${plural(guias.length, 'guía', 'guías')} sobre ${titulo}.`}
+    >
+      <nav aria-label="Migas de pan">
+        <ol class="migas">
+          <li>
+            <a href="/">Inicio</a>
+          </li>
+          <li>
+            <a href="/herramientas/">Herramientas</a>
+          </li>
+          <li aria-current="page">{titulo}</li>
+        </ol>
+      </nav>
+
+      <section class="seccion" aria-labelledby="herramienta-titulo">
+        <div>
+          <p class="eyebrow">Herramienta</p>
+          <h1 id="herramienta-titulo">{titulo}</h1>
+          <p class="entradilla">
+            {plural(guias.length, 'guía publicada', 'guías publicadas')} sobre {titulo}, repartidas entre lectura defensiva
+            (BLUE) y práctica ofensiva autorizada (RED).
+          </p>
+        </div>
+
+        <div class="rejilla-equipos">
+          <section class:list={['equipo', 'equipo--blue']} aria-labelledby="blue-titulo">
+            <p class="equipo__clave">BLUE</p>
+            <h2 class="equipo__titulo" id="blue-titulo">
+              Defensa
+            </h2>
+            {blue.length > 0 ? (
+              <ul class="rejilla-tarjetas">
+                {blue.map((guia) => (
+                  <li>
+                    <TarjetaGuia guia={guia} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Todavía no hay una guía BLUE publicada sobre {titulo}.</p>
+            )}
+          </section>
+
+          <section class:list={['equipo', 'equipo--red']} aria-labelledby="red-titulo">
+            <p class="equipo__clave">RED</p>
+            <h2 class="equipo__titulo" id="red-titulo">
+              Ofensiva
+            </h2>
+            {red.length > 0 ? (
+              <ul class="rejilla-tarjetas">
+                {red.map((guia) => (
+                  <li>
+                    <TarjetaGuia guia={guia} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Todavía no hay una guía RED publicada sobre {titulo}.</p>
+            )}
+          </section>
+        </div>
       </section>
-      <section class="herramienta__equipo herramienta__equipo--red" aria-labelledby="red-titulo">
-        <h2 id="red-titulo">Equipo RED</h2>
-        {red.length > 0 ? (
-          <ul>
-            {red.map((guia) => <li><a href={`/guias/${guia.slug}/`}>{guia.titulo}</a></li>)}
-          </ul>
-        ) : <p>No hay una guía RED publicada todavía.</p>}
-      </section>
-    </div>
-  </section>
-</Base>
+    </Base>
+  ) : (
+    <Base title="Herramienta no encontrada | JOANIX GUIDES" noindex>
+      <article class="pagina-error">
+        <p class="eyebrow">Error 404</p>
+        <h1>No tenemos guías sobre esa herramienta</h1>
+        <p>
+          Puede que el nombre no sea correcto o que todavía no haya ninguna guía publicada. Revisa el
+          explorador de herramientas.
+        </p>
+        <p class="pagina-error__acciones">
+          <a class="boton" href="/herramientas/">Ver herramientas</a>
+          <a class="boton boton--secundario" href="/buscar/">Buscar por texto</a>
+        </p>
+      </article>
+    </Base>
+  )
+}

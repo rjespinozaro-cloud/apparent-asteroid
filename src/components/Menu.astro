@@ -1,10 +1,40 @@
-<details class="menu">
-  <summary class="menu__summary">Menú</summary>
-  <nav aria-label="Navegación principal">
-    <ul class="menu__links">
-      <li><a href="/guias/">Guías</a></li>
-      <li><a href="/herramientas/nmap/">Herramientas</a></li>
-      <li><a href="/aviso-legal/">Aviso legal</a></li>
-    </ul>
-  </nav>
-</details>
+---
+interface Props {
+  /** Ruta actual para marcar el enlace activo. */
+  ruta?: string;
+}
+
+const { ruta = '/' } = Astro.props;
+
+const enlaces = [
+  { href: '/guias/', texto: 'Guías' },
+  { href: '/herramientas/', texto: 'Herramientas' },
+  { href: '/buscar/', texto: 'Buscar' },
+  { href: '/aviso-legal/', texto: 'Aviso legal' },
+];
+
+/**
+ * Un enlace está activo si la ruta coincide o si está dentro de su sección
+ * (por ejemplo, /guias/red/nmap-basico/ mantiene activo "Guías").
+ * @param {string} href
+ */
+function activo(href: string) {
+  return href === '/' ? ruta === href : ruta === href || ruta.startsWith(href);
+}
+---
+
+<nav class="menu" aria-label="Navegación principal">
+  <ul class="menu__enlaces">
+    {enlaces.map((enlace) => (
+      <li>
+        <a href={enlace.href} aria-current={activo(enlace.href) ? 'page' : undefined}>{enlace.texto}</a>
+      </li>
+    ))}
+    <li class="menu__buscar">
+      <a href="/buscar/" class="menu__boton-buscar">
+        <span aria-hidden="true">⌕</span>
+        <span class="visualmente-oculto">Buscar guías</span>
+      </a>
+    </li>
+  </ul>
+</nav>

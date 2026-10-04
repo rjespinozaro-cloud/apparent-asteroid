@@ -1,26 +1,126 @@
+/**
+ * Capa de tokens.
+ *
+ * Todo el color, el espacio, la tipografía y las sombras salen de aquí: ningún
+ * componente declara valores literales. Cambiar la identidad visual se reduce a
+ * editar este archivo.
+ *
+ * Tema oscuro por defecto (identidad del producto) con variante clara para
+ * quien tiene el sistema configurado en `prefers-color-scheme: light`.
+ * Ambos temas cumplen contraste AA en texto normal e inferior a 3:1 en los
+ * colores de acento que se usan como bordes decorativos.
+ */
+
 :root {
-  --papel: #0B111A;
-  --tinta: #E7EEF6;
-  --azul: #76B5FF;
-  --rojo: #F07A72;
-  --terminal-fondo: #050A11;
-  --terminal-texto: #D6E2F0;
-  --apagado: #9AAABD;
-  --aviso: #F0B84B;
-  --linea: #273646;
-  --linea-fuerte: #41566B;
-  --blanco: #16212D;
-  --papel-contraste: #152331;
-  --papel-linea: #172432;
-  --terminal-borde: #31465B;
-  --espacio-1: 0.5rem;
-  --espacio-2: 0.75rem;
-  --espacio-3: 1rem;
-  --espacio-4: 1.5rem;
-  --espacio-5: 2rem;
-  --espacio-6: 3rem;
-  --radio: 0.25rem;
-  --ancho-contenido: 74rem;
-  --ancho-lectura: 78ch;
-  --sombra-sutil: 0 0.5rem 1.5rem rgb(0 0 0 / 0.28);
+  color-scheme: dark;
+
+  /* Superficies ---------------------------------------------------------- */
+  --papel: #0b1019;
+  --papel-alto: #111927;
+  --papel-contraste: #16202f;
+  --papel-hover: #1b2737;
+  --terminal-fondo: #05090f;
+  --terminal-texto: #d7e3f1;
+
+  /* Texto ---------------------------------------------------------------- */
+  --tinta: #e8eff7;
+  --tinta-suave: #a9bacd;
+  --tinta-tenue: #7d90a6;
+  --tinta-inversa: #0b1019;
+
+  /* Marca ---------------------------------------------------------------- */
+  --blue: #76b5ff;
+  --blue-fuerte: #3d8fe0;
+  --blue-tenue: #16283f;
+  --red: #ff8a7d;
+  --red-fuerte: #e35c4c;
+  --red-tenue: #33191a;
+  --aviso: #f2c063;
+  --aviso-tenue: #33280f;
+  --exito: #63d19a;
+
+  /* Líneas --------------------------------------------------------------- */
+  --linea: #22303f;
+  --linea-fuerte: #35485d;
+  --borde-enfoque: var(--blue);
+
+  /* Tipografía ----------------------------------------------------------- */
+  --fuente-texto: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fuente-titulo: 'Bricolage Grotesque', var(--fuente-texto);
+  --fuente-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', monospace;
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.8125rem;
+  --texto-base: 1rem;
+  --texto-md: clamp(1.0625rem, 0.4vw + 1rem, 1.125rem);
+  --texto-lg: clamp(1.25rem, 0.8vw + 1.125rem, 1.5rem);
+  --texto-xl: clamp(1.6rem, 1.6vw + 1.25rem, 2.25rem);
+  --texto-2xl: clamp(2.1rem, 3.4vw + 1.25rem, 3.5rem);
+  --altura-linea: 1.65;
+  --altura-linea-corta: 1.35;
+  --ancho-lectura: 68ch;
+
+  /* Espaciado (escala de 4px con saltos mayores) -------------------------- */
+  --espacio-3xs: 0.25rem;
+  --espacio-2xs: 0.5rem;
+  --espacio-xs: 0.75rem;
+  --espacio-s: 1rem;
+  --espacio-m: 1.5rem;
+  --espacio-l: 2rem;
+  --espacio-xl: 3rem;
+  --espacio-2xl: 4.5rem;
+  --espacio-3xl: 6rem;
+
+  /* Formas y profundidad -------------------------------------------------- */
+  --radio-s: 0.25rem;
+  --radio-m: 0.5rem;
+  --radio-l: 0.875rem;
+  --radio-full: 999px;
+  --sombra-1: 0 1px 2px rgb(0 0 0 / 0.35);
+  --sombra-2: 0 0.5rem 1.5rem rgb(0 0 0 / 0.3);
+  --sombra-3: 0 1.5rem 3rem rgb(0 0 0 / 0.38);
+  --borde: 1px solid var(--linea);
+  --borde-fuerte: 1px solid var(--linea-fuerte);
+  --duracion: 160ms;
+  --curva: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* Medidas --------------------------------------------------------------- */
+  --ancho-contenido: 76rem;
+  --ancho-texto: 74rem;
+  --alto-cabecera: 4rem;
+  --alto-control: 2.75rem;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --papel: #f6f8fb;
+    --papel-alto: #ffffff;
+    --papel-contraste: #eef2f7;
+    --papel-hover: #e6ecf4;
+    --terminal-fondo: #101720;
+    --terminal-texto: #e4edf7;
+
+    --tinta: #131b25;
+    --tinta-suave: #3f4d5c;
+    --tinta-tenue: #5d6b7a;
+    --tinta-inversa: #ffffff;
+
+    --blue: #1b64c4;
+    --blue-fuerte: #12508f;
+    --blue-tenue: #e3edfb;
+    --red: #b5332a;
+    --red-fuerte: #8e241c;
+    --red-tenue: #fbe9e7;
+    --aviso: #8a6100;
+    --aviso-tenue: #fdf1d8;
+    --exito: #17784c;
+
+    --linea: #d7dee8;
+    --linea-fuerte: #b6c2d1;
+
+    --sombra-1: 0 1px 2px rgb(16 26 38 / 0.08);
+    --sombra-2: 0 0.5rem 1.25rem rgb(16 26 38 / 0.1);
+    --sombra-3: 0 1.25rem 2.5rem rgb(16 26 38 / 0.14);
+  }
 }

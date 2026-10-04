@@ -1,20 +1,34 @@
 ---
 import AdminBase from '../../layouts/AdminBase.astro';
 import { env } from 'cloudflare:workers';
-import { getDatabase, obtenerResumenAdmin } from '../../lib/db.js';
+import { contarGuias, contarUsuarios, getDatabase, ultimasAcciones } from '../../lib/db.js';
+import { formatearFechaHora, plural } from '../../lib/utils/texto.js';
 
 export const prerender = false;
 
 const sesion = Astro.locals.admin;
-const resumen = await obtenerResumenAdmin(getDatabase(env));
+const database = getDatabase(env);
+const [contenido, usuarios, actividad] = await Promise.all([
+  contarGuias(database),
+  contarUsuarios(database),
+  ultimasAcciones(database, 8),
+]);
+const resumen = {
+  guias: contenido.total,
+  publicadas: contenido.publicadas,
+  borradores: contenido.borradores,
+  herramientas: contenido.herramientas,
+  usuarios,
+  actividad,
+};
 const esAdmin = sesion?.usuario.rol === 'admin';
 ---
 
-<AdminBase title="Oficina admin | JOANIX - GUIDES">
+<AdminBase title="Oficina admin | JOANIX GUIDES">
   <div class="admin-office">
     <header class="admin-office__header">
       <div>
-        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / CONTROL ROOM</p>
         <p class="admin-shell__eyebrow">Oficina de administración</p>
         <h1>Tu centro de operaciones</h1>
         <p class="admin-shell__intro">Hola, {sesion?.usuario.usuario}. Aquí tienes el estado de tus contenidos y las herramientas de gestión.</p>
@@ -34,6 +48,14 @@ const esAdmin = sesion?.usuario.rol === 'admin';
       <article class="admin-metrica">
         <span class="admin-metrica__valor">{resumen.herramientas}</span>
         <span class="admin-metrica__etiqueta">Herramientas</span>
+      </article>
+      <article class="admin-metrica">
+        <span class="admin-metrica__valor">{resumen.borradores}</span>
+        <span class="admin-metrica__etiqueta">Borradores</span>
+      </article>
+      <article class="admin-metrica">
+        <span class="admin-metrica__valor">{resumen.usuarios}</span>
+        <span class="admin-metrica__etiqueta">{plural(resumen.usuarios, 'usuario', 'usuarios')}</span>
       </article>
     </section>
 
@@ -85,14 +107,14 @@ const esAdmin = sesion?.usuario.rol === 'admin';
         <p class="admin-shell__eyebrow">Trazabilidad</p>
         <h2 id="actividad-titulo">Actividad reciente</h2>
       </div>
-      {resumen.auditoria.length > 0 ? (
+      {resumen.actividad.length > 0 ? (
         <div class="admin-tabla-wrap">
           <table class="admin-tabla">
             <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Objeto</th></tr></thead>
             <tbody>
-              {resumen.auditoria.map((registro) => (
+              {resumen.actividad.map((registro) => (
                 <tr>
-                  <td>{registro.fecha}</td>
+                  <td>{formatearFechaHora(registro.fecha)}</td>
                   <td>{registro.usuario ?? 'sistema'}</td>
                   <td>{registro.accion}</td>
                   <td>{registro.objeto}</td>

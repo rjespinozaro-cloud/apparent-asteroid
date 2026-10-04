@@ -18,11 +18,11 @@ const miId = sesion?.usuario.usuario_id;
 const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length;
 ---
 
-<AdminBase title="Usuarios | JOANIX - GUIDES">
+<AdminBase title="Usuarios | JOANIX GUIDES">
   <div class="admin-office" data-usuarios data-csrf={sesion?.csrf ?? ''}>
     <header class="admin-office__header">
       <div>
-        <p class="admin-shell__marca"><strong>JOANIX - GUIDES</strong> / CONTROL ROOM</p>
+        <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / CONTROL ROOM</p>
         <p class="admin-shell__eyebrow">Accesos</p>
         <h1>Usuarios</h1>
         <p class="admin-shell__intro">{usuarios.length} cuenta{usuarios.length === 1 ? '' : 's'} registrada{usuarios.length === 1 ? '' : 's'}. No puedes eliminar ni desactivar tu propia cuenta ni al último administrador.</p>

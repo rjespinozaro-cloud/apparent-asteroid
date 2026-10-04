@@ -1,0 +1,60 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDatabase, listarHerramientasPublicadas } from '../../lib/db.js';
+import { plural } from '../../lib/utils/texto.js';
+import { nombreHerramienta } from '../../lib/vocabulario.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const database = getDatabase(env);
+const herramientas = await listarHerramientasPublicadas(database);
+const totalGuias = herramientas.reduce((suma, item) => suma + item.total, 0);
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+---
+
+<Base
+  title="Herramientas | JOANIX GUIDES"
+  description={`Explora las ${herramientas.length} herramientas documentadas en JOANIX GUIDES y encuentra las guías RED y BLUE de cada una.`}
+>
+  <nav aria-label="Migas de pan">
+    <ol class="migas">
+      <li><a href="/">Inicio</a></li>
+      <li aria-current="page">Herramientas</li>
+    </ol>
+  </nav>
+
+  <section class="seccion" aria-labelledby="herramientas-titulo">
+    <div>
+      <p class="eyebrow">Explorador</p>
+      <h1 id="herramientas-titulo">Herramientas</h1>
+      <p class="entradilla">
+        {herramientas.length > 0
+          ? `${plural(herramientas.length, 'herramienta', 'herramientas')} con ${plural(totalGuias, 'guía', 'guías')} asociadas.`
+          : 'Todavía no hay herramientas publicadas.'}
+      </p>
+    </div>
+
+    {
+      herramientas.length > 0 ? (
+        <ul class="lista-herramientas lista-herramientas--detalle">
+          {herramientas.map((item) => (
+            <li class="lista-herramientas__item">
+              <a href={`/herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+              <span class="lista-herramientas__conteo">
+                {item.blue > 0 && <span class="etiqueta etiqueta--blue">BLUE {item.blue}</span>}
+                {item.red > 0 && <span class="etiqueta etiqueta--red">RED {item.red}</span>}
+                <span class="lista-herramientas__total">{plural(item.total, 'guía', 'guías')}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>
+          Aún no hay guías publicadas. Vuelve pronto o revisa el <a href="/guias/">catálogo</a>.
+        </p>
+      )
+    }
+  </section>
+</Base>

@@ -1,0 +1,14 @@
+---
+interface Props {
+  titulo: string;
+  variante?: 'azul' | 'roja' | 'neutra';
+}
+
+const { titulo, variante = 'neutra' } = Astro.props;
+const clase = variante === 'neutra' ? 'nota' : `nota nota--${variante}`;
+---
+
+<aside class={clase}>
+  <p class="nota__titulo">{variante === 'roja' ? '▶' : variante === 'azul' ? '◆' : '•'} {titulo}</p>
+  <slot />
+</aside>

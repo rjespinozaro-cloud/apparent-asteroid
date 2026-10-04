@@ -10,7 +10,6 @@ import '../styles/layout.css';
 import '../styles/components.css';
 import Menu from '../components/Menu.astro';
 import AvisoLegal from '../components/AvisoLegal.astro';
-import EspacioAnuncio from '../components/EspacioAnuncio.astro';
 
 interface Props {
   title?: string;
@@ -18,70 +17,85 @@ interface Props {
   ogImage?: string;
   ogType?: string;
   noindex?: boolean;
+  /** Clase extra del elemento <main>, para páginas con ancho completo. */
+  clase?: string;
 }
 
 const {
-  title = 'JOANIX GUIDE | ciberguías',
-  description = 'Guías de hacking ético y redes para equipos RED y BLUE.',
-  ogImage = '/og-image.svg',
+  title = 'JOANIX GUIDES | Guías de ciberseguridad RED y BLUE',
+  description = 'Guías prácticas de hacking ético y redes para equipos RED y BLUE: reconocimiento, análisis y defensa con herramientas reales.',
+  ogImage = '/og-image.png',
   ogType = 'website',
   noindex = false,
+  clase,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
-const imagenOg = new URL(ogImage, Astro.site ?? Astro.url.origin).href;
+const origen = Astro.site ?? Astro.url.origin;
+const canonical = new URL(Astro.url.pathname, origen).href;
+const imagenOg = new URL(ogImage, origen).href;
 ---
 
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
+    <meta name="color-scheme" content="dark light" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap.xml" />
     <meta property="og:type" content={ogType} />
-    <meta property="og:site_name" content="JOANIX - GUIDES" />
+    <meta property="og:site_name" content="JOANIX GUIDES" />
     <meta property="og:locale" content="es_ES" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={imagenOg} />
-    <meta property="og:image:alt" content="JOANIX - GUIDES, ciberguías RED y BLUE" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="JOANIX GUIDES, guías de ciberseguridad RED y BLUE" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={imagenOg} />
     <title>{title}</title>
+    <slot name="cabecera" />
   </head>
   <body>
-    <a class="skip-link" href="#contenido">Saltar al contenido</a>
-    <header class="site-header">
-      <div class="site-header__inner">
-        <a class="marca" href="/" aria-label="JOANIX GUIDE, ciberguides">
-          <img class="marca__logo" src="/logo-joanix-guide.svg" alt="JOANIX GUIDE, ciberguides" width="240" height="60" />
+    <a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+
+    <header class="cabecera">
+      <div class="cabecera__interna contenedor">
+        <a class="marca" href="/" aria-label="JOANIX GUIDES, inicio">
+          <img class="marca__logo" src="/logo-joanix-guide.svg" alt="" width="180" height="45" decoding="async" />
+          <span class="marca__texto">
+            <strong>JOANIX</strong>
+            <span>GUIDES</span>
+          </span>
         </a>
-        <span class="marca__titulo">JOANIX - GUIDES</span>
-        <Menu />
+        <Menu ruta={Astro.url.pathname} />
       </div>
     </header>
+
     <main class="site-main" id="contenido">
-      <slot />
-      <EspacioAnuncio />
+      <div class:list={['site-main__interior', clase]}>
+        <slot />
+      </div>
     </main>
-    <footer class="site-footer">
-      <div class="site-footer__inner">
+
+    <footer class="pie">
+      <div class="pie__interna contenedor">
         <AvisoLegal />
       </div>
     </footer>
+
+    <script>
+      import '../scripts/copiar-codigo.js';
+    </script>
   </body>
 </html>
-
-<script>
-  import '../scripts/copiar-codigo.js';
-  import '../scripts/lightbox.js';
-</script>

@@ -1,4 +1,4 @@
-import { getDatabase, listarGuiasAdmin, listarHerramientas } from '../lib/db.js';
+import { getDatabase, listarGuiasPublicadas, listarHerramientasPublicadas } from '../lib/db.js';
 import { env } from 'cloudflare:workers';
 
 import type { APIContext } from 'astro';
@@ -6,8 +6,9 @@ import type { APIContext } from 'astro';
 export const prerender = false;
 
 const PAGINAS_ESTATICAS = [
-  { ruta: '/', prioridad: '1.0', frecuencia: 'daily' },
+  { ruta: '/', prioridad: '1.0', frecuencia: 'weekly' },
   { ruta: '/guias/', prioridad: '0.9', frecuencia: 'weekly' },
+  { ruta: '/herramientas/', prioridad: '0.8', frecuencia: 'weekly' },
   { ruta: '/aviso-legal/', prioridad: '0.3', frecuencia: 'yearly' },
 ];
 
@@ -35,24 +36,26 @@ export async function GET({ site, url: requestUrl }: APIContext) {
   const database = getDatabase(env);
   const hoy = new Date().toISOString().slice(0, 10);
 
+  // Solo contenido publicado: el sitemap nunca debe filtrar borradores.
   const [guias, herramientas] = await Promise.all([
-    listarGuiasAdmin(database, { estado: 'publicada', limite: 100 }),
-    listarHerramientas(database),
+    listarGuiasPublicadas(database, { porPagina: 48 }),
+    listarHerramientasPublicadas(database),
   ]);
 
   const entradas = [
     ...PAGINAS_ESTATICAS.map((pagina) => ({ ...pagina, loc: rutaCompleta(pagina.ruta, origen), ultima: hoy })),
-    ...herramientas.map((herramienta) => ({
-      ruta: `/herramientas/${encodeURIComponent(herramienta)}/`,
+    ...herramientas.map((item) => ({
+      loc: rutaCompleta(`/herramientas/${encodeURIComponent(item.herramienta)}/`, origen),
+      ultima: hoy,
       prioridad: '0.7',
       frecuencia: 'weekly',
-    })).map((pagina) => ({ ...pagina, loc: rutaCompleta(pagina.ruta, origen), ultima: hoy })),
-    ...guias.filas.map((fila: (typeof guias.filas)[number]) => ({
-      ruta: `/guias/${fila.slug}/`,
+    })),
+    ...guias.guias.map((fila) => ({
+      loc: rutaCompleta(`/guias/${fila.slug}/`, origen),
+      ultima: String(fila.fecha).slice(0, 10),
       prioridad: '0.8',
       frecuencia: 'monthly',
-      ultima: String(fila.fecha).slice(0, 10),
-    })).map((pagina) => ({ ...pagina, loc: rutaCompleta(pagina.ruta, origen) })),
+    })),
   ];
 
   const cuerpo = [

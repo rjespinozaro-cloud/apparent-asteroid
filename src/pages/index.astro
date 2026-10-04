@@ -1,45 +1,142 @@
 ---
 import Base from '../layouts/Base.astro';
-import { getDatabase, listarGuias, listarHerramientas } from '../lib/db.js';
+import Nota from '../components/Nota.astro';
+import TarjetaGuia from '../components/TarjetaGuia.astro';
+import { contarGuiasPublicadas, getDatabase, listarHerramientasPublicadas, listarUltimasGuias } from '../lib/db.js';
+import { plural } from '../lib/utils/texto.js';
+import { nombreHerramienta } from '../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
-import '../styles/guias-listado.css';
 
 export const prerender = false;
 
 const database = getDatabase(env);
-const guias = await listarGuias(database, { publicadas: true });
-const herramientas: string[] = await listarHerramientas(database);
-Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+const [conteo, ultimas, herramientas] = await Promise.all([
+  contarGuiasPublicadas(database),
+  listarUltimasGuias(database, 6),
+  listarHerramientasPublicadas(database),
+]);
+
+const destacadas = herramientas.slice(0, 6);
+const estadisticas = [
+  { valor: String(conteo.total), etiqueta: 'guías publicadas' },
+  { valor: String(conteo.blue), etiqueta: 'en clave defensiva (BLUE)' },
+  { valor: String(conteo.red), etiqueta: 'en clave ofensiva (RED)' },
+  { valor: String(conteo.gratis), etiqueta: 'gratuitas y openly legibles' },
+];
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
 
-<Base title="JOANIX GUIDE | ciberguías">
+<Base>
   <section class="portada" aria-labelledby="inicio-titulo">
-    <p>Informe de laboratorio</p>
+    <p class="eyebrow">Plataforma de conocimiento · RED + BLUE</p>
     <h1 id="inicio-titulo">Cada herramienta, dos veces: como atacante y como defensor</h1>
-    <p>Guías paso a paso para entender herramientas de hacking ético y redes desde los equipos RED y BLUE.</p>
-    <p class="portada__accesos">
-      <a href="/guias/?equipo=blue">Guías BLUE gratuitas</a>
-      <a href="/guias/?equipo=red">Guías RED en PDF</a>
+    <p class="entradilla">
+      Guías prácticas de hacking ético y redes escritas desde los dos lados del mismo ejercicio.
+      Aprende a ejecutar el ataque para saber qué tiene que detectar tu defensa.
     </p>
-  </section>
 
-  <section class="portada__seccion" aria-labelledby="herramientas-titulo">
-    <h2 id="herramientas-titulo">Herramientas</h2>
-    <ul>
-      {herramientas.map((herramienta) => <li><a href={`/herramientas/${herramienta}/`}>{herramienta}</a></li>)}
-    </ul>
-  </section>
+    <div class="portada__acciones">
+      <a class="boton" href="/guias/">Explorar todas las guías</a>
+      <a class="boton boton--secundario" href="/herramientas/">Ver por herramienta</a>
+    </div>
 
-  <section class="portada__seccion" aria-labelledby="ultimas-titulo">
-    <h2 id="ultimas-titulo">Últimas guías</h2>
-    <div class="lista-guias">
-      {guias.slice(0, 4).map((guia) => (
-        <article class={`guia-card guia-card--${guia.equipo}`}>
-          <p class="guia-card__equipo">Equipo {guia.equipo.toUpperCase()}</p>
-          <h3><a href={`/guias/${guia.slug}/`}>{guia.titulo}</a></h3>
-          <p>{guia.herramienta} · {guia.acceso === 'gratis' ? 'Gratis' : 'PDF de pago'}</p>
-        </article>
+    <dl class="portada__cifras">
+      {estadisticas.map((dato) => (
+        <div class="portada__cifra">
+          <dt class="portada__cifra-valor">{dato.valor}</dt>
+          <dd class="portada__cifra-etiqueta">{dato.etiqueta}</dd>
+        </div>
       ))}
+    </dl>
+  </section>
+
+  <section class="seccion" aria-labelledby="equipos-titulo">
+    <div class="seccion__cabecera">
+      <div>
+        <p class="eyebrow">Dos claves</p>
+        <h2 class="seccion__titulo" id="equipos-titulo">El mismo escenario, dos lecturas</h2>
+      </div>
+    </div>
+
+    <div class="rejilla-equipos">
+      <article class="equipo equipo--red">
+        <p class="equipo__clave">RED</p>
+        <h3 class="equipo__titulo">Ofensiva</h3>
+        <p>
+          Reconocimiento, enumeración y explotación con autorización explícita. El adelanto de cada guía
+          es público; la marcha completa va en PDF.
+        </p>
+        <a class="boton boton--red" href="/guias/?equipo=red">Ver guías RED</a>
+      </article>
+
+      <article class="equipo equipo--blue">
+        <p class="equipo__clave">BLUE</p>
+        <h3 class="equipo__titulo">Defensa</h3>
+        <p>
+          Detección, validación y endurecimiento. Guías gratuitas y abiertas para que el equipo defensivo
+          pueda practicar sin fricción.
+        </p>
+        <a class="boton" href="/guias/?equipo=blue">Ver guías BLUE</a>
+      </article>
+    </div>
+  </section>
+
+  {destacadas.length > 0 && (
+    <section class="seccion" aria-labelledby="herramientas-titulo">
+      <div class="seccion__cabecera">
+        <div>
+          <p class="eyebrow">Explorador</p>
+          <h2 class="seccion__titulo" id="herramientas-titulo">Herramientas documentadas</h2>
+        </div>
+        <a href="/herramientas/">Ver todas →</a>
+      </div>
+      <ul class="lista-herramientas">
+        {destacadas.map((item) => (
+          <li class="lista-herramientas__item">
+            <a href={`/herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+            <span class="lista-herramientas__conteo">{plural(item.total, 'guía', 'guías')}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {ultimas.length > 0 && (
+    <section class="seccion" aria-labelledby="ultimas-titulo">
+      <div class="seccion__cabecera">
+        <div>
+          <p class="eyebrow">Recién editado</p>
+          <h2 class="seccion__titulo" id="ultimas-titulo">Últimas guías</h2>
+        </div>
+        <a href="/guias/">Ver catálogo completo →</a>
+      </div>
+      <ul class="rejilla-tarjetas">
+        {ultimas.map((guia) => (
+          <li><TarjetaGuia guia={guia} /></li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="seccion" aria-labelledby="metodo-titulo">
+    <div>
+      <p class="eyebrow">Método</p>
+      <h2 class="seccion__titulo" id="metodo-titulo">Cómo se escribe cada guía</h2>
+    </div>
+    <div class="rejilla-notas">
+      <Nota titulo="Entorno" variante="neutra">
+        Cada guía declara el laboratorio mínimo, los datos de entrada y el resultado esperado antes de
+        mostrar el primer comando.
+      </Nota>
+      <Nota titulo="Interpretación" variante="azul">
+        No basta con ejecutar: cada salida se interpreta y se conecta con la señal que debería ver el
+        lado defensivo.
+      </Nota>
+      <Nota titulo="Legalidad" variante="roja">
+        Todo el material es educativo y va dirigido a redes propias o a sistemas con autorización
+        escrita.
+      </Nota>
     </div>
   </section>
 </Base>

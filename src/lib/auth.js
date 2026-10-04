@@ -1,10 +1,28 @@
-const PBKDF2_ITERACIONES = 100000;
+/**
+ * Sesiones, contraseñas y limitación de intentos.
+ * Todo el material criptográfico usa WebCrypto (disponible en Workers y en Node ≥ 20).
+ */
+
+const PBKDF2_ITERACIONES = 100_000;
 const HASH_BYTES = 32;
 const SESSION_BYTES = 32;
 const SESSION_HORAS = 8;
 const BLOQUEO_INTENTOS = 5;
 const BLOQUEO_MINUTOS = 15;
-const COOKIE_SESION = '__Host-ciberguias_sesion';
+
+/**
+ * Prefijo `__Host-`: exige `Secure`, `Path=/` y ausencia de `Domain`, por lo que
+ * la cookie solo puede viajar al propio origen y no puede ser fijada por un
+ * subdominio.
+ */
+const COOKIE_SESION = '__Host-joanix_sesion';
+
+/**
+ * Material señuelo (hash + sal de 32/16 bytes) que no corresponde a ninguna
+ * contraseña real. Se usa para igualar el coste del login cuando el usuario no existe.
+ */
+const HASH_SENUELO = 'iVEZ7Tpyjny39PRgu2moKfRZOGz3R5QHSObo/EvssjE=';
+const SAL_SENUELA = 'L3hTOETb+VHr8bAIttfMpA==';
 
 function bytesBase64(bytes) {
   let texto = '';
@@ -21,10 +39,26 @@ function textoBytes(texto) {
   return new TextEncoder().encode(texto);
 }
 
+/** Comparación en tiempo constante para evitar fugas por temporización. */
+function igualesSeguros(a, b) {
+  const izquierda = new Uint8Array(a);
+  const derecha = new Uint8Array(b);
+  if (izquierda.length !== derecha.length) return false;
+  let diferencia = 0;
+  for (let indice = 0; indice < izquierda.length; indice += 1) diferencia |= izquierda[indice] ^ derecha[indice];
+  return diferencia === 0;
+}
+
 async function clavePassword(password) {
   return crypto.subtle.importKey('raw', textoBytes(password), 'PBKDF2', false, ['deriveBits']);
 }
 
+/**
+ * Deriva el hash de una contraseña con PBKDF2-SHA256 y sal aleatoria de 16 bytes.
+ * @param {string} password
+ * @param {Uint8Array} [sal]
+ * @returns {Promise<{hash: string, sal: string}>} base64
+ */
 export async function hashPassword(password, sal = crypto.getRandomValues(new Uint8Array(16))) {
   const clave = await clavePassword(password);
   const bits = await crypto.subtle.deriveBits(
@@ -35,16 +69,41 @@ export async function hashPassword(password, sal = crypto.getRandomValues(new Ui
   return { hash: bytesBase64(new Uint8Array(bits)), sal: bytesBase64(sal) };
 }
 
-function igualesSeguros(a, b) {
-  if (a.length !== b.length) return false;
-  let diferencia = 0;
-  for (let indice = 0; indice < a.length; indice += 1) diferencia |= a[indice] ^ b[indice];
-  return diferencia === 0;
+/** @returns {Promise<boolean>} */
+export async function comprobarPassword(password, hash, sal) {
+  try {
+    const resultado = await hashPassword(password, base64Bytes(sal));
+    return igualesSeguros(base64Bytes(resultado.hash), base64Bytes(hash));
+  } catch {
+    return false;
+  }
 }
 
-export async function comprobarPassword(password, hash, sal) {
-  const resultado = await hashPassword(password, base64Bytes(sal));
-  return igualesSeguros(base64Bytes(resultado.hash), base64Bytes(hash));
+/**
+ * Compara dos secretos sin filtrar información por temporización.
+ * Se usa para el token de instalación inicial.
+ * @returns {Promise<boolean>}
+ */
+export async function secretoValido(a, b) {
+  const primero = new Uint8Array(await crypto.subtle.digest('SHA-256', textoBytes(a ?? '')));
+  const segundo = new Uint8Array(await crypto.subtle.digest('SHA-256', textoBytes(b ?? '')));
+  return igualesSeguros(primero, segundo);
+}
+
+/**
+ * Verifica credenciales sin revelar si la cuenta existe.
+ * Cuando el usuario no existe se ejecuta igualmente PBKDF2 contra material señuelo,
+ * de modo que el tiempo de respuesta es comparable en ambos casos.
+ * @param {{password: string, hash: string, sal: string, activo: number}|null} cuenta
+ * @returns {Promise<boolean>}
+ */
+export async function verificarCredenciales(cuenta) {
+  if (cuenta) {
+    const correcta = await comprobarPassword(cuenta.password, cuenta.hash, cuenta.sal);
+    return Boolean(cuenta.activo) && correcta;
+  }
+  await comprobarPassword('', HASH_SENUELO, SAL_SENUELA);
+  return false;
 }
 
 async function sha256(texto) {
@@ -52,24 +111,19 @@ async function sha256(texto) {
   return bytesBase64(new Uint8Array(digest));
 }
 
-export async function secretoValido(a, b) {
-  const primero = new Uint8Array(await crypto.subtle.digest('SHA-256', textoBytes(a ?? '')));
-  const segundo = new Uint8Array(await crypto.subtle.digest('SHA-256', textoBytes(b ?? '')));
-  return igualesSeguros(primero, segundo);
-}
-
+/**
+ * Deriva el token CSRF de la sesión con HMAC-SHA256.
+ * Nunca se almacena: se recalcula a partir del token de sesión, así que no hay
+ * nada que sincronizar ni que pueda desincronizarse.
+ */
 async function csrfDesdeSesion(token) {
   const clave = await crypto.subtle.importKey('raw', textoBytes(token), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const firma = await crypto.subtle.sign('HMAC', clave, textoBytes('ciberguias-csrf'));
+  const firma = await crypto.subtle.sign('HMAC', clave, textoBytes('joanix-csrf'));
   return bytesBase64(new Uint8Array(firma));
 }
 
 export function cookieSesion(token, maxAge = SESSION_HORAS * 60 * 60) {
   return `${COOKIE_SESION}=${token}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Strict`;
-}
-
-export function nombreCookieSesion() {
-  return COOKIE_SESION;
 }
 
 export function borrarCookieSesion() {
@@ -78,10 +132,12 @@ export function borrarCookieSesion() {
 
 function tokenDesdeCookie(request) {
   const cookie = request.headers.get('Cookie') ?? '';
-  const pareja = cookie.split(';').map((parte) => parte.trim()).find((parte) => parte.startsWith(`${COOKIE_SESION}=`));
-  return pareja?.slice(`${COOKIE_SESION}=`.length) || null;
+  const prefijo = `${COOKIE_SESION}=`;
+  const pareja = cookie.split(';').map((parte) => parte.trim()).find((parte) => parte.startsWith(prefijo));
+  return pareja?.slice(prefijo.length) || null;
 }
 
+/** Crea una sesión en D1 y devuelve el token (que solo existe en la cookie). */
 export async function crearSesion(database, usuario) {
   const token = bytesBase64(crypto.getRandomValues(new Uint8Array(SESSION_BYTES)));
   const id = await sha256(token);
@@ -91,6 +147,12 @@ export async function crearSesion(database, usuario) {
   return { token, csrf, expira };
 }
 
+/**
+ * Resuelve la sesión de una petición.
+ * En D1 solo se guarda el hash del token: si alguien lee la tabla, no puede
+ * suplantar ninguna sesión.
+ * @returns {Promise<{usuario: {usuario_id: number, usuario: string, rol: string, activo: number}, token: string, csrf: string}|null>}
+ */
 export async function obtenerSesion(database, request) {
   const token = tokenDesdeCookie(request);
   if (!token) return null;
@@ -111,9 +173,15 @@ export async function destruirSesion(database, request) {
   await database.prepare('DELETE FROM sesiones WHERE id = ?').bind(await sha256(token)).run();
 }
 
+/**
+ * Comprueba el token CSRF en la cabecera o en el cuerpo del formulario.
+ * Solo es obligatorio en métodos que modifican datos.
+ * @returns {Promise<boolean>}
+ */
 export async function csrfValido(sesion, request) {
-  const header = request.headers.get('X-CSRF-Token');
-  if (header && igualesSeguros(textoBytes(header), textoBytes(sesion.csrf))) return true;
+  if (!sesion || !request) return false;
+  const cabecera = request.headers.get('X-CSRF-Token');
+  if (cabecera && igualesSeguros(textoBytes(cabecera), textoBytes(sesion.csrf))) return true;
   if (request.headers.get('Content-Type')?.includes('application/x-www-form-urlencoded')) {
     const datos = await request.clone().formData();
     const formulario = datos.get('_csrf');
@@ -122,8 +190,12 @@ export async function csrfValido(sesion, request) {
   return false;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Limitación de intentos (D1, compartida por varias instancias)             */
+/* -------------------------------------------------------------------------- */
+
 export function claveIntento(usuario, ip) {
-  return `${usuario.trim().toLowerCase()}:${ip || 'sin-ip'}`;
+  return `u:${String(usuario ?? '').trim().toLowerCase().slice(0, 40)}:${ip || 'sin-ip'}`;
 }
 
 export function claveIntentoIp(ip) {
@@ -143,6 +215,11 @@ export function limpiarIntentos(database, ...claves) {
   return Promise.all(claves.map((clave) => database.prepare('DELETE FROM intentos_login WHERE clave = ?').bind(clave).run()));
 }
 
+/**
+ * Suma un intento fallido y bloquea la clave al alcanzar el umbral.
+ * La ventana de bloqueo se extiende en cada intento posterior, de modo que un
+ * ataque automatizado no puede "esperar" al vencimiento del bloqueo.
+ */
 export async function registrarIntentoFallido(database, clave) {
   const actual = await database.prepare('SELECT cantidad FROM intentos_login WHERE clave = ?').bind(clave).first();
   const cantidad = (actual?.cantidad ?? 0) + 1;
@@ -155,6 +232,15 @@ export async function registrarIntentoFallido(database, clave) {
   ).bind(clave, cantidad, bloqueadoHasta).run();
 }
 
-export function medirConfiguracionHash() {
-  return { iteraciones: PBKDF2_ITERACIONES, aviso: 'La medición real debe hacerse en el runtime Workers.' };
+/** Elimina intentos caducados para que la tabla no crezca sin límite. */
+export function purgarIntentos(database) {
+  return database.prepare('DELETE FROM intentos_login WHERE bloqueado_hasta IS NOT NULL AND bloqueado_hasta <= ?')
+    .bind(new Date().toISOString()).run();
 }
+
+export const LIMITES_AUTENTICACION = {
+  BLOQUEO_INTENTOS,
+  BLOQUEO_MINUTOS,
+  PBKDF2_ITERACIONES,
+  SESSION_HORAS,
+};

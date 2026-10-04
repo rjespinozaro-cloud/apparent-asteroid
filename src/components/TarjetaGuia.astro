@@ -1,0 +1,44 @@
+---
+import { descripcionDesdeMarkdown } from '../lib/utils/texto.js';
+import { claseEquipo, nombreEquipo, nombreHerramienta, nombreNivel } from '../lib/vocabulario.js';
+
+interface Props {
+  guia: {
+    slug: string;
+    titulo: string;
+    herramienta: string;
+    equipo: string;
+    nivel: string;
+    acceso: string;
+    fecha: string;
+    /** Solo si viene del detalle; en listados se resume desde el meta. */
+    resumen?: string | null;
+  };
+  /** Resumen a mostrar: por defecto, los primeros caracteres de la guía. */
+  descripcion?: string | null;
+  mostrarNivel?: boolean;
+}
+
+const { guia, descripcion, mostrarNivel = true } = Astro.props;
+const equipo = claseEquipo(guia.equipo);
+const resumen = descripcion ?? guia.resumen ?? null;
+---
+
+<article class:list={['tarjeta', `tarjeta--${equipo}`]}>
+  <div class="tarjeta__meta">
+    <span class:list={['etiqueta', `etiqueta--${equipo}`]}>{nombreEquipo(guia.equipo)}</span>
+    {mostrarNivel && <span class="etiqueta etiqueta--neutro">{nombreNivel(guia.nivel)}</span>}
+    {guia.acceso === 'pago' && <span class="etiqueta etiqueta--pago">PDF</span>}
+    <time datetime={guia.fecha}>{guia.fecha}</time>
+  </div>
+
+  <h3 class="tarjeta__titulo">
+    <a href={`/guias/${guia.slug}/`}>{guia.titulo}</a>
+  </h3>
+
+  {resumen && <p class="tarjeta__resumen">{descripcionDesdeMarkdown(resumen)}</p>}
+
+  <p class="tarjeta__meta">
+    <span>{nombreHerramienta(guia.herramienta)}</span>
+  </p>
+</article>

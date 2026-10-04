@@ -8,8 +8,26 @@ const MAX_TOKENS_SALIDA = 4096;
 const MAX_LONGITUD_PROMPT = 8000;
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
-/** Límite por minuto en memoria de la instancia. Suficiente para un panel de un solo usuario. */
+/**
+ * Límite por minuto en memoria de la instancia.
+ *
+ * El `Map` se poda en cada consulta: sin esta pasada, cada usuario+IP distinto
+ * dejaría una entrada permanente en la memoria del isolate y el proceso crecería
+ * sin límite. Es una protección por instancia (suficiente para un panel de un
+ * solo usuario); el tope mensual de tokens es la garantía global, y esa sí
+ * persiste en D1.
+ */
 const requestsPorMinuto = new Map();
+const VENTANA_MS = 60_000;
+
+/** @param {number} momentoMs */
+function podar(momentoMs) {
+  for (const [clave, marcas] of requestsPorMinuto) {
+    const vigentes = marcas.filter((marca) => momentoMs - marca < VENTANA_MS);
+    if (vigentes.length === 0) requestsPorMinuto.delete(clave);
+    else requestsPorMinuto.set(clave, vigentes);
+  }
+}
 
 const ahora = () => Date.now();
 
@@ -87,13 +105,23 @@ function mensajeError(estado, cuerpo) {
   return `El proveedor ha respondido con un error (${estado})${detalle}`;
 }
 
-/** Comprueba el límite por minuto para una identidad (usuario + IP). */
-export function exceededoPorMinuto(clave, ahoraMs = ahora()) {
-  const momento = ahoraMs;
-  const previos = (requestsPorMinuto.get(clave) ?? []).filter((marca) => momento - marca < 60_000);
+/**
+ * Comprueba el límite por minuto para una identidad (usuario + IP).
+ * @param {string} clave
+ * @param {number} [ahoraMs]
+ * @returns {boolean} true si la petición debe rechazarse.
+ */
+export function excedidoPorMinuto(clave, ahoraMs = ahora()) {
+  podar(ahoraMs);
+  const previos = requestsPorMinuto.get(clave) ?? [];
   if (previos.length >= MAX_PETICIONES_POR_MINUTO) return true;
-  requestsPorMinuto.set(clave, [...previos, momento]);
+  requestsPorMinuto.set(clave, [...previos, ahoraMs]);
   return false;
+}
+
+/** Vacía el contador. Solo para pruebas. */
+export function reiniciarLimiteIa() {
+  requestsPorMinuto.clear();
 }
 
 /**
@@ -112,7 +140,7 @@ export async function consultarIa(database, environment, { usuarioId, prompt, ip
   }
 
   const claveLimite = `${usuarioId}:${ip ?? 'sin-ip'}`;
-  if (exceededoPorMinuto(claveLimite)) {
+  if (excedidoPorMinuto(claveLimite)) {
     return { ok: false, error: `Has superado el límite de ${MAX_PETICIONES_POR_MINUTO} peticiones por minuto.`, codigo: 429 };
   }
 

@@ -1,14 +1,23 @@
 ---
 interface Props {
-  enlaceCompra: string;
+  /** URL externa de compra (normalmente una pasarela de pago). Puede ser null si no hay. */
+  enlaceCompra?: string | null;
+  /** Etiqueta del botón, según el destino configurado. */
+  etiqueta?: string;
 }
 
-const { enlaceCompra } = Astro.props;
+const { enlaceCompra, etiqueta = 'Comprar PDF completo' } = Astro.props;
 ---
 
 <aside class="candado" aria-labelledby="candado-titulo">
   <p class="candado__estado">Contenido completo bloqueado</p>
   <h2 id="candado-titulo">Continúa con el PDF completo</h2>
   <p>Incluye todos los pasos de la guía, interpretación de resultados y comprobaciones defensivas para el laboratorio.</p>
-  <a class="candado__enlace" href={enlaceCompra} rel="nofollow">Comprar PDF completo</a>
+  {enlaceCompra ? (
+    <a class="candado__enlace" href={enlaceCompra} rel="nofollow noopener noreferrer" target="_blank">
+      {etiqueta}
+    </a>
+  ) : (
+    <p class="candado__aviso">Este PDF todavía no está disponible. Vuelve pronto.</p>
+  )}
 </aside>

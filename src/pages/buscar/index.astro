@@ -1,0 +1,83 @@
+---
+import Base from '../../layouts/Base.astro';
+import TarjetaGuia from '../../components/TarjetaGuia.astro';
+import { buscarGuias, getDatabase } from '../../lib/db.js';
+import { plural, recortar } from '../../lib/utils/texto.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const TERMINO_MAXIMO = 80;
+const bruto = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, TERMINO_MAXIMO);
+const termino = bruto.replace(/\s+/g, ' ');
+
+const database = getDatabase(env);
+const { guias, hayMas } = termino.length >= 2 ? await buscarGuias(database, termino, { limite: 20 }) : { guias: [], hayMas: false };
+
+const hayTermino = termino.length >= 2;
+Astro.response.headers.set('Cache-Control', 'no-store');
+---
+
+<Base
+  title={hayTermino ? `Buscando “${termino}” | JOANIX GUIDES` : 'Buscar | JOANIX GUIDES'}
+  description="Busca guías por título, herramienta o contenido en JOANIX GUIDES."
+  noindex
+>
+  <section class="seccion" aria-labelledby="buscar-titulo">
+    <div>
+      <p class="eyebrow">Búsqueda</p>
+      <h1 id="buscar-titulo">Buscar guías</h1>
+      <p class="entradilla">Busca por título, herramienta o texto del contenido. Mínimo dos caracteres.</p>
+    </div>
+
+    <form class="buscador" method="get" action="/buscar/" role="search">
+      <label class="visualmente-oculto" for="q">Texto de búsqueda</label>
+      <input
+        id="q"
+        name="q"
+        type="search"
+        value={termino}
+        placeholder="por ejemplo: nmap, escaneo de puertos, detección"
+        autocomplete="off"
+        maxlength={TERMINO_MAXIMO}
+        enterkeyhint="search"
+      />
+      <button type="submit">Buscar</button>
+    </form>
+
+    {
+      hayTermino ? (
+        guias.length > 0 ? (
+          <div class="seccion">
+            <p class="paginacion__estado" role="status">
+              {plural(guias.length, 'resultado', 'resultados')} para “{recortar(termino, 60)}”
+              {hayMas && ' (muestra los primeros)'}
+            </p>
+            <ul class="rejilla-tarjetas">
+              {guias.map((guia) => (
+                <li>
+                  <TarjetaGuia guia={guia} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div class="vacio">
+            <h2>Sin resultados</h2>
+            <p>
+              No hay guías que coincidan con “{recortar(termino, 60)}”. Prueba con el nombre de la herramienta
+              o con un término más corto.
+            </p>
+            <a class="boton" href="/guias/">Ver todas las guías</a>
+          </div>
+        )
+      ) : (
+        <div class="vacio">
+          <h2>¿Qué quieres aprender hoy?</h2>
+          <p>Introduce al menos dos caracteres. También puedes filtrar el catálogo por equipo, nivel o herramienta.</p>
+          <a class="boton boton--secundario" href="/guias/">Ir al catálogo</a>
+        </div>
+      )
+    }
+  </section>
+</Base>

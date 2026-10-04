@@ -49,38 +49,45 @@ function origenConfiable(request, url) {
   return true;
 }
 
-function cabecerasSeguras(response, csp) {
+/**
+ * Cabeceras de seguridad. El CSP lo calcula Astro con hashes reales de los scripts
+ * y estilos que emite (ver `security.csp` en astro.config.mjs): aquí solo se aplica
+ * una política de reserva para respuestas que Astro no cubre (assets, endpoints).
+ */
+function cabecerasSeguras(response) {
   const headers = new Headers(response.headers);
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   headers.set('X-Frame-Options', 'DENY');
-  headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  if (csp) headers.set('Content-Security-Policy', csp);
+  headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), interest-cohort=()');
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  headers.set('X-DNS-Prefetch-Control', 'off');
+
+  if (esProduccion() && !headers.has('Strict-Transport-Security')) {
+    headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  if (!headers.has('Content-Security-Policy')) {
+    // Solo en desarrollo: el CSP con hashes de Astro requiere un build.
+    headers.set(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "img-src 'self' data:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+        "object-src 'none'",
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline'",
+      ].join('; '),
+    );
+  }
 
   const init = { status: response.status, statusText: response.statusText, headers };
   return ESTADOS_SIN_CUERPO.has(response.status) ? new Response(null, init) : new Response(response.body, init);
-}
-
-function politicaSeguridad(nonce) {
-  // En producción el middleware genera un nonce aleatorio por respuesta y
-  // publica el CSP con 'nonce-...' en la cabecera Content-Security-Policy.
-  // En desarrollo se usa 'unsafe-inline' para scripts y estilos.
-  if (esProduccion()) {
-    return [
-      "default-src 'self'",
-      "img-src 'self' data:",
-      "font-src 'self'",
-      "connect-src 'self'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-      "object-src 'none'",
-      `script-src 'nonce-${nonce}'`,
-      `style-src 'nonce-${nonce}'`,
-      'upgrade-insecure-requests',
-    ].join('; ');
-  }
-  return "default-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
 }
 
 export async function onRequest(context, next) {
@@ -89,22 +96,13 @@ export async function onRequest(context, next) {
   const admin = esRutaAdmin(ruta);
   const apiAdmin = esApiAdmin(ruta);
 
-  // Generar un nonce aleatorio para cada respuesta en producción
-  const nonce = esProduccion()
-    ? Array.from(crypto.getRandomValues(new Uint8Array(16)))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')
-    : null;
-
-  const csp = politicaSeguridad(nonce);
-
   const json = (datos, status) => new Response(JSON.stringify(datos), {
     status,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
   });
 
   if ((admin || apiAdmin) && !origenConfiable(context.request, url)) {
-    return cabecerasSeguras(json({ error: 'Origen no permitido.' }, 403), csp);
+    return cabecerasSeguras(json({ error: 'Origen no permitido.' }, 403));
   }
 
   if (admin || apiAdmin) {
@@ -112,21 +110,21 @@ export async function onRequest(context, next) {
     const database = getDatabase(env);
 
     if (ruta === '/admin/instalar' && await contarUsuarios(database) > 0) {
-      return cabecerasSeguras(Response.redirect(new URL('/admin/login', context.request.url), 302), csp);
+      return cabecerasSeguras(Response.redirect(new URL('/admin/login', context.request.url), 302));
     }
 
     if (!RUTAS_LIBRES.has(ruta)) {
       const sesion = await obtenerSesion(database, context.request);
       if (!sesion) {
-        if (apiAdmin) return cabecerasSeguras(json({ error: 'No autorizado.' }, 401), csp);
-        return cabecerasSeguras(Response.redirect(new URL('/admin/login', context.request.url), 302), csp);
+        if (apiAdmin) return cabecerasSeguras(json({ error: 'No autorizado.' }, 401));
+        return cabecerasSeguras(Response.redirect(new URL('/admin/login', context.request.url), 302));
       }
       context.locals.admin = sesion;
     }
   }
 
   const response = await next();
-  const segura = cabecerasSeguras(response, csp);
+  const segura = cabecerasSeguras(response);
   if (admin || apiAdmin) {
     segura.headers.set('X-Robots-Tag', 'noindex');
     segura.headers.set('Cache-Control', 'no-store');
