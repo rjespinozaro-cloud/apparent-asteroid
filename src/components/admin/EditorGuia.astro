@@ -135,27 +135,27 @@ const tieneId = guia?.id !== undefined && guia?.id !== null;
           <textarea id="instruccion-ia" name="instruccion" rows="3" placeholder="Escribe una intro de 3 frases, sugiere un índice de pasos, corrige los comandos…"></textarea>
         </div>
         <div class="admin-filtros__acciones">
-          <button type="button" data-consultar-ia>Consultar</button>
+          <button type="button" class="admin-boton admin-boton--secondary" data-consultar-ia>Consultar</button>
           <button type="button" class="admin-boton admin-boton--plano" data-limpiar-ia>Limpiar</button>
         </div>
         <p class="admin-editor__estado admin-editor__estado--info" role="status" data-mensaje-ia hidden></p>
         <div class="admin-asistente__respuesta" data-respuesta-ia hidden>
           <div class="admin-markdown" data-markdown-ia />
-          <button type="button" class="admin-boton admin-boton--secundario" data-insertar-ia>Insertar en el contenido</button>
+          <button type="button" class="admin-boton admin-boton--secondary" data-insertar-ia>Insertar en el contenido</button>
         </div>
       </div>
     </section>
   )}
 
   <div class="admin-acciones">
-    <button type="submit" data-guardar>Guardar guía</button>
+    <button type="submit" class="admin-boton admin-boton--primary" data-guardar>Guardar guía</button>
     {tieneId && (
-      <button type="button" class="admin-boton admin-boton--secundario" data-publicar={guia?.publicada ? 0 : 1}>
+      <button type="button" class="admin-boton admin-boton--secondary" data-publicar={guia?.publicada ? 0 : 1}>
         {guia?.publicada ? 'Despublicar' : 'Publicar'}
       </button>
     )}
     {esAdmin && tieneId && (
-      <button type="button" class="admin-boton admin-boton--peligro" data-eliminar>Eliminar</button>
+      <button type="button" class="admin-boton admin-boton--danger" data-eliminar>Eliminar</button>
     )}
     <a class="admin-boton admin-boton--plano" href="/admin/guias/">Volver al listado</a>
   </div>

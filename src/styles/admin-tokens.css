@@ -14,12 +14,15 @@
   --adm-border: #E6E8EC;
   --adm-border-strong: #D0D5DD;
 
-  /* Text */
+  /* Text: --adm-text (17.74) and --adm-muted (5.98 on white) are AA.
+     --adm-text-subtle (2.58 on white) is decorative only: icons,
+     placeholders, non-essential dividers. Never meaningful text. */
   --adm-text: #111827;
   --adm-text-muted: #5B6472;
   --adm-text-subtle: #98A2B3;
 
-  /* Yellow accent (never as text on white) */
+  /* Yellow accent: fills only, never text on white (#FACC15/#FFFFFF = 1.53).
+     Text on yellow always uses --adm-on-yellow (#111827). */
   --adm-yellow: #FACC15;
   --adm-yellow-strong: #EAB308;
   --adm-yellow-soft: #FEF9C3;
@@ -36,6 +39,7 @@
 
   /* Semantic */
   --adm-success: #16A34A;
+  --adm-success-text: #15803D;
   --adm-success-bg: #DCFCE7;
   --adm-success-border: #86EFAC;
   --adm-danger: #DC2626;

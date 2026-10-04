@@ -58,29 +58,37 @@ if (Astro.request.method === 'POST') {
 }
 ---
 
-<AdminBase title="Acceso | JOANIX GUIDES" description="Acceso privado a la oficina de administración de JOANIX GUIDES.">
-  <article class="admin-shell__panel" aria-labelledby="login-titulo">
-    <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / ADMIN</p>
-    <p class="admin-shell__eyebrow">Acceso privado</p>
-    <h1 id="login-titulo">Iniciar sesión</h1>
-    <p class="admin-shell__intro">Gestiona las guías y herramientas desde el panel de control.</p>
+<AdminBase
+  title="Acceso | JOANIX GUIDES"
+  description="Acceso privado a la oficina de administración de JOANIX GUIDES."
+  pageTitle="Iniciar sesión"
+  crumbs={[{ label: 'Acceso' }]}
+>
+  <div class="admin-content admin-auth">
+    <article class="admin-auth__panel" aria-labelledby="login-titulo">
+      <p class="admin-auth__marca">JOANIX GUIDES / ADMIN · Acceso privado</p>
+      <h1 class="admin-auth__title" id="login-titulo">Iniciar sesión</h1>
+      <p class="admin-auth__intro">Gestiona las guías y herramientas desde el panel de control.</p>
 
-    {instalado && <p class="admin-alerta admin-alerta--ok" role="status">Administrador creado. Ya puedes iniciar sesión.</p>}
-    {error && <p class="admin-alerta" role="alert">{error}</p>}
+      {instalado && <p class="admin-alerta admin-alerta--ok" role="status">Administrador creado. Ya puedes iniciar sesión.</p>}
+      {error && <p class="admin-alerta admin-alerta--error" role="alert">{error}</p>}
 
-    <form class="admin-form" method="post">
-      <div class="admin-form__campo">
-        <label for="usuario">Usuario</label>
-        <input id="usuario" name="usuario" type="text" value={usuarioEnviado} autocomplete="username"
-          spellcheck="false" autocapitalize="none" maxlength="40" required />
-      </div>
-      <div class="admin-form__campo">
-        <label for="password">Contraseña</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required />
-      </div>
-      <button type="submit" class="boton--premium">Entrar</button>
-    </form>
+      <form class="admin-form" method="post">
+        <div class="admin-form__campo">
+          <label for="usuario">Usuario</label>
+          <input id="usuario" name="usuario" type="text" value={usuarioEnviado} autocomplete="username"
+            spellcheck="false" autocapitalize="none" maxlength="40" required />
+        </div>
+        <div class="admin-form__campo">
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required />
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="admin-boton admin-boton--primary">Entrar</button>
+        </div>
+      </form>
 
-    <a class="link--premium" href="/">Volver al portal público</a>
-  </article>
+      <a class="admin-boton admin-boton--plano admin-auth__volver" href="/">Volver al portal público</a>
+    </article>
+  </div>
 </AdminBase>

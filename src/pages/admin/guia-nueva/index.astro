@@ -12,14 +12,17 @@ const herramientas = await listarHerramientasAdmin(database);
 const today = new Date().toISOString().slice(0, 10);
 ---
 
-<AdminBase title="Nueva guía | JOANIX GUIDES">
-  <div class="admin-office">
-    <header class="admin-office__header">
+<AdminBase
+  title="Nueva guía | JOANIX GUIDES"
+  pageTitle="Nueva guía"
+  crumbs={[{ href: '/admin/', label: 'Resumen' }, { href: '/admin/guias/', label: 'Guías' }, { label: 'Nueva guía' }]}
+>
+  <div class="admin-content">
+    <header class="admin-section__header">
       <div>
-        <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / CONTROL ROOM</p>
-        <p class="admin-shell__eyebrow">Biblioteca</p>
-        <h1>Nueva guía</h1>
-        <p class="admin-shell__intro">Redacta el contenido en Markdown y comprueba la vista previa antes de guardar.</p>
+        <p class="admin-section__eyebrow">Biblioteca</p>
+        <h1 class="admin-section__title">Nueva guía</h1>
+        <p class="admin-section__nota">Redacta el contenido en Markdown y comprueba la vista previa antes de guardar.</p>
       </div>
     </header>
 

@@ -9,7 +9,8 @@ export const prerender = false;
 const sesion = Astro.locals.admin;
 const esAdmin = sesion?.usuario.rol === 'admin';
 const database = getDatabase(env);
-const stats = await obtenerEstadisticasAdmin(database);
+// Los datos de usuarios, IA y auditoría solo se consultan con rol admin.
+const stats = await obtenerEstadisticasAdmin(database, { admin: esAdmin });
 
 const { guias, usuarios, ia, auditoria, graficas } = stats;
 
@@ -20,18 +21,18 @@ const maxPorMes = Math.max(...graficas.por_mes.map((m) => m.total), 1);
 const maxPorHerramienta = Math.max(...graficas.por_herramienta.map((h) => h.total), 1);
 const maxUltimos30 = Math.max(...graficas.ultimos_30_dias.map((d) => d.total), 1);
 
-const borradoresSinAdelanto = guias.borradores; // placeholder - could be refined
-const redSinAdelanto = 0; // would need additional query
-const usuariosBloqueados = 0; // would need additional query
+// Donut RED/BLUE: circunferencia r=70 -> 2*pi*70 ~= 439.823.
+// El segundo arco se desplaza con stroke-dashoffset = -longitud del primero.
+const DONUT_C = 2 * Math.PI * 70;
+const blueLen = (bluePct / 100) * DONUT_C;
+const redLen = (redPct / 100) * DONUT_C;
 ---
 
-<AdminBase title="Resumen | JOANIX GUIDES">
-  <slot name="page-title">Resumen</slot>
-
-  <slot name="breadcrumbs">
-    <li aria-current="page">Resumen</li>
-  </slot>
-
+<AdminBase
+  title="Resumen | JOANIX GUIDES"
+  pageTitle="Resumen"
+  crumbs={[{ href: '/admin/', label: 'Resumen' }]}
+>
   <div class="admin-content">
 
     <!-- KPI Cards -->
@@ -173,11 +174,11 @@ const usuariosBloqueados = 0; // would need additional query
             <text class="admin-bar-chart__label" x="20" y="110" text-anchor="end" dominant-baseline="middle">{Math.round(maxPorMes / 2)}</text>
             <text class="admin-bar-chart__label" x="20" y="175" text-anchor="end" dominant-baseline="middle">0</text>
             {/* Legend */}
-            <g class="admin-chart__legend" transform="translate(50, 15)">
-              <rect class="admin-chart__legend-color" fill="var(--adm-blue)" />
-              <text x="12" y="9.5" font-size="11" fill="var(--adm-text)">BLUE</text>
-              <rect class="admin-chart__legend-color" x="60" fill="var(--adm-red)" />
-              <text x="72" y="9.5" font-size="11" fill="var(--adm-text)">RED</text>
+            <g transform="translate(50, 15)">
+              <rect width="12" height="12" rx="2" fill="var(--adm-blue)" />
+              <text x="16" y="10.5" font-size="11" fill="var(--adm-text)">BLUE</text>
+              <rect x="64" width="12" height="12" rx="2" fill="var(--adm-red)" />
+              <text x="80" y="10.5" font-size="11" fill="var(--adm-text)">RED</text>
             </g>
           </svg>
         ) : (
@@ -197,8 +198,9 @@ const usuariosBloqueados = 0; // would need additional query
               stroke="var(--adm-blue)"
               stroke-width="35"
               fill="none"
-              stroke-dasharray={`${bluePct > 0 ? bluePct * 4.398 : 0} 439.8`}
+              stroke-dasharray={`${blueLen} ${DONUT_C}`}
               stroke-linecap="round"
+              transform="rotate(-90 100 100)"
               class="admin-donut-chart__slice"
             />
             <circle
@@ -206,10 +208,11 @@ const usuariosBloqueados = 0; // would need additional query
               stroke="var(--adm-red)"
               stroke-width="35"
               fill="none"
-              stroke-dasharray={`${redPct > 0 ? redPct * 4.398 : 0} 439.8`}
+              stroke-dasharray={`${redLen} ${DONUT_C}`}
+              stroke-dashoffset={-blueLen}
               stroke-linecap="round"
+              transform="rotate(-90 100 100)"
               class="admin-donut-chart__slice"
-              style="transform: rotate(-90deg); transform-origin: 100px 100px;"
             />
             <g class="admin-donut-chart__center">
               <text class="admin-donut-chart__total" x="100" y="92">{guias.total}</text>
@@ -218,11 +221,11 @@ const usuariosBloqueados = 0; // would need additional query
           </svg>
           <div class="admin-chart__legend">
             <span class="admin-chart__legend-item">
-              <span class="admin-chart__legend-color" style="background: var(--adm-blue);"></span>
+              <span class="admin-chart__legend-color admin-chart__legend-color--blue"></span>
               BLUE: {guias.blue} ({bluePct}%)
             </span>
             <span class="admin-chart__legend-item">
-              <span class="admin-chart__legend-color" style="background: var(--adm-red);"></span>
+              <span class="admin-chart__legend-color admin-chart__legend-color--red"></span>
               RED: {guias.red} ({redPct}%)
             </span>
           </div>
@@ -313,6 +316,15 @@ const usuariosBloqueados = 0; // would need additional query
         </section>
       )}
     </div>
+
+    <section class="admin-panel" aria-labelledby="visitas-title">
+      <header class="admin-panel__header">
+        <h2 id="visitas-title" class="admin-panel__titulo">Visitas</h2>
+      </header>
+      <div class="admin-panel__body">
+        <p class="admin-panel__nota">Sin datos reales conectados. Conecta Cloudflare Web Analytics para ver visitas; no se muestran cifras inventadas.</p>
+      </div>
+    </section>
 
     <!-- Panels: Actividad reciente, Pendientes, Acciones rápidas -->
     <div class="admin-grid admin-grid--2">

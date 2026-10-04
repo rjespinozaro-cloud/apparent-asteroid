@@ -18,14 +18,11 @@ const miId = sesion?.usuario.usuario_id;
 const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length;
 ---
 
-<AdminBase title="Usuarios | JOANIX GUIDES">
-  <slot name="page-title">Usuarios</slot>
-
-  <slot name="breadcrumbs">
-    <li><a href="/admin/">Resumen</a></li>
-    <li aria-current="page">Usuarios</li>
-  </slot>
-
+<AdminBase
+  title="Usuarios | JOANIX GUIDES"
+  pageTitle="Usuarios"
+  crumbs={[{ href: '/admin/', label: 'Resumen' }, { label: 'Usuarios' }]}
+>
   <div class="admin-content" data-usuarios data-csrf={sesion?.csrf ?? ''}>
     <header class="admin-section__header">
       <div>
@@ -76,7 +73,7 @@ const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length
       <header class="admin-panel__header">
         <h2 class="admin-panel__titulo">Cuentas existentes</h2>
       </header>
-      <div class="admin-panel__body admin-tabla-wrap">
+      <div class="admin-panel__body admin-table-wrap">
         <table class="admin-tabla" data-tabla-usuarios>
           <thead>
             <tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Creada</th><th>Acciones</th></tr>
@@ -111,7 +108,7 @@ const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length
                   </button>
                 </td>
                 <td>{fila.creado_en}</td>
-                <td class="admin-acciones">
+                <td class="admin-table__actions">
                   <button type="button" class="admin-boton admin-boton--plano" data-accion="password" data-id={fila.id}>Resetear contraseña</button>
                   {fila.id !== miId && !(fila.rol === 'admin' && fila.activo && totalAdmins <= 1) && (
                     <button type="button" class="admin-boton admin-boton--danger" data-accion="eliminar" data-id={fila.id}>Eliminar</button>

@@ -47,14 +47,11 @@ const enlacePagina = (pagina: number) => {
 };
 ---
 
-<AdminBase title="Auditoría | JOANIX GUIDES">
-  <slot name="page-title">Auditoría</slot>
-
-  <slot name="breadcrumbs">
-    <li><a href="/admin/">Resumen</a></li>
-    <li aria-current="page">Auditoría</li>
-  </slot>
-
+<AdminBase
+  title="Auditoría | JOANIX GUIDES"
+  pageTitle="Auditoría"
+  crumbs={[{ href: '/admin/', label: 'Resumen' }, { label: 'Auditoría' }]}
+>
   <div class="admin-content">
     <header class="admin-section__header">
       <div>

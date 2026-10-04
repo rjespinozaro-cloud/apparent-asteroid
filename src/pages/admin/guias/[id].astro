@@ -22,15 +22,11 @@ if (!guia) {
 const herramientas = await listarHerramientasAdmin(database);
 ---
 
-<AdminBase title={`Editar ${guia.titulo} | JOANIX GUIDES`}>
-  <slot name="page-title">{guia.titulo}</slot>
-
-  <slot name="breadcrumbs">
-    <li><a href="/admin/">Resumen</a></li>
-    <li><a href="/admin/guias/">Guías</a></li>
-    <li aria-current="page">{guia.titulo}</li>
-  </slot>
-
+<AdminBase
+  title={`Editar ${guia.titulo} | JOANIX GUIDES`}
+  pageTitle={guia.titulo}
+  crumbs={[{ href: '/admin/', label: 'Resumen' }, { href: '/admin/guias/', label: 'Guías' }, { label: guia.titulo }]}
+>
   <div class="admin-content">
     <header class="admin-section__header">
       <div>

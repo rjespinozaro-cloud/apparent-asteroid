@@ -56,38 +56,46 @@ if (Astro.request.method === 'POST' && !existeAdministrador) {
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
 ---
 
-<AdminBase title="Instalar | JOANIX GUIDES" description="Configuración inicial de JOANIX GUIDES.">
-  <article class="admin-shell__panel" aria-labelledby="instalar-titulo">
-    <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / SETUP</p>
-    <p class="admin-shell__eyebrow">Configuración inicial</p>
-    <h1 id="instalar-titulo">Crear administrador</h1>
+<AdminBase
+  title="Instalar | JOANIX GUIDES"
+  description="Configuración inicial de JOANIX GUIDES."
+  pageTitle="Crear administrador"
+  crumbs={[{ label: 'Instalación' }]}
+>
+  <div class="admin-content admin-auth">
+    <article class="admin-auth__panel" aria-labelledby="instalar-titulo">
+      <p class="admin-auth__marca">JOANIX GUIDES / SETUP · Configuración inicial</p>
+      <h1 class="admin-auth__title" id="instalar-titulo">Crear administrador</h1>
 
-    {existeAdministrador ? (
-      <p class="admin-alerta admin-alerta--ok" role="status">
-        La instalación inicial ya se ha completado. <a href="/admin/login">Inicia sesión</a>.
-      </p>
-    ) : (
-      <>
-        <p class="admin-shell__intro">Crea el primer acceso seguro. Esta página se desactiva en cuanto exista un administrador.</p>
-        {error && <p class="admin-alerta" role="alert">{error}</p>}
-        <form class="admin-form" method="post">
-          <div class="admin-form__campo">
-            <label for="token">Token de instalación</label>
-            <input id="token" name="token" type="password" autocomplete="off" maxlength="500" required />
-          </div>
-          <div class="admin-form__campo">
-            <label for="usuario">Usuario</label>
-            <input id="usuario" name="usuario" type="text" autocomplete="username" spellcheck="false"
-              autocapitalize="none" maxlength="40" required />
-          </div>
-          <div class="admin-form__campo">
-            <label for="password">Contraseña (mínimo {MIN_PASSWORD} caracteres)</label>
-            <input id="password" name="password" type="password" autocomplete="new-password"
-              minlength={MIN_PASSWORD} maxlength="200" required />
-          </div>
-          <button type="submit">Crear administrador</button>
-        </form>
-      </>
-    )}
-  </article>
+      {existeAdministrador ? (
+        <p class="admin-alerta admin-alerta--ok" role="status">
+          La instalación inicial ya se ha completado. <a href="/admin/login">Inicia sesión</a>.
+        </p>
+      ) : (
+        <>
+          <p class="admin-auth__intro">Crea el primer acceso seguro. Esta página se desactiva en cuanto exista un administrador.</p>
+          {error && <p class="admin-alerta admin-alerta--error" role="alert">{error}</p>}
+          <form class="admin-form" method="post">
+            <div class="admin-form__campo">
+              <label for="token">Token de instalación</label>
+              <input id="token" name="token" type="password" autocomplete="off" maxlength="500" required />
+            </div>
+            <div class="admin-form__campo">
+              <label for="usuario">Usuario</label>
+              <input id="usuario" name="usuario" type="text" autocomplete="username" spellcheck="false"
+                autocapitalize="none" maxlength="40" required />
+            </div>
+            <div class="admin-form__campo">
+              <label for="password">Contraseña (mínimo {MIN_PASSWORD} caracteres)</label>
+              <input id="password" name="password" type="password" autocomplete="new-password"
+                minlength={MIN_PASSWORD} maxlength="200" required />
+            </div>
+            <div class="admin-form__actions">
+              <button type="submit" class="admin-boton admin-boton--primary">Crear administrador</button>
+            </div>
+          </form>
+        </>
+      )}
+    </article>
+  </div>
 </AdminBase>

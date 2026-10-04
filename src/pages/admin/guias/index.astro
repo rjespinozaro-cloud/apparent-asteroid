@@ -38,14 +38,11 @@ const enlacePagina = (pagina: number) => {
 };
 ---
 
-<AdminBase title="Guías | JOANIX GUIDES">
-  <slot name="page-title">Guías</slot>
-
-  <slot name="breadcrumbs">
-    <li><a href="/admin/">Resumen</a></li>
-    <li aria-current="page">Guías</li>
-  </slot>
-
+<AdminBase
+  title="Guías | JOANIX GUIDES"
+  pageTitle="Guías"
+  crumbs={[{ href: '/admin/', label: 'Resumen' }, { label: 'Guías' }]}
+>
   <div class="admin-content">
     <header class="admin-section__header">
       <div>
@@ -108,7 +105,7 @@ const enlacePagina = (pagina: number) => {
       <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
-            <tr><th>Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado</th><th>Fecha</th></tr>
+            <tr><th>Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado</th><th>Acceso</th><th>Fecha</th></tr>
           </thead>
           <tbody>
             {filas.map((fila: (typeof filas)[number]) => (
@@ -117,8 +114,17 @@ const enlacePagina = (pagina: number) => {
                 <td><code>{fila.slug}</code></td>
                 <td><span class={`admin-badge admin-badge--${fila.equipo}`}>{fila.equipo.toUpperCase()}</span></td>
                 <td>{fila.herramienta}</td>
-                <td>{fila.publicada ? 'Publicada' : 'Borrador'}</td>
-                <td>{fila.fecha}</td>
+                <td>
+                  {fila.publicada
+                    ? <span class="admin-badge admin-badge--green">Publicada</span>
+                    : <span class="admin-badge admin-badge--yellow">Borrador</span>}
+                </td>
+                <td>
+                  {fila.acceso === 'gratis'
+                    ? <span class="admin-badge admin-badge--green">Gratis</span>
+                    : <span class="admin-badge admin-badge--gray">Pago</span>}
+                </td>
+                <td><time>{fila.fecha}</time></td>
               </tr>
             ))}
           </tbody>
