@@ -36,5 +36,40 @@ function activo(href: string) {
         <span class="visualmente-oculto">Buscar guías</span>
       </a>
     </li>
+    <li aria-hidden="true"><span class="menu__indicator"></span></li>
   </ul>
 </nav>
+
+<script>
+  // Sliding menu indicator
+  const menu = document.querySelector('.menu__enlaces');
+  const indicator = menu?.querySelector('.menu__indicator');
+  const links = menu?.querySelectorAll('a[aria-current="page"]');
+  
+  function positionIndicator() {
+    if (!menu || !indicator) return;
+    
+    const activeLink = menu.querySelector('a[aria-current="page"]');
+    if (!activeLink) {
+      indicator.style.transform = 'translateX(0) scaleX(0)';
+      return;
+    }
+    
+    const rect = activeLink.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const x = rect.left - menuRect.left;
+    const width = rect.width;
+    
+    indicator.style.setProperty('--indicator-x', `${x}px`);
+    indicator.style.setProperty('--indicator-scale', '1');
+  }
+  
+  // Initial position
+  positionIndicator();
+  
+  // Reposition on resize
+  window.addEventListener('resize', positionIndicator);
+  
+  // Reposition on navigation (for SPA-like behavior)
+  document.addEventListener('astro:page-load', positionIndicator);
+</script>

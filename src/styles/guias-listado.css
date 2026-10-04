@@ -142,10 +142,12 @@
 .lista-herramientas__item a {
   font-weight: 600;
   text-decoration: none;
+  color: var(--tinta);
+  transition: color 160ms var(--curva);
 }
 
 .lista-herramientas__item a:hover {
-  text-decoration: underline;
+  color: var(--fuchsia);
 }
 
 .lista-herramientas__conteo {

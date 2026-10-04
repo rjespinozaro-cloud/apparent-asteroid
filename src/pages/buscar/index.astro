@@ -42,7 +42,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
         maxlength={TERMINO_MAXIMO}
         enterkeyhint="search"
       />
-      <button type="submit">Buscar</button>
+      <button type="submit" class="boton--premium">Buscar</button>
     </form>
 
     {
@@ -68,14 +68,14 @@ Astro.response.headers.set('Cache-Control', 'no-store');
               No hay guías que coincidan con “{recortar(termino, 60)}”. Prueba con el nombre de la herramienta
               o con un término más corto.
             </p>
-            <a class="boton" href="/guias/">Ver todas las guías</a>
+            <a class="boton--premium" href="/guias/">Ver todas las guías</a>
           </div>
         )
       ) : (
         <div class="vacio">
           <h2>¿Qué quieres aprender hoy?</h2>
           <p>Introduce al menos dos caracteres. También puedes filtrar el catálogo por equipo, nivel o herramienta.</p>
-          <a class="boton boton--secundario" href="/guias/">Ir al catálogo</a>
+          <a class="boton--ghost" href="/guias/">Ir al catálogo</a>
         </div>
       )
     }

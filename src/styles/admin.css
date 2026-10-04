@@ -74,6 +74,49 @@
   min-width: 8rem;
 }
 
+.admin-form button[type="submit"] {
+  background: var(--ink-950);
+  border: 1px solid transparent;
+  border-radius: var(--radio-m);
+  color: var(--text) !important;
+  display: inline-flex;
+  font-weight: 600;
+  gap: var(--espacio-2xs);
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  transition: transform 160ms var(--curva), box-shadow 200ms var(--curva), background 200ms var(--curva);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.admin-form button[type="submit"]::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  background: var(--borde-animado);
+  border-radius: inherit;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotate-border 6s linear infinite;
+}
+
+.admin-form button[type="submit"]:hover {
+  background: var(--ink-900);
+  box-shadow: 0 0 25px -5px var(--glow-fuchsia-strong);
+  transform: translateY(-1px);
+  color: var(--text) !important;
+}
+
+.admin-form button[type="submit"]:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 40ms;
+}
+
 .admin-alerta {
   background: rgb(240 184 75 / 0.12);
   border-left: 0.3rem solid var(--aviso);
@@ -181,19 +224,35 @@
 .admin-modulo {
   background: var(--papel-alto);
   border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
   color: var(--tinta);
   display: flex;
   flex-direction: column;
   min-height: 13rem;
   padding: var(--espacio-m);
+  position: relative;
   text-decoration: none;
-  transition: border-color 160ms ease, transform 160ms ease;
+  transition: transform 200ms var(--curva), border-color 200ms var(--curva), box-shadow 200ms var(--curva);
+  isolation: isolate;
+}
+
+.admin-modulo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--glow-fuchsia), transparent 40%);
+  opacity: var(--spotlight-opacity);
+  transition: --spotlight-opacity 300ms var(--curva);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .admin-modulo:hover {
-  border-color: var(--linea-fuerte);
+  --spotlight-opacity: 0.6;
+  border-color: var(--violet-500);
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-2);
   color: var(--tinta);
-  transform: translateY(-0.15rem);
 }
 
 .admin-modulo--blue {
@@ -202,7 +261,7 @@
 
 .admin-modulo__numero {
   color: var(--tinta-suave);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--fuente-mono);
   font-size: 0.72rem;
 }
 
@@ -217,7 +276,7 @@
 }
 
 .admin-modulo__accion {
-  color: var(--blue);
+  color: var(--violet-300);
   font-size: 0.9rem;
   font-weight: 600;
   margin-top: auto;
@@ -418,39 +477,95 @@
 .admin-boton {
   background: transparent;
   border: 1px solid var(--linea-fuerte);
-  color: var(--tinta);
+  border-radius: var(--radio-m);
+  color: var(--text);
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font: inherit;
-  min-height: 2.75rem;
-  padding: var(--espacio-xs) var(--espacio-m);
+  font-weight: 500;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
   text-decoration: none;
+  transition: border-color 200ms var(--curva), box-shadow 200ms var(--curva), transform 160ms var(--curva), background 200ms var(--curva);
 }
 
 .admin-boton:hover {
-  border-color: var(--tinta-suave);
-  color: var(--tinta);
+  background: var(--papel-hover);
+  border-color: var(--violet-300);
+  box-shadow: 0 0 15px -5px var(--glow-violet);
+  transform: translateY(-1px);
+  color: var(--text);
+}
+
+.admin-boton:active {
+  transform: scale(0.97);
+  transition-duration: 40ms;
 }
 
 .admin-boton--secundario {
-  border-color: var(--blue);
+  background: var(--ink-950);
+  border: 1px solid transparent;
+  border-radius: var(--radio-m);
+  color: var(--text) !important;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.admin-boton--secundario::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  background: var(--borde-animado);
+  border-radius: inherit;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotate-border 6s linear infinite;
+}
+
+.admin-boton--secundario:hover {
+  background: var(--ink-900);
+  box-shadow: 0 0 25px -5px var(--glow-fuchsia-strong);
+  transform: translateY(-1px);
+  border-color: transparent;
 }
 
 .admin-boton--peligro {
+  border-color: color-mix(in srgb, var(--red) 40%, var(--linea));
+  color: var(--red);
+}
+
+.admin-boton--peligro:hover {
+  background: var(--red-tenue);
   border-color: var(--red);
+  box-shadow: 0 0 15px -5px var(--glow-red);
   color: var(--red);
 }
 
 .admin-boton--plano {
+  background: transparent;
   border-color: transparent;
-  color: var(--tinta-suave);
+  color: var(--text-muted);
   min-height: auto;
   padding: var(--espacio-2xs) 0;
 }
 
+.admin-boton--plano:hover {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text);
+  transform: none;
+}
+
 .admin-boton--inactivo {
-  color: var(--linea-fuerte);
-  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(1);
 }
 
 .admin-etiqueta {
@@ -609,6 +724,15 @@
 .admin-topbar__enlace {
   color: var(--tinta-suave);
   font-size: var(--texto-sm);
+  text-decoration: none;
+  padding: var(--espacio-2xs) var(--espacio-xs);
+  border-radius: var(--radio-m);
+  transition: color 160ms var(--curva), background 160ms var(--curva);
+}
+
+.admin-topbar__enlace:hover {
+  color: var(--text);
+  background: var(--papel-hover);
 }
 
 /* El formulario de logout no debe heredar el layout de bloque. */
@@ -621,6 +745,19 @@
   font-size: var(--texto-xs);
   min-height: 2rem;
   padding: 0.2rem 0.6rem;
+  background: transparent;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-m);
+  color: var(--tinta-suave);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 160ms var(--curva), color 160ms var(--curva), background 160ms var(--curva);
+}
+
+.admin-topbar__salir button:hover {
+  border-color: var(--violet-300);
+  color: var(--text);
+  background: var(--papel-hover);
 }
 
 /* Estados de aviso ------------------------------------------------------ */

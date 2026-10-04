@@ -92,11 +92,37 @@
 .guia__indice-item a {
   color: var(--tinta-suave);
   text-decoration: none;
+  position: relative;
+  padding-inline: 0.25em;
+  transition: color 160ms var(--curva);
+}
+
+.guia__indice-item a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 1px;
+  width: 100%;
+  height: 1px;
+  background: var(--signal-grad);
+  background-size: 200% 100%;
+  background-position: var(--grad-pos) 0;
+  transition: --grad-pos 300ms var(--curva), opacity 160ms var(--curva);
+  opacity: 0;
 }
 
 .guia__indice-item a:hover {
-  color: var(--blue);
-  text-decoration: underline;
+  color: var(--text);
+}
+
+.guia__indice-item a:hover::after {
+  --grad-pos: 0%;
+  opacity: 0.8;
+}
+
+.guia__indice-item a:active {
+  transform: scale(0.97);
+  transition-duration: 40ms;
 }
 
 .guia__contenido {
@@ -236,18 +262,36 @@
 }
 
 .guia__vecina {
-  border: var(--borde);
-  border-radius: var(--radio-m);
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
   display: flex;
   flex-direction: column;
   gap: var(--espacio-3xs);
   max-width: none;
-  padding: var(--espacio-s);
+  padding: var(--espacio-m);
+  position: relative;
   text-decoration: none;
+  transition: transform 200ms var(--curva), border-color 200ms var(--curva), box-shadow 200ms var(--curva);
+  isolation: isolate;
+}
+
+.guia__vecina::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--glow-fuchsia), transparent 40%);
+  opacity: var(--spotlight-opacity);
+  transition: --spotlight-opacity 300ms var(--curva);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .guia__vecina:hover {
-  border-color: var(--blue);
+  --spotlight-opacity: 0.6;
+  border-color: var(--violet-500);
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-2);
 }
 
 .guia__vecina--derecha {
@@ -258,7 +302,7 @@
   color: var(--tinta-tenue);
   font-family: var(--fuente-mono);
   font-size: var(--texto-xs);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
