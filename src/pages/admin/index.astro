@@ -2,7 +2,7 @@
 import AdminBase from '../../layouts/AdminBase.astro';
 import { env } from 'cloudflare:workers';
 import { getDatabase, obtenerEstadisticasAdmin } from '../../lib/db.js';
-import { formatearFechaHora, plural } from '../../lib/utils/texto.js';
+import { formatearFechaHora } from '../../lib/utils/texto.js';
 
 export const prerender = false;
 
@@ -34,6 +34,7 @@ const redLen = (redPct / 100) * DONUT_C;
   crumbs={[{ href: '/admin/', label: 'Resumen' }]}
 >
   <div class="admin-content">
+    <h1 class="visualmente-oculto">Resumen</h1>
 
     <!-- KPI Cards -->
     <section class="admin-kpi-grid" aria-label="Indicadores clave">
@@ -326,8 +327,9 @@ const redLen = (redPct / 100) * DONUT_C;
       </div>
     </section>
 
-    <!-- Panels: Actividad reciente, Pendientes, Acciones rápidas -->
+    <!-- Panels: Actividad reciente (solo admin), Pendientes, Acciones rápidas -->
     <div class="admin-grid admin-grid--2">
+      {esAdmin && (
       <section class="admin-panel" aria-labelledby="actividad-title">
         <header class="admin-panel__header">
           <h2 id="actividad-title" class="admin-panel__titulo">Actividad reciente</h2>
@@ -362,6 +364,7 @@ const redLen = (redPct / 100) * DONUT_C;
           )}
         </div>
       </section>
+      )}
 
       <section class="admin-panel" aria-labelledby="pendientes-title">
         <header class="admin-panel__header">

@@ -63,6 +63,15 @@
         ],
         "createdAt": "2026-10-04T21:08:36.805Z",
         "reason": "Pre-existing markdown renderer with proper src escaping"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/styles/admin.css"
+        ],
+        "createdAt": "2026-10-04T22:24:59.898Z",
+        "reason": "Barras funcionales de severidad en alertas y timeline de actividad, no decoración"
       }
     ]
   }

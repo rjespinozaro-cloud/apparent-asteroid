@@ -120,7 +120,7 @@ function isActive(href: string, exact?: boolean) {
 
     <header class="admin-topbar">
       <div class="admin-topbar__start">
-        {pageTitle && <h1 class="admin-topbar__title">{pageTitle}</h1>}
+        {pageTitle && <p class="admin-topbar__title" aria-hidden="true">{pageTitle}</p>}
         {crumbs.length > 0 && (
           <nav class="admin-topbar__migas" aria-label="Migas de pan">
             <ol class="admin-migas">
