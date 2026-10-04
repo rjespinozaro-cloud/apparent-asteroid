@@ -31,13 +31,18 @@
   --success: #34D399;
   --warning: #FBBF24;
   --danger: #F97316;
-  /* Gradientes y brillos */
-  --signal-grad: linear-gradient(135deg, var(--violet-500) 0%, var(--fuchsia) 60%, var(--violet-500) 100%);
-  --team-grad: linear-gradient(90deg, #FF4D6D 0%, #8B5CF6 40%, #4D7CFF 100%);
-  --glow-violet: rgba(139, 92, 246, 0.45);
-  --glow-fuchsia: rgba(232, 121, 249, 0.45);
-  --glow-blue: rgba(77, 124, 255, 0.45);
-  --glow-red: rgba(255, 77, 109, 0.45);
+  /* Gradientes y brillos -------------------------------------------------- */
+  --signal-grad: linear-gradient(135deg, var(--violet-500) 0%, var(--fuchsia) 100%);
+  --team-grad: linear-gradient(90deg, var(--red) 0%, var(--violet-500) 50%, var(--blue) 100%);
+  --glow-violet: rgba(139, 92, 246, 0.15);
+  --glow-fuchsia: rgba(232, 121, 249, 0.15);
+  --glow-blue: rgba(77, 124, 255, 0.15);
+  --glow-red: rgba(255, 77, 109, 0.15);
+
+  /* Variables de animación (respaldo para @property) ----------------------- */
+  --grad-pos: 100%;
+  --angle: 0deg;
+  --opacidad-spotlight: 0.1;
 
   /* Aliases para compatibilidad con estilos existentes -------------------- */
   --papel: var(--ink-900);
