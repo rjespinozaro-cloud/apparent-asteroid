@@ -58,6 +58,16 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
     <meta name="twitter:image" content={imagenOg} />
     <title>{title}</title>
     <style>
+      /* LÉXICO DE MOVIMIENTO (vocabulario preciso):
+         auroras  = Alternate loop (translate+opacity, ease-in-out 9s, contrafase)
+         anillos  = Rotate lineal 26s/40s + glow con Pulse 4s (opacity)
+         logo     = Scale in (.9) + Fade in + Float (translateY 6s)
+         grid     = Loop lineal 40s (background-position, solo pintado)
+         scan     = Loop lineal 7s (translateY)
+         CTA      = Press feedback (scale .98) + borde cónico en Loop lineal 4s
+         parallax = Translate por puntero (rAF, solo hover fino)
+         salida   = Scale + Fade out + Blur (550ms, una vez por visita) */
+
       @property --angle {
         syntax: '<angle>';
         initial-value: 0deg;
@@ -408,7 +418,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       @keyframes logoIn {
         from {
           opacity: 0;
-          transform: scale(0.82);
+          transform: scale(0.9);
           filter: blur(12px);
         }
         to {
@@ -449,7 +459,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         -webkit-backdrop-filter: blur(10px);
         backdrop-filter: blur(10px);
         isolation: isolate;
-        transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+        transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
         box-shadow: 0 0 0 rgba(0, 0, 0, 0);
       }
       .cta::before {
@@ -493,6 +503,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       }
       .cta:active {
         transform: scale(0.98);
+        transition-duration: 0.15s;
       }
       .cta:focus-visible {
         outline: 2px solid #fff;
@@ -619,6 +630,17 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       }
 
       /* ---------- ACCESIBILIDAD ---------- */
+      @media (prefers-reduced-transparency: reduce) {
+        .cta {
+          background: #080c16;
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+        .noise,
+        .scan {
+          display: none;
+        }
+      }
       @media (prefers-contrast: more) {
         .grid,
         .noise,
@@ -752,6 +774,9 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         });
 
         if (fineHover && !reduceMotion) {
+          var logoNode = document.getElementById('logo');
+          if (!(logoNode instanceof HTMLElement)) return;
+          var logo = logoNode;
           var raf = 0;
           var mx = 0;
           var my = 0;
@@ -762,8 +787,10 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
             my = Math.max(-1, Math.min(1, y));
             if (!raf) {
               raf = window.requestAnimationFrame(function () {
-                cover.style.setProperty('--mx', mx.toFixed(3));
-                cover.style.setProperty('--my', my.toFixed(3));
+                // La variable vive en .logo (consumidor), no en .cover:
+                // evita recalcular estilos de todo el subárbol en cada frame.
+                logo.style.setProperty('--mx', mx.toFixed(3));
+                logo.style.setProperty('--my', my.toFixed(3));
                 raf = 0;
               });
             }
