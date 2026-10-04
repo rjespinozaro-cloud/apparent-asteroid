@@ -68,7 +68,8 @@ function cabecerasSeguras(response) {
   }
 
   if (!headers.has('Content-Security-Policy')) {
-    // Solo en desarrollo: el CSP con hashes de Astro requiere un build.
+    // Solo en desarrollo: dejamos un CSP mínimo sin script-src/style-src
+    // para evitar duplicidad con el CSP integrado de Astro.
     headers.set(
       'Content-Security-Policy',
       [
@@ -80,8 +81,8 @@ function cabecerasSeguras(response) {
         "form-action 'self'",
         "frame-ancestors 'none'",
         "object-src 'none'",
-        "script-src 'self' 'unsafe-inline'",
-        "style-src 'self' 'unsafe-inline'",
+        "manifest-src 'self'",
+        'upgrade-insecure-requests',
       ].join('; '),
     );
   }
