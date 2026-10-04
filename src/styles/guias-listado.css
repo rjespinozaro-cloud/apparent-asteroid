@@ -389,6 +389,18 @@
   animation: fade-up 500ms ease-out 200ms both;
 }
 
+.portada--hero__descriptor {
+  color: var(--tinta-suave);
+  font-size: var(--texto-md);
+  max-width: 60ch;
+  text-align: center;
+  animation: fade-up 500ms ease-out 300ms both;
+}
+
+.portada--hero__descriptor .cursor-blink {
+  animation-delay: 300ms;
+}
+
 .portada--hero__acciones {
   animation: fade-up 500ms ease-out 300ms both;
   justify-content: center;

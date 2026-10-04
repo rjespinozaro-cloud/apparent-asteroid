@@ -34,6 +34,7 @@ const sesion = Astro.locals.admin;
     <header class="admin-topbar">
       <a class="admin-topbar__marca" href="/admin/">
         <img class="marca__logo" src="/logo.png" alt="JOANIX GUIDES" width="120" height="60" loading="lazy" decoding="async" />
+        <span class="wordmark-glitch" data-text="JOANIX GUIDES">JOANIX GUIDES</span>
       </a>
       <div class="admin-topbar__sesion">
         {sesion && <span class="admin-topbar__usuario">{sesion.usuario.usuario} · {sesion.usuario.rol}</span>}

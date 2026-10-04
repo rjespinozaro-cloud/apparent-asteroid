@@ -917,3 +917,122 @@ a.tarjeta:hover .tarjeta__titulo {
   border-color: var(--linea-fuerte);
   box-shadow: var(--sombra-1);
 }
+
+/* ==========================================================================
+   TIPOGRAFÍA Y TEXTO VIVO
+   ========================================================================== */
+
+/* Metadatos y etiquetas en JetBrains Mono, small caps, tracking */
+.meta, .eyebrow, .chip, .etiqueta, .tarjeta__meta, .lista-herramientas__conteo,
+.guia__indice h2, .guia__etiquetas li, .admin-shell__marca, .admin-shell__eyebrow,
+.admin-metrica__etiqueta, .admin-modulo__numero, .admin-tabla th,
+.portada--hero__eyebrow, .portada__cifra-etiqueta, .equipo__clave {
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-caps: small-caps;
+  font-feature-settings: 'smcp' on, 'c2sc' on;
+}
+
+/* Efecto decodificación para título de portada */
+.decodificando {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+
+.decodificando::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  background: var(--papel);
+  animation: decodificar 600ms var(--curva) forwards;
+}
+
+@keyframes decodificar {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+/* Cursor parpadeante */
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--fuchsia);
+  margin-inline-start: 2px;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-blink {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Glitch corto en wordmark al hover */
+.wordmark-glitch {
+  position: relative;
+  display: inline-block;
+  transition: color 160ms var(--curva);
+}
+
+.wordmark-glitch:hover {
+  color: var(--fuchsia);
+}
+
+.wordmark-glitch::before,
+.wordmark-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 0 0 0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wordmark-glitch::before {
+  color: var(--red);
+  animation: glitch-1 200ms ease-out forwards;
+}
+
+.wordmark-glitch::after {
+  color: var(--blue);
+  animation: glitch-2 200ms ease-out forwards;
+}
+
+@keyframes glitch-1 {
+  0% { clip-path: inset(40% 0 50% 0); transform: translateX(-2px); opacity: 1; }
+  25% { clip-path: inset(20% 0 70% 0); transform: translateX(2px); }
+  50% { clip-path: inset(60% 0 30% 0); transform: translateX(-1px); }
+  100% { clip-path: inset(0 0 0 0); transform: translateX(0); opacity: 0; }
+}
+
+@keyframes glitch-2 {
+  0% { clip-path: inset(50% 0 40% 0); transform: translateX(2px); opacity: 1; }
+  25% { clip-path: inset(70% 0 20% 0); transform: translateX(-2px); }
+  50% { clip-path: inset(30% 0 60% 0); transform: translateX(1px); }
+  100% { clip-path: inset(0 0 0 0); transform: translateX(0); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordmark-glitch::before,
+  .wordmark-glitch::after {
+    display: none;
+  }
+}
+
+/* Texto con small-caps real usando font-variant */
+.text-small-caps {
+  font-variant-caps: small-caps;
+  font-feature-settings: 'smcp' on, 'c2sc' on;
+  letter-spacing: 0.1em;
+}
