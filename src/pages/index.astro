@@ -28,27 +28,26 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
 
 <Base>
-  <section class="portada" aria-labelledby="inicio-titulo">
-    <p class="eyebrow">Plataforma de conocimiento · RED + BLUE</p>
-    <h1 id="inicio-titulo">Cada herramienta, dos veces: como atacante y como defensor</h1>
-    <p class="entradilla">
-      Guías prácticas de hacking ético y redes escritas desde los dos lados del mismo ejercicio.
-      Aprende a ejecutar el ataque para saber qué tiene que detectar tu defensa.
-    </p>
-
-    <div class="portada__acciones">
-      <a class="boton" href="/guias/">Explorar todas las guías</a>
-      <a class="boton boton--secundario" href="/herramientas/">Ver por herramienta</a>
+  <section class="portada portada--hero" aria-labelledby="inicio-titulo">
+    <div class="portada--hero__bg" aria-hidden="true">
+      <div class="portada--hero__glow portada--hero__glow--red"></div>
+      <div class="portada--hero__glow portada--hero__glow--blue"></div>
+      <div class="portada--hero__grid"></div>
+      <div class="portada--hero__scrim"></div>
     </div>
-
-    <dl class="portada__cifras">
-      {estadisticas.map((dato) => (
-        <div class="portada__cifra">
-          <dt class="portada__cifra-valor">{dato.valor}</dt>
-          <dd class="portada__cifra-etiqueta">{dato.etiqueta}</dd>
-        </div>
-      ))}
-    </dl>
+    <div class="portada--hero__contenido">
+      <img src="/logo.png" alt="JOANIX GUIDES" width="480" height="240" fetchpriority="high" decoding="async" class="portada--hero__logo" />
+      <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
+      <h1 id="inicio-titulo">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</h1>
+      <div class="portada__acciones portada--hero__acciones">
+        <a class="boton" href="/guias/">Explorar guías</a>
+        <a class="boton boton--secundario" href="/herramientas/">Explorar herramientas</a>
+      </div>
+      <div class="portada--hero__scroll" aria-hidden="true">
+        <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
+        <span class="portada--hero__scroll-line"></span>
+      </div>
+    </div>
   </section>
 
   <section class="seccion" aria-labelledby="equipos-titulo">
