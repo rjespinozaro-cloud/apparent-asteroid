@@ -26,6 +26,8 @@
   --violet-300: #A78BFA;
   --violet-700: #7B2FF7;
   --fuchsia: #E879F9;
+  --fuchsia-active: #f0abfc;
+  --fuchsia-muted: #d946ef;
   --blue: #4D7CFF;
   --red: #FF4D6D;
   --success: #34D399;
@@ -36,8 +38,10 @@
   --team-grad: linear-gradient(90deg, var(--red) 0%, var(--violet-500) 50%, var(--blue) 100%);
   --glow-violet: rgba(139, 92, 246, 0.15);
   --glow-fuchsia: rgba(232, 121, 249, 0.15);
+  --glow-fuchsia-strong: rgba(232, 121, 249, 0.3);
   --glow-blue: rgba(77, 124, 255, 0.15);
   --glow-red: rgba(255, 77, 109, 0.15);
+  --borde-animado: conic-gradient(from var(--angle), transparent 0%, var(--violet-500) 25%, var(--fuchsia) 50%, transparent 75%);
 
   /* Variables de animación (respaldo para @property) ----------------------- */
   --grad-pos: 100%;
@@ -143,6 +147,12 @@
     --aviso: #8a6100;
     --aviso-tenue: #fdf1d8;
     --exito: #17784c;
+
+    --fuchsia: #A21CAF;
+    --fuchsia-active: #C026D3;
+    --fuchsia-muted: #D946EF;
+    --glow-fuchsia: rgba(162, 28, 175, 0.1);
+    --glow-fuchsia-strong: rgba(162, 28, 175, 0.2);
 
     --linea: #d7dee8;
     --linea-fuerte: #b6c2d1;
