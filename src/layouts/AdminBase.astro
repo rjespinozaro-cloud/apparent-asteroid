@@ -32,7 +32,9 @@ const sesion = Astro.locals.admin;
     <a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
 
     <header class="admin-topbar">
-      <a class="admin-topbar__marca" href="/admin/">JOANIX <span>GUIDES</span></a>
+      <a class="admin-topbar__marca" href="/admin/">
+        <img class="marca__logo" src="/logo.png" alt="JOANIX GUIDES" width="120" height="60" loading="lazy" decoding="async" />
+      </a>
       <div class="admin-topbar__sesion">
         {sesion && <span class="admin-topbar__usuario">{sesion.usuario.usuario} · {sesion.usuario.rol}</span>}
         <a class="admin-topbar__enlace" href="/">Ver portal</a>
