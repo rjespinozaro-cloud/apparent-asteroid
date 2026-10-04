@@ -14,35 +14,50 @@
 :root {
   color-scheme: dark;
 
-  /* Superficies ---------------------------------------------------------- */
-  --papel: #0b1019;
-  --papel-alto: #111927;
-  --papel-contraste: #16202f;
-  --papel-hover: #1b2737;
-  --terminal-fondo: #05090f;
-  --terminal-texto: #d7e3f1;
+  /* Paleta JOANIX SIGNAL ------------------------------------------------- */
+  --ink-950: #05060C;
+  --ink-900: #07080F;
+  --ink-850: #0D0F1A;
+  --ink-800: #141726;
+  --line: #232842;
+  --text: #E8EAF6;
+  --text-muted: #8A90B2;
+  --violet-500: #8B5CF6;
+  --violet-300: #A78BFA;
+  --violet-700: #7B2FF7;
+  --blue: #4D7CFF;
+  --red: #FF4D6D;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F97316;
+
+  /* Aliases para compatibilidad con estilos existentes -------------------- */
+  --papel: var(--ink-900);
+  --papel-alto: var(--ink-850);
+  --papel-contraste: var(--ink-800);
+  --papel-hover: var(--ink-800);
+  --terminal-fondo: #05060C;
+  --terminal-texto: var(--text);
 
   /* Texto ---------------------------------------------------------------- */
-  --tinta: #e8eff7;
-  --tinta-suave: #a9bacd;
-  --tinta-tenue: #7d90a6;
-  --tinta-inversa: #0b1019;
+  --tinta: var(--text);
+  --tinta-suave: var(--text-muted);
+  --tinta-tenue: #9FA5C6;
+  --tinta-inversa: var(--ink-950);
 
   /* Marca ---------------------------------------------------------------- */
-  --blue: #76b5ff;
-  --blue-fuerte: #3d8fe0;
-  --blue-tenue: #16283f;
-  --red: #ff8a7d;
-  --red-fuerte: #e35c4c;
-  --red-tenue: #33191a;
-  --aviso: #f2c063;
-  --aviso-tenue: #33280f;
-  --exito: #63d19a;
+  --blue-fuerte: #3D66E6;
+  --blue-tenue: rgba(77, 124, 255, 0.15);
+  --red-fuerte: #E6455F;
+  --red-tenue: rgba(255, 77, 109, 0.15);
+  --aviso: var(--warning);
+  --aviso-tenue: rgba(251, 191, 36, 0.15);
+  --exito: var(--success);
 
   /* Líneas --------------------------------------------------------------- */
-  --linea: #22303f;
-  --linea-fuerte: #35485d;
-  --borde-enfoque: var(--blue);
+  --linea: var(--line);
+  --linea-fuerte: #323A5C;
+  --borde-enfoque: var(--violet-300);
 
   /* Tipografía ----------------------------------------------------------- */
   --fuente-texto: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
