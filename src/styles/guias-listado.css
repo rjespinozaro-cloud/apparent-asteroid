@@ -277,3 +277,170 @@
 .rejilla-notas > * {
   margin: 0;
 }
+/* Portada hero animada -------------------------------------------------- */
+@property --g1 {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@property --g2 {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+
+.portada--hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-block: var(--espacio-2xl) var(--espacio-xl);
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+@supports not (min-height: 100svh) {
+  .portada--hero {
+    min-height: 100vh;
+  }
+}
+
+.portada--hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.portada--hero__glow {
+  position: absolute;
+  width: 60vw;
+  height: 60vh;
+  filter: blur(120px);
+  opacity: 0.6;
+  mix-blend-mode: screen;
+  animation: glow-move 24s ease-in-out infinite;
+}
+
+.portada--hero__glow--red {
+  top: -20vh;
+  left: -20vw;
+  background: radial-gradient(closest-side, rgba(255, 77, 109, 0.55), transparent);
+  animation-delay: -8s;
+}
+
+.portada--hero__glow--blue {
+  bottom: -25vh;
+  right: -15vw;
+  background: radial-gradient(closest-side, rgba(77, 124, 255, 0.5), transparent);
+  animation-delay: -12s;
+}
+
+.portada--hero__grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(35, 40, 66, 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(35, 40, 66, 0.3) 1px, transparent 1px);
+  background-size: 80px 80px;
+  opacity: 0.12;
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+}
+
+.portada--hero__scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(5, 6, 12, 0.9) 100%);
+  z-index: -1;
+}
+
+.portada--hero__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-m);
+  align-items: center;
+  z-index: 1;
+  padding-inline: var(--espacio-s);
+}
+
+.portada--hero__logo {
+  width: clamp(260px, 40vw, 480px);
+  height: auto;
+  animation: fade-up 500ms ease-out both;
+}
+
+.portada--hero__eyebrow {
+  color: var(--tinta-suave);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+  animation: fade-up 500ms ease-out 100ms both;
+}
+
+.portada--hero h1 {
+  max-width: 20ch;
+  margin: 0;
+  animation: fade-up 500ms ease-out 200ms both;
+}
+
+.portada--hero__acciones {
+  animation: fade-up 500ms ease-out 300ms both;
+  justify-content: center;
+}
+
+.portada--hero__scroll {
+  margin-top: var(--espacio-l);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espacio-2xs);
+  color: var(--tinta-tenue);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  animation: fade-up 600ms ease-out 500ms both;
+}
+
+.portada--hero__scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(168, 139, 250, 0.8) 0%, transparent 100%);
+  animation: scroll-indicator 2.4s ease-in-out infinite;
+}
+
+@keyframes glow-move {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+  25% { transform: translate(8%, -4%) scale(1.05); opacity: 0.6; }
+  50% { transform: translate(-4%, 6%) scale(1.08); opacity: 0.65; }
+  75% { transform: translate(6%, 4%) scale(1.04); opacity: 0.6; }
+  100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scroll-indicator {
+  0% { transform: scaleY(0.2); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  100% { transform: scaleY(0.2); transform-origin: top; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portada--hero__logo,
+  .portada--hero__eyebrow,
+  .portada--hero h1,
+  .portada--hero__acciones,
+  .portada--hero__scroll,
+  .portada--hero__glow {
+    animation: none;
+  }
+  .portada--hero__scroll-line {
+    animation: none;
+    height: 30px;
+  }
+}
