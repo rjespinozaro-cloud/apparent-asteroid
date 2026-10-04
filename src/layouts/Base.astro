@@ -23,10 +23,14 @@ interface Props {
   clase?: string;
 }
 
+// BASE_URL trae el subpath en modo Pages ('/apparent-asteroid') y '/' en
+// Cloudflare: se normaliza para prefijar assets sin romper ningún modo.
+const baseAsset = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
 const {
   title = 'JOANIX GUIDES | Guías de ciberseguridad RED y BLUE',
   description = 'Guías prácticas de hacking ético y redes para equipos RED y BLUE: reconocimiento, análisis y defensa con herramientas reales.',
-  ogImage = '/og-image.png',
+  ogImage = `${baseAsset}og-image.png`,
   ogType = 'website',
   noindex = false,
   clase,

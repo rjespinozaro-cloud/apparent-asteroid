@@ -1,13 +1,23 @@
 ---
 import Guia from '../../layouts/Guia.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
-import { getDatabase, guiasRelacionadas, guiasVecinas, obtenerGuiaPorSlug } from '../../lib/db.js';
+import { getDatabase, guiasRelacionadas, guiasVecinas, listarGuiasPublicadas, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
 import { descripcionDesdeMarkdown, tiempoLectura } from '../../lib/utils/texto.js';
 import { nombreHerramienta } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
+
+/**
+ * Solo se usa en el build estático de Pages (la integración de config fuerza
+ * `prerender = true` fuera de /admin y /api). En Cloudflare se ignora.
+ */
+export async function getStaticPaths() {
+  const database = getDatabase(env);
+  const { guias } = await listarGuiasPublicadas(database, { porPagina: 48 });
+  return guias.map((fila) => ({ params: { slug: fila.slug } }));
+}
 
 const parametroSlug = Astro.params.slug ?? '';
 const slug = Array.isArray(parametroSlug) ? parametroSlug.join('/') : parametroSlug;

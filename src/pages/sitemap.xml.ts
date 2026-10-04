@@ -18,7 +18,10 @@ function escapar(valor: string) {
 }
 
 function rutaCompleta(ruta: string, origen: string) {
-  return new URL(ruta, origen).href;
+  // Antepone el base path solo cuando existe (modo Pages: /apparent-asteroid).
+  // En Cloudflare BASE_URL es '/' y el resultado es idéntico al de antes.
+  const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+  return new URL(`${base}${ruta}`, origen).href;
 }
 
 function elemento({ loc, ultima, prioridad, frecuencia }: { loc: string; ultima: string; prioridad: string; frecuencia: string }) {

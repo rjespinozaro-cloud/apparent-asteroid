@@ -1,12 +1,22 @@
 ---
 import Base from '../../layouts/Base.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
-import { getDatabase, listarGuiasDeHerramienta, existeHerramientaPublicada } from '../../lib/db.js';
+import { getDatabase, listarGuiasDeHerramienta, existeHerramientaPublicada, listarHerramientasPublicadas } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
 import { nombreHerramienta } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
+
+/**
+ * Solo se usa en el build estático de Pages (la integración de config fuerza
+ * `prerender = true` fuera de /admin y /api). En Cloudflare se ignora.
+ */
+export async function getStaticPaths() {
+  const database = getDatabase(env);
+  const herramientas = await listarHerramientasPublicadas(database);
+  return herramientas.map((item) => ({ params: { herramienta: item.herramienta } }));
+}
 
 const herramienta = (Astro.params.herramienta ?? '').toLowerCase();
 const database = getDatabase(env);
