@@ -25,11 +25,19 @@
   --violet-500: #8B5CF6;
   --violet-300: #A78BFA;
   --violet-700: #7B2FF7;
+  --fuchsia: #E879F9;
   --blue: #4D7CFF;
   --red: #FF4D6D;
   --success: #34D399;
   --warning: #FBBF24;
   --danger: #F97316;
+  /* Gradientes y brillos */
+  --signal-grad: linear-gradient(135deg, var(--violet-500) 0%, var(--fuchsia) 60%, var(--violet-500) 100%);
+  --team-grad: linear-gradient(90deg, #FF4D6D 0%, #8B5CF6 40%, #4D7CFF 100%);
+  --glow-violet: rgba(139, 92, 246, 0.45);
+  --glow-fuchsia: rgba(232, 121, 249, 0.45);
+  --glow-blue: rgba(77, 124, 255, 0.45);
+  --glow-red: rgba(255, 77, 109, 0.45);
 
   /* Aliases para compatibilidad con estilos existentes -------------------- */
   --papel: var(--ink-900);
