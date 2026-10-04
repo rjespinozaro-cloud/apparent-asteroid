@@ -82,6 +82,97 @@
   }
 }
 
+/* Pausar animaciones fuera de viewport */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal:not(:is(:hover, :focus, :focus-visible, :active)) {
+    animation-play-state: paused;
+  }
+  
+  [data-spotlight]:not(:hover)::before {
+    animation-play-state: paused;
+  }
+}
+
+/* Limitar animaciones infinitas simultáneas */
+@media (prefers-reduced-motion: no-preference) {
+  .panel-lab::before,
+  .boton--premium::before,
+  .admin-boton--secundario::before,
+  .boton::before {
+    animation-play-state: running;
+  }
+  
+  /* Solo 3 animaciones infinitas a la vez */
+  .panel-lab:nth-child(n+4)::before,
+  .boton--premium:nth-child(n+4)::before {
+    animation-play-state: paused;
+  }
+}
+
+/* prefers-contrast: more */
+@media (prefers-contrast: more) {
+  :root {
+    --borde: 2px solid var(--text);
+    --linea: var(--text);
+    --linea-fuerte: var(--text);
+  }
+  
+  .link--premium::after,
+  .migas a::after,
+  .guia__indice-item a::after {
+    background: var(--text);
+    opacity: 1;
+  }
+  
+  .boton--premium,
+  .boton {
+    border: 2px solid var(--text);
+  }
+  
+  .boton--ghost,
+  .boton--secundario {
+    border: 2px solid var(--text);
+  }
+  
+  .chip,
+  .etiqueta {
+    border: 2px solid var(--text);
+  }
+  
+  .tarjeta-premium,
+  .admin-modulo,
+  .guia__vecina {
+    border: 2px solid var(--text);
+  }
+  
+  :focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* prefers-contrast: less */
+@media (prefers-contrast: less) {
+  :root {
+    --glow-fuchsia: transparent;
+    --glow-violet: transparent;
+    --glow-red: transparent;
+    --glow-blue: transparent;
+    --glow-fuchsia-strong: transparent;
+  }
+  
+  .boton--premium::before,
+  .boton::before,
+  .admin-boton--secundario::before,
+  .panel-lab::before {
+    display: none;
+  }
+  
+  .spotlight,
+  [data-spotlight]::before {
+    display: none;
+  }
+}
+
 /* ==========================================================================
    READING PROGRESS BAR
    ========================================================================== */

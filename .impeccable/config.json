@@ -18,6 +18,51 @@
           "src/**/*"
         ],
         "createdAt": "2026-10-04T20:04:26.359Z"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "src/styles/guias-listado.css"
+        ],
+        "createdAt": "2026-10-04T21:08:01.475Z",
+        "reason": "Brand hero background grid - intentional cyber-lab aesthetic"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/styles/components.css"
+        ],
+        "createdAt": "2026-10-04T21:08:10.433Z",
+        "reason": "Intentional left-border accent for notes/cards"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/styles/guia.css"
+        ],
+        "createdAt": "2026-10-04T21:08:15.205Z",
+        "reason": "Intentional left-border accent for guide navigation"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/styles/guias-listado.css"
+        ],
+        "createdAt": "2026-10-04T21:08:20.647Z",
+        "reason": "Intentional left-border accent for error pages"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "src/lib/markdown.js"
+        ],
+        "createdAt": "2026-10-04T21:08:36.805Z",
+        "reason": "Pre-existing markdown renderer with proper src escaping"
       }
     ]
   }

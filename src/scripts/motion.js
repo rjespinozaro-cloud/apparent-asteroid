@@ -15,6 +15,33 @@
   }
 
   // ==========================================================================
+  // PAUSE ANIMATIONS OFFSCREEN
+  // ==========================================================================
+  const animatedElements = document.querySelectorAll(
+    '.panel-lab, .boton--premium, .boton, .admin-boton--secundario, [data-spotlight], .separador'
+  );
+  
+  if (animatedElements.length > 0) {
+    const animationObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const els = entry.target.querySelectorAll('[style*="animation"], [class*="animation"]');
+        els.forEach((el) => {
+          el.style.animationPlayState = entry.isIntersecting ? 'running' : 'paused';
+        });
+        // Also check the element itself
+        if (entry.target.style.animation) {
+          entry.target.style.animationPlayState = entry.isIntersecting ? 'running' : 'paused';
+        }
+      });
+    }, {
+      rootMargin: '100px',
+      threshold: 0
+    });
+
+    animatedElements.forEach((el) => animationObserver.observe(el));
+  }
+
+  // ==========================================================================
   // SCROLL REVEALS - IntersectionObserver fallback
   // ==========================================================================
   const revealElements = document.querySelectorAll('.reveal, .reveal--fast, .reveal--slow, .reveal--stagger > *');

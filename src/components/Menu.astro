@@ -44,10 +44,9 @@ function activo(href: string) {
   // Sliding menu indicator
   const menu = document.querySelector('.menu__enlaces');
   const indicator = menu?.querySelector('.menu__indicator');
-  const links = menu?.querySelectorAll('a[aria-current="page"]');
   
   function positionIndicator() {
-    if (!menu || !indicator) return;
+    if (!menu || !(indicator instanceof HTMLElement)) return;
     
     const activeLink = menu.querySelector('a[aria-current="page"]');
     if (!activeLink) {
@@ -58,7 +57,6 @@ function activo(href: string) {
     const rect = activeLink.getBoundingClientRect();
     const menuRect = menu.getBoundingClientRect();
     const x = rect.left - menuRect.left;
-    const width = rect.width;
     
     indicator.style.setProperty('--indicator-x', `${x}px`);
     indicator.style.setProperty('--indicator-scale', '1');
