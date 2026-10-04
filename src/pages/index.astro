@@ -40,8 +40,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
       <h1 id="inicio-titulo">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</h1>
       <div class="portada__acciones portada--hero__acciones">
-        <a class="boton" href="/guias/">Explorar guías</a>
-        <a class="boton boton--secundario" href="/herramientas/">Explorar herramientas</a>
+        <a class="boton boton--premium" href="/guias/">Explorar guías</a>
+        <a class="boton boton--ghost" href="/herramientas/">Explorar herramientas</a>
       </div>
       <div class="portada--hero__scroll" aria-hidden="true">
         <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
@@ -66,7 +66,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           Reconocimiento, enumeración y explotación con autorización explícita. El adelanto de cada guía
           es público; la marcha completa va en PDF.
         </p>
-        <a class="boton boton--red" href="/guias/?equipo=red">Ver guías RED</a>
+        <a class="boton boton--ghost chip--red chip--pulse" href="/guias/?equipo=red"Ver guías RED</a>
       </article>
 
       <article class="equipo equipo--blue">
@@ -76,7 +76,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           Detección, validación y endurecimiento. Guías gratuitas y abiertas para que el equipo defensivo
           pueda practicar sin fricción.
         </p>
-        <a class="boton" href="/guias/?equipo=blue">Ver guías BLUE</a>
+        <a class="boton boton--ghost chip--blue" href="/guias/?equipo=blue">Ver guías BLUE</a>
       </article>
     </div>
   </section>

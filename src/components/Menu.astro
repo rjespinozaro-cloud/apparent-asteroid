@@ -27,7 +27,7 @@ function activo(href: string) {
   <ul class="menu__enlaces">
     {enlaces.map((enlace) => (
       <li>
-        <a href={enlace.href} aria-current={activo(enlace.href) ? 'page' : undefined}>{enlace.texto}</a>
+        <a class="link--premium" href={enlace.href} aria-current={activo(enlace.href) ? 'page' : undefined}>{enlace.texto}</a>
       </li>
     ))}
     <li class="menu__buscar">
