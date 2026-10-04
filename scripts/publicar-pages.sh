@@ -14,17 +14,24 @@ TMP="$(mktemp -d)"; WT="$TMP/gh-pages"; MIR="$TMP/mirror"; SRV=""
 limpiar() { [ -n "$SRV" ] && kill "$SRV" 2>/dev/null || true; git worktree remove --force "$WT" 2>/dev/null || true; rm -rf "$TMP"; git worktree prune 2>/dev/null || true; }
 trap limpiar EXIT
 PAGES_BUILD=1 CLOUDFLARE_REMOTE=true npm run build
-ESTATICO="$RAIZ/dist/client/apparent-asteroid"
-[ -f "$ESTATICO/index.html" ] || { echo 'ERROR: el build Pages no generó index.html' >&2; exit 1; }
+ESTATICO="$RAIZ/dist/client"
+RUTA="/apparent-asteroid/"
+[ -f "$ESTATICO/apparent-asteroid/index.html" ] || { echo 'ERROR: el build Pages no generó index.html' >&2; exit 1; }
 PUERTO=""
 for p in 8811 8812 8813 8814 8815; do
   (exec 3<>"/dev/tcp/127.0.0.1/$p") 2>/dev/null || { PUERTO="$p"; break; }
 done
 [ -n "$PUERTO" ] || { echo 'ERROR: sin puerto libre 8811-8815' >&2; exit 1; }
 python3 -m http.server "$PUERTO" --directory "$ESTATICO" >/dev/null 2>&1 & SRV=$!
-listo=0; for _ in $(seq 1 30); do curl -sf -o /dev/null "http://127.0.0.1:$PUERTO/" && { listo=1; break; } || sleep 1; done
+listo=0; for _ in $(seq 1 30); do curl -sf -o /dev/null "http://127.0.0.1:$PUERTO$RUTA" && { listo=1; break; } || sleep 1; done
 [ "$listo" = 1 ] || { echo 'ERROR: el servidor estático no respondió' >&2; exit 1; }
-wget --mirror --convert-links --adjust-extension --page-requisites --no-parent --no-host-directories --no-verbose -P "$MIR" "http://127.0.0.1:$PUERTO/" "http://127.0.0.1:$PUERTO/404.html"
+wget --mirror --convert-links --adjust-extension --page-requisites --no-parent --no-host-directories --no-verbose -P "$MIR" "http://127.0.0.1:$PUERTO$RUTA" "http://127.0.0.1:$PUERTO${RUTA}404.html"
+# El build usa base (/apparent-asteroid): el espejo cae en un subdir, se sube un nivel.
+SUB="$MIR/apparent-asteroid"
+[ -f "$SUB/index.html" ] || { echo 'ERROR: el espejo no contiene index.html' >&2; exit 1; }
+shopt -s dotglob nullglob
+mv "$SUB"/* "$MIR/"
+rmdir "$SUB"
 kill "$SRV"; SRV=""; wait 2>/dev/null || true
 rm -rf "$MIR/admin" "$MIR/api"
 fugas=$(grep -rl "localhost\|127\.0\.0\.1" "$MIR" --include='*.html' --include='*.xml' --include='*.txt' --include='*.json' || true)
