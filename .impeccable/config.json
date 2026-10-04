@@ -72,6 +72,42 @@
         ],
         "createdAt": "2026-10-04T22:24:59.898Z",
         "reason": "Barras funcionales de severidad en alertas y timeline de actividad, no decoración"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/pages/index.astro"
+        ],
+        "createdAt": "2026-10-04T22:52:57.685Z",
+        "reason": "Wordmark de marca con degradado RED-blanco-BLUE exigido por el brief de portada"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "src/pages/index.astro"
+        ],
+        "createdAt": "2026-10-04T22:52:57.691Z",
+        "reason": "Glow bicolor del CTA exigido por el brief (dualidad RED/BLUE)"
+      },
+      {
+        "rule": "radial-halo",
+        "value": "*",
+        "files": [
+          "src/pages/index.astro"
+        ],
+        "createdAt": "2026-10-04T22:52:57.697Z",
+        "reason": "Auroras RED/BLUE que enmarcan el logo exigidas por el brief"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "src/pages/index.astro"
+        ],
+        "createdAt": "2026-10-04T22:52:57.703Z",
+        "reason": "Grid técnico de laboratorio exigido por el brief"
       }
     ]
   }

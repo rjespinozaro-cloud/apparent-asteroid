@@ -6,7 +6,8 @@ import type { APIContext } from 'astro';
 export const prerender = false;
 
 const PAGINAS_ESTATICAS = [
-  { ruta: '/', prioridad: '1.0', frecuencia: 'weekly' },
+  { ruta: '/', prioridad: '0.8', frecuencia: 'weekly' },
+  { ruta: '/inicio/', prioridad: '1.0', frecuencia: 'weekly' },
   { ruta: '/guias/', prioridad: '0.9', frecuencia: 'weekly' },
   { ruta: '/herramientas/', prioridad: '0.8', frecuencia: 'weekly' },
   { ruta: '/aviso-legal/', prioridad: '0.3', frecuencia: 'yearly' },

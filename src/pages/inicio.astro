@@ -1,0 +1,137 @@
+---
+import Base from '../layouts/Base.astro';
+import Nota from '../components/Nota.astro';
+import TarjetaGuia from '../components/TarjetaGuia.astro';
+import { getDatabase, listarHerramientasPublicadas, listarUltimasGuias } from '../lib/db.js';
+import { plural } from '../lib/utils/texto.js';
+import { nombreHerramienta } from '../lib/vocabulario.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const database = getDatabase(env);
+const [ultimas, herramientas] = await Promise.all([
+  listarUltimasGuias(database, 6),
+  listarHerramientasPublicadas(database),
+]);
+
+const destacadas = herramientas.slice(0, 6);
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+---
+
+<Base clase="page-enter">
+  <section class="portada portada--hero" aria-labelledby="inicio-titulo">
+    <div class="portada--hero__bg" aria-hidden="true">
+      <div class="portada--hero__glow portada--hero__glow--red"></div>
+      <div class="portada--hero__glow portada--hero__glow--blue"></div>
+      <div class="portada--hero__grid"></div>
+      <div class="portada--hero__scrim"></div>
+    </div>
+    <div class="portada--hero__contenido">
+      <img src="/logo.png" alt="JOANIX GUIDES" width="480" height="240" fetchpriority="high" decoding="async" class="portada--hero__logo" />
+      <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
+      <h1 id="inicio-titulo" class="decodificando" data-text="Aprende seguridad ofensiva y defensiva desde una misma plataforma.">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</h1>
+      <p class="portada--hero__descriptor">
+        <span class="cursor-blink" aria-hidden="true"></span>
+      </p>
+      <div class="portada__acciones portada--hero__acciones">
+        <a class="boton--premium" href="/guias/">Explorar guías</a>
+        <a class="boton--ghost" href="/herramientas/">Explorar herramientas</a>
+      </div>
+      <div class="portada--hero__scroll" aria-hidden="true">
+        <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
+        <span class="portada--hero__scroll-line"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion reveal" aria-labelledby="equipos-titulo">
+    <div class="seccion__cabecera">
+      <div>
+        <p class="eyebrow">Dos claves</p>
+        <h2 class="seccion__titulo" id="equipos-titulo">El mismo escenario, dos lecturas</h2>
+      </div>
+    </div>
+
+    <div class="rejilla-equipos reveal--stagger">
+      <article class="equipo equipo--red">
+        <p class="equipo__clave">RED</p>
+        <h3 class="equipo__titulo">Ofensiva</h3>
+        <p>
+          Reconocimiento, enumeración y explotación con autorización explícita. El adelanto de cada guía
+          es público; la marcha completa va en PDF.
+        </p>
+        <a class="boton--ghost chip--red chip--pulse" href="/guias/?equipo=red">Ver guías RED</a>
+      </article>
+
+      <article class="equipo equipo--blue">
+        <p class="equipo__clave">BLUE</p>
+        <h3 class="equipo__titulo">Defensa</h3>
+        <p>
+          Detección, validación y endurecimiento. Guías gratuitas y abiertas para que el equipo defensivo
+          pueda practicar sin fricción.
+        </p>
+        <a class="boton--ghost chip--blue chip--pulse" href="/guias/?equipo=blue">Ver guías BLUE</a>
+      </article>
+    </div>
+  </section>
+
+  {destacadas.length > 0 && (
+    <section class="seccion reveal" aria-labelledby="herramientas-titulo">
+      <div class="seccion__cabecera">
+        <div>
+          <p class="eyebrow">Explorador</p>
+          <h2 class="seccion__titulo" id="herramientas-titulo">Herramientas documentadas</h2>
+        </div>
+        <a class="link--premium" href="/herramientas/">Ver todas →</a>
+      </div>
+      <ul class="lista-herramientas">
+        {destacadas.map((item) => (
+          <li class="lista-herramientas__item">
+            <a href={`/herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+            <span class="lista-herramientas__conteo">{plural(item.total, 'guía', 'guías')}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {ultimas.length > 0 && (
+    <section class="seccion reveal" aria-labelledby="ultimas-titulo">
+      <div class="seccion__cabecera">
+        <div>
+          <p class="eyebrow">Recién editado</p>
+          <h2 class="seccion__titulo" id="ultimas-titulo">Últimas guías</h2>
+        </div>
+        <a class="link--premium" href="/guias/">Ver catálogo completo →</a>
+      </div>
+      <ul class="rejilla-tarjetas reveal--stagger">
+        {ultimas.map((guia) => (
+          <li><TarjetaGuia guia={guia} /></li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="seccion reveal" aria-labelledby="metodo-titulo">
+    <div>
+      <p class="eyebrow">Método</p>
+      <h2 class="seccion__titulo" id="metodo-titulo">Cómo se escribe cada guía</h2>
+    </div>
+    <div class="rejilla-notas">
+      <Nota titulo="Entorno" variante="neutra">
+        Cada guía declara el laboratorio mínimo, los datos de entrada y el resultado esperado antes de
+        mostrar el primer comando.
+      </Nota>
+      <Nota titulo="Interpretación" variante="azul">
+        No basta con ejecutar: cada salida se interpreta y se conecta con la señal que debería ver el
+        lado defensivo.
+      </Nota>
+      <Nota titulo="Legalidad" variante="roja">
+        Todo el material es educativo y va dirigido a redes propias o a sistemas con autorización
+        escrita.
+      </Nota>
+    </div>
+  </section>
+</Base>
