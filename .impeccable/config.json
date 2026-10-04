@@ -1,0 +1,16 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "brand-gradient",
+        "value": "*",
+        "files": [
+          "src/components/Hero.astro"
+        ],
+        "createdAt": "2026-10-04T19:19:15.962Z"
+      }
+    ]
+  }
+}
