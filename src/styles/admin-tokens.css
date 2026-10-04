@@ -1,0 +1,107 @@
+/**
+ * Admin tokens - Light theme with own color scheme
+ * Completely independent from public Cyber-Premium theme
+ */
+
+:root {
+  /* Admin color scheme - Light only */
+  color-scheme: light;
+
+  /* Surfaces */
+  --adm-bg: #F6F7F9;
+  --adm-surface: #FFFFFF;
+  --adm-surface-hover: #F0F1F4;
+  --adm-border: #E6E8EC;
+  --adm-border-strong: #D0D5DD;
+
+  /* Text */
+  --adm-text: #111827;
+  --adm-text-muted: #5B6472;
+  --adm-text-subtle: #98A2B3;
+
+  /* Yellow accent (never as text on white) */
+  --adm-yellow: #FACC15;
+  --adm-yellow-strong: #EAB308;
+  --adm-yellow-soft: #FEF9C3;
+  --adm-yellow-border: #FDE047;
+  --adm-on-yellow: #111827;
+
+  /* Team colors for light theme - AA contrast */
+  --adm-red: #BE123C;
+  --adm-red-bg: #FFE4E6;
+  --adm-red-border: #FECACA;
+  --adm-blue: #1D4ED8;
+  --adm-blue-bg: #DBEAFE;
+  --adm-blue-border: #BFDBFE;
+
+  /* Semantic */
+  --adm-success: #16A34A;
+  --adm-success-bg: #DCFCE7;
+  --adm-success-border: #86EFAC;
+  --adm-danger: #DC2626;
+  --adm-danger-bg: #FEE2E2;
+  --adm-danger-border: #FCA5A5;
+  --adm-warning: #B45309;
+  --adm-warning-bg: #FEF3C7;
+  --adm-warning-border: #FDE68A;
+
+  /* Focus */
+  --adm-focus: #111827;
+  --adm-focus-offset: 2px;
+
+  /* Typography */
+  --adm-font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --adm-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', monospace;
+
+  /* Spacing */
+  --adm-space-xs: 0.25rem;
+  --adm-space-sm: 0.5rem;
+  --adm-space-md: 1rem;
+  --adm-space-lg: 1.5rem;
+  --adm-space-xl: 2rem;
+  --adm-space-2xl: 3rem;
+
+  /* Radius */
+  --adm-radius-sm: 0.5rem;
+  --adm-radius-md: 0.75rem;
+  --adm-radius-lg: 1rem;
+
+  /* Shadows - minimal */
+  --adm-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
+  --adm-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --adm-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+
+  /* Transitions */
+  --adm-duration-fast: 150ms;
+  --adm-duration-base: 200ms;
+  --adm-ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* Layout */
+  --adm-sidebar-width: 16rem;
+  --adm-topbar-height: 4rem;
+  --adm-content-max: 80rem;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --adm-duration-fast: 0.01ms;
+    --adm-duration-base: 0.01ms;
+  }
+}
+
+/* High contrast */
+@media (prefers-contrast: more) {
+  :root {
+    --adm-border: #111827;
+    --adm-border-strong: #111827;
+    --adm-text-muted: #111827;
+    --adm-yellow: #B45309;
+    --adm-yellow-strong: #92400E;
+    --adm-red: #991B1B;
+    --adm-blue: #1E3A8A;
+    --adm-success: #14532D;
+    --adm-danger: #991B1B;
+    --adm-warning: #92400E;
+  }
+}

@@ -26,6 +26,7 @@ export {
   listarHerramientasAdmin,
   listarHerramientasPublicadas,
   listarUltimasGuias,
+  obtenerEstadisticasAdmin,
   obtenerGuiaPorId,
   obtenerGuiaPorSlug,
 } from './guias.js';

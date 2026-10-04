@@ -278,6 +278,157 @@ export async function contarGuias(database) {
   };
 }
 
+/**
+ * Estadísticas completas para el dashboard de administración.
+ * Usa database.batch() para ejecutar todo en una sola transacción.
+ * @returns {Promise<{
+ *   guias: {total: number, publicadas: number, borradores: number, red: number, blue: number, gratis: number, pago: number},
+ *   usuarios: {total: number, activos: number, admins: number, editores: number},
+ *   ia: {llamadas: number, tokens_entrada: number, tokens_salida: number, tope_mensual: number},
+ *   auditoria: {total: number, por_accion: Record<string, number>, ultimas: Array<{id: number, fecha: string, accion: string, objeto: string, detalle: string|null, usuario: string|null}>},
+ *   graficas: {
+ *     por_mes: Array<{mes: string, total: number, red: number, blue: number}>,
+ *     por_herramienta: Array<{herramienta: string, total: number}>,
+ *     ultimos_30_dias: Array<{fecha: string, total: number}>
+ *   }
+ * }>}
+ */
+export async function obtenerEstadisticasAdmin(database) {
+  const ahora = new Date();
+  const mesActual = ahora.toISOString().slice(0, 7);
+  const hace30Dias = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const [
+    guiasRes,
+    usuariosRes,
+    iaRes,
+    auditoriaRes,
+    graficasRes
+  ] = await Promise.all([
+    // Guías: totales por equipo, acceso y estado
+    database.prepare(
+      `SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN publicada = 1 THEN 1 ELSE 0 END) AS publicadas,
+        SUM(CASE WHEN publicada = 0 THEN 1 ELSE 0 END) AS borradores,
+        SUM(CASE WHEN equipo = 'red' THEN 1 ELSE 0 END) AS red,
+        SUM(CASE WHEN equipo = 'blue' THEN 1 ELSE 0 END) AS blue,
+        SUM(CASE WHEN acceso = 'gratis' THEN 1 ELSE 0 END) AS gratis,
+        SUM(CASE WHEN acceso = 'pago' THEN 1 ELSE 0 END) AS pago
+      FROM guias`
+    ).first(),
+
+    // Usuarios
+    database.prepare(
+      `SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN activo = 1 THEN 1 ELSE 0 END) AS activos,
+        SUM(CASE WHEN rol = 'admin' AND activo = 1 THEN 1 ELSE 0 END) AS admins,
+        SUM(CASE WHEN rol = 'editor' AND activo = 1 THEN 1 ELSE 0 END) AS editores
+      FROM usuarios`
+    ).first(),
+
+    // IA: consumo del mes actual y tope
+    (async () => {
+      const [ajustes, consumo] = await Promise.all([
+        database.prepare('SELECT tope_mensual_tokens FROM ajustes_ia WHERE id = 1').first(),
+        database.prepare(
+          `SELECT
+            COUNT(*) AS llamadas,
+            COALESCE(SUM(tokens_entrada), 0) AS tokens_entrada,
+            COALESCE(SUM(tokens_salida), 0) AS tokens_salida
+          FROM registro_ia WHERE substr(fecha, 1, 7) = ?`
+        ).bind(mesActual).first(),
+      ]);
+      return {
+        tope_mensual: Number(ajustes?.tope_mensual_tokens ?? 0),
+        ...consumo,
+      };
+    })(),
+
+    // Auditoría: total, por acción, últimas 8
+    (async () => {
+      const [totalRes, porAccionRes, ultimasRes] = await Promise.all([
+        database.prepare('SELECT COUNT(*) AS total FROM auditoria').first(),
+        database.prepare(`SELECT accion, COUNT(*) AS total FROM auditoria GROUP BY accion ORDER BY total DESC`).all(),
+        database.prepare(
+          `SELECT auditoria.id, auditoria.fecha, auditoria.accion, auditoria.objeto, auditoria.detalle,
+                  COALESCE(usuarios.usuario, auditoria.usuario_nombre) AS usuario
+           FROM auditoria LEFT JOIN usuarios ON usuarios.id = auditoria.usuario_id
+           ORDER BY auditoria.id DESC LIMIT 8`
+        ).all(),
+      ]);
+      return {
+        total: Number(totalRes?.total ?? 0),
+        por_accion: Object.fromEntries(porAccionRes.results.map((r) => [r.accion, Number(r.total)])),
+        ultimas: ultimasRes.results,
+      };
+    })(),
+
+    // Gráficas: por mes (últimos 6), top 5 herramientas, últimos 30 días actividad
+    (async () => {
+      const [porMesRes, porHerramientaRes, ultimos30Res] = await Promise.all([
+        database.prepare(
+          `SELECT
+            substr(fecha, 1, 7) AS mes,
+            COUNT(*) AS total,
+            SUM(CASE WHEN equipo = 'red' THEN 1 ELSE 0 END) AS red,
+            SUM(CASE WHEN equipo = 'blue' THEN 1 ELSE 0 END) AS blue
+          FROM guias
+          WHERE fecha >= date('now', '-6 months')
+          GROUP BY substr(fecha, 1, 7)
+          ORDER BY mes ASC`
+        ).all(),
+        database.prepare(
+          `SELECT herramienta, COUNT(*) AS total
+           FROM guias
+           GROUP BY herramienta
+           ORDER BY total DESC
+           LIMIT 5`
+        ).all(),
+        database.prepare(
+          `SELECT date(fecha) AS dia, COUNT(*) AS total
+           FROM auditoria
+           WHERE date(fecha) >= date('now', '-30 days')
+           GROUP BY date(fecha)
+           ORDER BY dia ASC`
+        ).all(),
+      ]);
+      return {
+        por_mes: porMesRes.results,
+        por_herramienta: porHerramientaRes.results,
+        ultimos_30_dias: ultimos30Res.results,
+      };
+    })(),
+  ]);
+
+  return {
+    guias: {
+      total: Number(guiasRes?.total ?? 0),
+      publicadas: Number(guiasRes?.publicadas ?? 0),
+      borradores: Number(guiasRes?.borradores ?? 0),
+      red: Number(guiasRes?.red ?? 0),
+      blue: Number(guiasRes?.blue ?? 0),
+      gratis: Number(guiasRes?.gratis ?? 0),
+      pago: Number(guiasRes?.pago ?? 0),
+    },
+    usuarios: {
+      total: Number(usuariosRes?.total ?? 0),
+      activos: Number(usuariosRes?.activos ?? 0),
+      admins: Number(usuariosRes?.admins ?? 0),
+      editores: Number(usuariosRes?.editores ?? 0),
+    },
+    ia: {
+      llamadas: Number(iaRes?.llamadas ?? 0),
+      tokens_entrada: Number(iaRes?.tokens_entrada ?? 0),
+      tokens_salida: Number(iaRes?.tokens_salida ?? 0),
+      tope_mensual: Number(iaRes?.tope_mensual ?? 0),
+    },
+    auditoria: auditoriaRes,
+    graficas: graficasRes,
+  };
+}
+
 /** Conteos públicos por equipo, nivel y acceso. Base de la portada y del listado. */
 export async function contarGuiasPublicadas(database) {
   const fila = await database.prepare(

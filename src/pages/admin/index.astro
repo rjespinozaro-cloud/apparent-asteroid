@@ -1,129 +1,444 @@
 ---
 import AdminBase from '../../layouts/AdminBase.astro';
 import { env } from 'cloudflare:workers';
-import { contarGuias, contarUsuarios, getDatabase, ultimasAcciones } from '../../lib/db.js';
+import { getDatabase, obtenerEstadisticasAdmin } from '../../lib/db.js';
 import { formatearFechaHora, plural } from '../../lib/utils/texto.js';
 
 export const prerender = false;
 
 const sesion = Astro.locals.admin;
-const database = getDatabase(env);
-const [contenido, usuarios, actividad] = await Promise.all([
-  contarGuias(database),
-  contarUsuarios(database),
-  ultimasAcciones(database, 8),
-]);
-const resumen = {
-  guias: contenido.total,
-  publicadas: contenido.publicadas,
-  borradores: contenido.borradores,
-  herramientas: contenido.herramientas,
-  usuarios,
-  actividad,
-};
 const esAdmin = sesion?.usuario.rol === 'admin';
+const database = getDatabase(env);
+const stats = await obtenerEstadisticasAdmin(database);
+
+const { guias, usuarios, ia, auditoria, graficas } = stats;
+
+const redPct = guias.total > 0 ? Math.round((guias.red / guias.total) * 100) : 0;
+const bluePct = guias.total > 0 ? Math.round((guias.blue / guias.total) * 100) : 0;
+
+const maxPorMes = Math.max(...graficas.por_mes.map((m) => m.total), 1);
+const maxPorHerramienta = Math.max(...graficas.por_herramienta.map((h) => h.total), 1);
+const maxUltimos30 = Math.max(...graficas.ultimos_30_dias.map((d) => d.total), 1);
+
+const borradoresSinAdelanto = guias.borradores; // placeholder - could be refined
+const redSinAdelanto = 0; // would need additional query
+const usuariosBloqueados = 0; // would need additional query
 ---
 
-<AdminBase title="Oficina admin | JOANIX GUIDES">
-  <div class="admin-office">
-    <header class="admin-office__header">
-      <div>
-        <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / CONTROL ROOM</p>
-        <p class="admin-shell__eyebrow">Oficina de administración</p>
-        <h1>Tu centro de operaciones</h1>
-        <p class="admin-shell__intro">Hola, {sesion?.usuario.usuario}. Aquí tienes el estado de tus contenidos y las herramientas de gestión.</p>
-      </div>
-      <a class="link--premium" href="/">Ver portal público</a>
-    </header>
+<AdminBase title="Resumen | JOANIX GUIDES">
+  <slot name="page-title">Resumen</slot>
 
-    <section class="admin-metricas" aria-label="Resumen del contenido">
-      <article class="admin-metrica admin-metrica--blue">
-        <span class="admin-metrica__valor">{resumen.guias}</span>
-        <span class="admin-metrica__etiqueta">Guías en D1</span>
+  <slot name="breadcrumbs">
+    <li aria-current="page">Resumen</li>
+  </slot>
+
+  <div class="admin-content">
+
+    <!-- KPI Cards -->
+    <section class="admin-kpi-grid" aria-label="Indicadores clave">
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{guias.total}</p>
+        <p class="admin-kpi__label">Guías totales</p>
       </article>
-      <article class="admin-metrica">
-        <span class="admin-metrica__valor">{resumen.publicadas}</span>
-        <span class="admin-metrica__etiqueta">Publicadas</span>
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{guias.publicadas}</p>
+        <p class="admin-kpi__label">Publicadas</p>
       </article>
-      <article class="admin-metrica">
-        <span class="admin-metrica__valor">{resumen.herramientas}</span>
-        <span class="admin-metrica__etiqueta">Herramientas</span>
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{guias.borradores}</p>
+        <p class="admin-kpi__label">Borradores</p>
       </article>
-      <article class="admin-metrica">
-        <span class="admin-metrica__valor">{resumen.borradores}</span>
-        <span class="admin-metrica__etiqueta">Borradores</span>
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{guias.red}</p>
+        <p class="admin-kpi__label">Equipo RED ({redPct}%)</p>
       </article>
-      <article class="admin-metrica">
-        <span class="admin-metrica__valor">{resumen.usuarios}</span>
-        <span class="admin-metrica__etiqueta">{plural(resumen.usuarios, 'usuario', 'usuarios')}</span>
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{guias.blue}</p>
+        <p class="admin-kpi__label">Equipo BLUE ({bluePct}%)</p>
       </article>
+
+      {esAdmin && (
+        <>
+          <article class="admin-kpi">
+            <header class="admin-kpi__header">
+              <span class="admin-kpi__icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
+              </span>
+            </header>
+            <p class="admin-kpi__value">{usuarios.total}</p>
+            <p class="admin-kpi__label">Usuarios ({usuarios.activos} activos)</p>
+          </article>
+
+          <article class="admin-kpi">
+            <header class="admin-kpi__header">
+              <span class="admin-kpi__icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+              </span>
+            </header>
+            <p class="admin-kpi__value">{ia.llamadas}</p>
+            <p class="admin-kpi__label">
+              IA: {ia.llamadas} llamadas este mes
+              {ia.tope_mensual > 0 && ` / tope ${ia.tope_mensual.toLocaleString('es-ES')} tokens`}
+            </p>
+          </article>
+        </>
+      )}
     </section>
 
-    <section aria-labelledby="modulos-titulo">
-      <div class="admin-section-heading">
-        <p class="admin-shell__eyebrow">Módulos</p>
-        <h2 id="modulos-titulo">Gestiona tu plataforma</h2>
-      </div>
-      <div class="admin-modulos">
-        <a class="admin-modulo admin-modulo--blue" href="/admin/guias/">
-          <span class="admin-modulo__numero">01</span>
-          <h3>Guías</h3>
-          <p>Busca, filtra y revisa tus contenidos publicados.</p>
-          <span class="admin-modulo__accion">Abrir módulo →</span>
+    <!-- Charts Row 1: Por mes + Donut RED/BLUE -->
+    <div class="admin-grid admin-grid--2">
+      <section class="admin-chart admin-panel" aria-labelledby="chart-mes-title">
+        <header class="admin-chart__header">
+          <h2 id="chart-mes-title" class="admin-chart__title">Guías creadas por mes</h2>
+          <span class="admin-chart__period">Últimos 6 meses</span>
+        </header>
+        {graficas.por_mes.length > 0 ? (
+          <svg class="admin-chart__svg admin-bar-chart" viewBox="0 0 500 200" role="img" aria-label={`Gráfico de barras: guías creadas por mes. ${graficas.por_mes.map((m) => `${m.mes}: ${m.total} guías (${m.red} RED, ${m.blue} BLUE)`).join(', ')}`}>
+            <desc>Barras agrupadas por mes. Eje X: mes. Eje Y: número de guías. Barras azules = equipo BLUE, barras rojas = equipo RED.</desc>
+            <g>
+              {graficas.por_mes.map((m, i) => {
+                const x = 60 + i * 70;
+                const barWidth = 28;
+                const redH = (m.red / maxPorMes) * 140;
+                const blueH = (m.blue / maxPorMes) * 140;
+                const yBase = 180;
+                return (
+                  <g>
+                    <rect class="admin-bar-chart__bar" x={x} y={yBase - blueH} width={barWidth} height={blueH} fill="var(--adm-blue)" rx="2" />
+                    <text class="admin-bar-chart__value" x={x + barWidth / 2} y={yBase - blueH - 4} text-anchor="middle">{m.blue > 0 ? m.blue : ''}</text>
+                    <rect class="admin-bar-chart__bar" x={x + barWidth + 2} y={yBase - redH} width={barWidth} height={redH} fill="var(--adm-red)" rx="2" />
+                    <text class="admin-bar-chart__value" x={x + barWidth + 2 + barWidth / 2} y={yBase - redH - 4} text-anchor="middle">{m.red > 0 ? m.red : ''}</text>
+                    <text class="admin-bar-chart__label" x={x + barWidth + 1} y={yBase + 18} text-anchor="middle">{m.mes.slice(5)}</text>
+                  </g>
+                );
+              })}
+            </g>
+            {/* Y axis */}
+            <line x1="50" y1="40" x2="50" y2="180" stroke="var(--adm-border)" />
+            <text class="admin-bar-chart__label" x="20" y="45" text-anchor="end" dominant-baseline="middle">{maxPorMes}</text>
+            <text class="admin-bar-chart__label" x="20" y="110" text-anchor="end" dominant-baseline="middle">{Math.round(maxPorMes / 2)}</text>
+            <text class="admin-bar-chart__label" x="20" y="175" text-anchor="end" dominant-baseline="middle">0</text>
+            {/* Legend */}
+            <g class="admin-chart__legend" transform="translate(50, 15)">
+              <rect class="admin-chart__legend-color" fill="var(--adm-blue)" />
+              <text x="12" y="9.5" font-size="11" fill="var(--adm-text)">BLUE</text>
+              <rect class="admin-chart__legend-color" x="60" fill="var(--adm-red)" />
+              <text x="72" y="9.5" font-size="11" fill="var(--adm-text)">RED</text>
+            </g>
+          </svg>
+        ) : (
+          <p class="admin-chart__empty">No hay datos de guías por mes.</p>
+        )}
+      </section>
+
+      <section class="admin-chart admin-panel" aria-labelledby="chart-redblue-title">
+        <header class="admin-chart__header">
+          <h2 id="chart-redblue-title" class="admin-chart__title">Reparto RED / BLUE</h2>
+        </header>
+        {guias.total > 0 ? (
+          <svg class="admin-chart__svg admin-donut-chart" viewBox="0 0 200 200" role="img" aria-label={`Gráfico de dona: ${bluePct}% BLUE (${guias.blue} guías), ${redPct}% RED (${guias.red} guías)`}>
+            <desc>Dona con dos segmentos. Azul = equipo BLUE, rojo = equipo RED. Centro muestra total de guías.</desc>
+            <circle
+              cx="100" cy="100" r="70"
+              stroke="var(--adm-blue)"
+              stroke-width="35"
+              fill="none"
+              stroke-dasharray={`${bluePct > 0 ? bluePct * 4.398 : 0} 439.8`}
+              stroke-linecap="round"
+              class="admin-donut-chart__slice"
+            />
+            <circle
+              cx="100" cy="100" r="70"
+              stroke="var(--adm-red)"
+              stroke-width="35"
+              fill="none"
+              stroke-dasharray={`${redPct > 0 ? redPct * 4.398 : 0} 439.8`}
+              stroke-linecap="round"
+              class="admin-donut-chart__slice"
+              style="transform: rotate(-90deg); transform-origin: 100px 100px;"
+            />
+            <g class="admin-donut-chart__center">
+              <text class="admin-donut-chart__total" x="100" y="92">{guias.total}</text>
+              <text class="admin-donut-chart__total-label" x="100" y="114">guías totales</text>
+            </g>
+          </svg>
+          <div class="admin-chart__legend">
+            <span class="admin-chart__legend-item">
+              <span class="admin-chart__legend-color" style="background: var(--adm-blue);"></span>
+              BLUE: {guias.blue} ({bluePct}%)
+            </span>
+            <span class="admin-chart__legend-item">
+              <span class="admin-chart__legend-color" style="background: var(--adm-red);"></span>
+              RED: {guias.red} ({redPct}%)
+            </span>
+          </div>
+        ) : (
+          <p class="admin-chart__empty">No hay guías para mostrar el reparto.</p>
+        )}
+      </section>
+    </div>
+
+    <!-- Charts Row 2: Top 5 herramientas + Auditoría 30 días -->
+    <div class="admin-grid admin-grid--2">
+      <section class="admin-chart admin-panel" aria-labelledby="chart-herramientas-title">
+        <header class="admin-chart__header">
+          <h2 id="chart-herramientas-title" class="admin-chart__title">Top 5 herramientas</h2>
+        </header>
+        {graficas.por_herramienta.length > 0 ? (
+          <svg class="admin-chart__svg admin-hbar-chart" viewBox="0 0 500 200" role="img" aria-label={`Barras horizontales: ${graficas.por_herramienta.map((h) => `${h.herramienta}: ${h.total}`).join(', ')}`}>
+            <desc>Barras horizontales. Eje Y: herramienta. Eje X: número de guías. Ordenadas de mayor a menor.</desc>
+            <g>
+              {graficas.por_herramienta.map((h, i) => {
+                const y = 30 + i * 30;
+                const w = (h.total / maxPorHerramienta) * 380;
+                return (
+                  <g>
+                    <rect class="admin-hbar-chart__bar" x={40} y={y} width={w} height={20} fill="var(--adm-blue)" rx="2" />
+                    <text class="admin-hbar-chart__label" x={36} y={y + 14} text-anchor="end">{h.herramienta.length > 18 ? h.herramienta.slice(0, 18) + '…' : h.herramienta}</text>
+                    <text class="admin-hbar-chart__value" x={40 + w + 8} y={y + 14} text-anchor="start">{h.total}</text>
+                  </g>
+                );
+              })}
+            </g>
+          </svg>
+        ) : (
+          <p class="admin-chart__empty">No hay herramientas con guías.</p>
+        )}
+      </section>
+
+      {esAdmin && (
+        <section class="admin-chart admin-panel" aria-labelledby="chart-auditoria-title">
+          <header class="admin-chart__header">
+            <h2 id="chart-auditoria-title" class="admin-chart__title">Actividad de auditoría (30 días)</h2>
+          </header>
+          {graficas.ultimos_30_dias.length > 0 ? (
+            <svg class="admin-chart__svg admin-line-chart" viewBox="0 0 500 100" role="img" aria-label={`Línea de actividad: ${graficas.ultimos_30_dias.map((d) => `${d.dia}: ${d.total}`).join(', ')}`}>
+              <desc>Gráfico de línea temporal. Eje X: día. Eje Y: número de acciones. Puntos interactivos.</desc>
+              <defs>
+                <linearGradient id="line-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--adm-blue)" stop-opacity="0.3" />
+                  <stop offset="100%" stop-color="var(--adm-blue)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <g>
+                {/* Area */}
+                <path
+                  class="admin-line-chart__line"
+                  stroke="url(#line-gradient)"
+                  stroke-width="0"
+                  fill="url(#line-gradient)"
+                  d={`M${40},${80 - (graficas.ultimos_30_dias[0]?.total / maxUltimos30) * 60 || 80} ${graficas.ultimos_30_dias.map((d, i) => {
+                    const x = 40 + i * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1));
+                    const y = 80 - (d.total / maxUltimos30) * 60;
+                    return `L${x},${y}`;
+                  }).join(' ')} L${40 + (graficas.ultimos_30_dias.length - 1) * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1))},80 Z`}
+                />
+                {/* Line */}
+                <path
+                  class="admin-line-chart__line"
+                  stroke="var(--adm-blue)"
+                  d={`M${40},${80 - (graficas.ultimos_30_dias[0]?.total / maxUltimos30) * 60 || 80} ${graficas.ultimos_30_dias.map((d, i) => {
+                    const x = 40 + i * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1));
+                    const y = 80 - (d.total / maxUltimos30) * 60;
+                    return `L${x},${y}`;
+                  }).join(' ')}`}
+                />
+                {/* Points */}
+                {graficas.ultimos_30_dias.map((d, i) => {
+                  const x = 40 + i * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1));
+                  const y = 80 - (d.total / maxUltimos30) * 60;
+                  return (
+                    <circle class="admin-line-chart__point" cx={x} cy={y} fill="var(--adm-blue)" />
+                  );
+                })}
+              </g>
+            </svg>
+          ) : (
+            <p class="admin-chart__empty">No hay actividad en los últimos 30 días.</p>
+          )}
+        </section>
+      )}
+    </div>
+
+    <!-- Panels: Actividad reciente, Pendientes, Acciones rápidas -->
+    <div class="admin-grid admin-grid--2">
+      <section class="admin-panel" aria-labelledby="actividad-title">
+        <header class="admin-panel__header">
+          <h2 id="actividad-title" class="admin-panel__titulo">Actividad reciente</h2>
+          <a class="admin-boton admin-boton--plano" href="/admin/auditoria/">Ver todo</a>
+        </header>
+        <div class="admin-panel__body">
+          {auditoria.ultimas.length > 0 ? (
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Objeto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditoria.ultimas.map((registro) => (
+                    <tr>
+                      <td><time>{formatearFechaHora(registro.fecha)}</time></td>
+                      <td>{registro.usuario ?? 'sistema'}</td>
+                      <td><code>{registro.accion}</code></td>
+                      <td><code>{registro.objeto}</code></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="admin-empty">Todavía no hay acciones registradas.</p>
+          )}
+        </div>
+      </section>
+
+      <section class="admin-panel" aria-labelledby="pendientes-title">
+        <header class="admin-panel__header">
+          <h2 id="pendientes-title" class="admin-panel__titulo">Pendientes</h2>
+        </header>
+        <div class="admin-panel__body">
+          <ul class="admin-historial">
+            {guias.borradores > 0 && (
+              <li class="admin-historial__item">
+                <p class="admin-historial__meta">
+                  <span class="admin-badge admin-badge--yellow">{guias.borradores} borrador{guias.borradores === 1 ? '' : 'es'}</span>
+                </p>
+                <p>Guías sin publicar. <a class="admin-boton admin-boton--plano" href="/admin/guias/?estado=borrador">Revisar</a></p>
+              </li>
+            )}
+            {esAdmin && usuarios.total > usuarios.activos && (
+              <li class="admin-historial__item">
+                <p class="admin-historial__meta">
+                  <span class="admin-badge admin-badge--red">{usuarios.total - usuarios.activos} inactivo{usuarios.total - usuarios.activos === 1 ? '' : 's'}</span>
+                </p>
+                <p>Usuarios desactivados. <a class="admin-boton admin-boton--plano" href="/admin/usuarios/">Gestionar</a></p>
+              </li>
+            )}
+            {esAdmin && ia.tope_mensual > 0 && ia.tokens_entrada + ia.tokens_salida > ia.tope_mensual * 0.8 && (
+              <li class="admin-historial__item">
+                <p class="admin-historial__meta">
+                  <span class="admin-badge admin-badge--yellow">Consumo IA al {( (ia.tokens_entrada + ia.tokens_salida) / ia.tope_mensual * 100 ).toFixed(0)}%</span>
+                </p>
+                <p>Cerca del tope mensual. <a class="admin-boton admin-boton--plano" href="/admin/ajustes-ia/">Ajustar tope</a></p>
+              </li>
+            )}
+            {!guias.borradores && !(esAdmin && usuarios.total > usuarios.activos) && !(esAdmin && ia.tope_mensual > 0 && ia.tokens_entrada + ia.tokens_salida > ia.tope_mensual * 0.8) && (
+              <li class="admin-historial__item">
+                <p class="admin-historial__meta"><span class="admin-badge admin-badge--green">Todo al día</span></p>
+                <p>No hay elementos pendientes de revisión.</p>
+              </li>
+            )}
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <section class="admin-panel" aria-labelledby="acciones-title">
+      <header class="admin-panel__header">
+        <h2 id="acciones-title" class="admin-panel__titulo">Acciones rápidas</h2>
+      </header>
+      <div class="admin-panel__body admin-acciones">
+        <a class="admin-boton admin-boton--primary" href="/admin/guia-nueva/">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Nueva guía
         </a>
-        <a class="admin-modulo" href="/admin/guia-nueva/">
-          <span class="admin-modulo__numero">02</span>
-          <h3>Nueva guía</h3>
-          <p>Crea un borrador BLUE desde el editor.</p>
-          <span class="admin-modulo__accion">Crear contenido →</span>
+        <a class="admin-boton admin-boton--secondary" href="/admin/guias/">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          Ver guías
         </a>
         {esAdmin && (
           <>
-            <a class="admin-modulo" href="/admin/ajustes-ia/">
-              <span class="admin-modulo__numero">03</span>
-              <h3>Ajustes IA</h3>
-              <p>Configura el prompt, proveedor y límites de uso.</p>
-              <span class="admin-modulo__accion">Configurar IA →</span>
+            <a class="admin-boton admin-boton--secondary" href="/admin/usuarios/">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+              </svg>
+              Gestionar usuarios
             </a>
-            <a class="admin-modulo" href="/admin/usuarios/">
-              <span class="admin-modulo__numero">04</span>
-              <h3>Usuarios</h3>
-              <p>Administra accesos, roles y cuentas activas.</p>
-              <span class="admin-modulo__accion">Gestionar usuarios →</span>
-            </a>
-            <a class="admin-modulo" href="/admin/auditoria/">
-              <span class="admin-modulo__numero">05</span>
-              <h3>Auditoría</h3>
-              <p>Consulta las acciones recientes del panel.</p>
-              <span class="admin-modulo__accion">Ver registro →</span>
+            <a class="admin-boton admin-boton--secondary" href="/admin/ajustes-ia/">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 1 4.6 9a1.65 1.65 0 0 1 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 1-.33 1.82V9a1.65 1.65 0 0 1 1.51-1H9a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 1 1 1.51 1.65 1.65 0 0 1 1.82.33l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06.06a1.65 1.65 0 0 1-.33 1.82V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 1 1 1.51 1.65 1.65 0 0 1 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l-.06-.06A1.65 1.65 0 0 1 15 4.6 1.65 1.65 0 0 1 16.5 3H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              Ajustes IA
             </a>
           </>
         )}
+        <a class="admin-boton admin-boton--plano" href="/" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+          Ver portal
+        </a>
       </div>
     </section>
 
-    <section class="admin-actividad" aria-labelledby="actividad-titulo">
-      <div class="admin-section-heading">
-        <p class="admin-shell__eyebrow">Trazabilidad</p>
-        <h2 id="actividad-titulo">Actividad reciente</h2>
-      </div>
-      {resumen.actividad.length > 0 ? (
-        <div class="admin-tabla-wrap">
-          <table class="admin-tabla">
-            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Objeto</th></tr></thead>
-            <tbody>
-              {resumen.actividad.map((registro) => (
-                <tr>
-                  <td>{formatearFechaHora(registro.fecha)}</td>
-                  <td>{registro.usuario ?? 'sistema'}</td>
-                  <td>{registro.accion}</td>
-                  <td>{registro.objeto}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : <p class="admin-empty">Todavía no hay acciones registradas.</p>}
-    </section>
   </div>
 </AdminBase>

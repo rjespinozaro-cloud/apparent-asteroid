@@ -1,6 +1,6 @@
 ---
-import AdminBase from '../../../layouts/AdminBase.astro';
-import { getDatabase, listarGuiasAdmin, listarHerramientasAdmin } from '../../../lib/db.js';
+import AdminBase from '../../layouts/AdminBase.astro';
+import { getDatabase, listarGuiasAdmin, listarHerramientasAdmin } from '../../lib/db.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -39,18 +39,30 @@ const enlacePagina = (pagina: number) => {
 ---
 
 <AdminBase title="Guías | JOANIX GUIDES">
-  <div class="admin-office">
-    <header class="admin-office__header">
+  <slot name="page-title">Guías</slot>
+
+  <slot name="breadcrumbs">
+    <li><a href="/admin/">Resumen</a></li>
+    <li aria-current="page">Guías</li>
+  </slot>
+
+  <div class="admin-content">
+    <header class="admin-section__header">
       <div>
-        <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / CONTROL ROOM</p>
-        <p class="admin-shell__eyebrow">Biblioteca</p>
-        <h1>Guías</h1>
-        <p class="admin-shell__intro">{total} guía{total === 1 ? '' : 's'} en la base de datos.</p>
+        <p class="admin-section__eyebrow">Biblioteca</p>
+        <h1 class="admin-section__title">Guías</h1>
+        <p class="admin-section__nota">{total} guía{total === 1 ? '' : 's'} en la base de datos.</p>
       </div>
-      <a class="admin-office__salir" href="/admin/guia-nueva/">Nueva guía</a>
+      <a class="admin-boton admin-boton--primary" href="/admin/guia-nueva/">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Nueva guía
+      </a>
     </header>
 
-    <form class="admin-filtros" method="get" action="/admin/guias/">
+    <form class="admin-filtros admin-panel__body--compact" method="get" action="/admin/guias/">
       <div class="admin-form__campo">
         <label for="q">Buscar</label>
         <input id="q" name="q" type="search" value={filtros.busqueda} placeholder="Título o slug" />
@@ -86,15 +98,15 @@ const enlacePagina = (pagina: number) => {
           <option value="titulo" selected={filtros.orden === 'titulo'}>Título A-Z</option>
         </select>
       </div>
-      <div class="admin-filtros__acciones">
-        <button type="submit">Filtrar</button>
+      <div class="admin-form__actions">
+        <button type="submit" class="admin-boton admin-boton--secondary">Filtrar</button>
         <a class="admin-boton admin-boton--plano" href="/admin/guias/">Limpiar</a>
       </div>
     </form>
 
     {filas.length > 0 ? (
-      <div class="admin-tabla-wrap">
-        <table class="admin-tabla">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
           <thead>
             <tr><th>Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado</th><th>Fecha</th></tr>
           </thead>
@@ -103,7 +115,7 @@ const enlacePagina = (pagina: number) => {
               <tr>
                 <td><a href={`/admin/guias/${fila.id}/`}>{fila.titulo}</a></td>
                 <td><code>{fila.slug}</code></td>
-                <td><span class={`admin-etiqueta admin-etiqueta--${fila.equipo}`}>{fila.equipo.toUpperCase()}</span></td>
+                <td><span class={`admin-badge admin-badge--${fila.equipo}`}>{fila.equipo.toUpperCase()}</span></td>
                 <td>{fila.herramienta}</td>
                 <td>{fila.publicada ? 'Publicada' : 'Borrador'}</td>
                 <td>{fila.fecha}</td>

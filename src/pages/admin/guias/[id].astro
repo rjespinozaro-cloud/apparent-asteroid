@@ -23,17 +23,29 @@ const herramientas = await listarHerramientasAdmin(database);
 ---
 
 <AdminBase title={`Editar ${guia.titulo} | JOANIX GUIDES`}>
-  <div class="admin-office">
-    <header class="admin-office__header">
+  <slot name="page-title">{guia.titulo}</slot>
+
+  <slot name="breadcrumbs">
+    <li><a href="/admin/">Resumen</a></li>
+    <li><a href="/admin/guias/">Guías</a></li>
+    <li aria-current="page">{guia.titulo}</li>
+  </slot>
+
+  <div class="admin-content">
+    <header class="admin-section__header">
       <div>
-        <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / CONTROL ROOM</p>
-        <p class="admin-shell__eyebrow">Biblioteca / Edición</p>
-        <h1>{guia.titulo}</h1>
-        <p class="admin-shell__intro">
-          <code>{guia.slug}</code> · {guia.publicada ? 'Publicada' : 'Borrador'} · actualizada {guia.actualizado_en}
-        </p>
+        <p class="admin-section__eyebrow">Biblioteca / Edición</p>
+        <h1 class="admin-section__title">{guia.titulo}</h1>
+        <p class="admin-section__nota"><code>{guia.slug}</code> · {guia.publicada ? 'Publicada' : 'Borrador'} · actualizada {guia.actualizado_en}</p>
       </div>
-      <a class="admin-office__salir" href={`/guias/${guia.slug}/`}>Ver en el portal</a>
+      <a class="admin-boton admin-boton--secondary" href={`/guias/${guia.slug}/`} target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
+        Ver en el portal
+      </a>
     </header>
 
     <EditorGuia

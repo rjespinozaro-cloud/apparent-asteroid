@@ -48,18 +48,23 @@ const enlacePagina = (pagina: number) => {
 ---
 
 <AdminBase title="Auditoría | JOANIX GUIDES">
-  <div class="admin-office">
-    <header class="admin-office__header">
+  <slot name="page-title">Auditoría</slot>
+
+  <slot name="breadcrumbs">
+    <li><a href="/admin/">Resumen</a></li>
+    <li aria-current="page">Auditoría</li>
+  </slot>
+
+  <div class="admin-content">
+    <header class="admin-section__header">
       <div>
-        <p class="admin-shell__marca"><strong>JOANIX GUIDES</strong> / CONTROL ROOM</p>
-        <p class="admin-shell__eyebrow">Trazabilidad</p>
-        <h1>Auditoría</h1>
-        <p class="admin-shell__intro">{total} acción{total === 1 ? '' : 'es'} registrada{total === 1 ? '' : 's'}. Este registro es de solo lectura.</p>
+        <p class="admin-section__eyebrow">Trazabilidad</p>
+        <h1 class="admin-section__title">Auditoría</h1>
+        <p class="admin-section__nota">{total} acción{total === 1 ? '' : 'es'} registrada{total === 1 ? '' : 's'}. Este registro es de solo lectura.</p>
       </div>
-      <a class="admin-office__salir" href="/admin/">Volver al panel</a>
     </header>
 
-    <form class="admin-filtros" method="get" action="/admin/auditoria/">
+    <form class="admin-filtros admin-panel__body--compact" method="get" action="/admin/auditoria/">
       <div class="admin-form__campo">
         <label for="accion">Acción</label>
         <select id="accion" name="accion">
@@ -89,14 +94,14 @@ const enlacePagina = (pagina: number) => {
         <label for="hasta">Hasta</label>
         <input id="hasta" name="hasta" type="date" value={filtros.hasta} />
       </div>
-      <div class="admin-filtros__acciones">
-        <button type="submit">Filtrar</button>
+      <div class="admin-form__actions">
+        <button type="submit" class="admin-boton admin-boton--secondary">Filtrar</button>
         <a class="admin-boton admin-boton--plano" href="/admin/auditoria/">Limpiar</a>
       </div>
     </form>
 
     {registros.length > 0 ? (
-      <div class="admin-tabla-wrap">
+      <div class="admin-table-wrap">
         <table class="admin-tabla">
           <thead>
             <tr><th>#</th><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Objeto</th><th>Detalle</th></tr>
@@ -105,7 +110,7 @@ const enlacePagina = (pagina: number) => {
             {registros.map((registro: (typeof registros)[number]) => (
               <tr>
                 <td>{registro.id}</td>
-                <td>{registro.fecha}</td>
+                <td><time>{registro.fecha}</time></td>
                 <td>{registro.usuario ?? 'sistema'}</td>
                 <td><code>{registro.accion}</code></td>
                 <td><code>{registro.objeto}</code></td>
