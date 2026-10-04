@@ -68,21 +68,12 @@ function cabecerasSeguras(response) {
   }
 
   if (!headers.has('Content-Security-Policy')) {
-    // Solo en desarrollo: dejamos un CSP mínimo sin script-src/style-src
-    // para evitar duplicidad con el CSP integrado de Astro.
+    // Solo dejamos directivas que no soporta un meta CSP
     headers.set(
       'Content-Security-Policy',
       [
-        "default-src 'self'",
-        "img-src 'self' data:",
-        "font-src 'self'",
-        "connect-src 'self'",
-        "base-uri 'self'",
-        "form-action 'self'",
         "frame-ancestors 'none'",
-        "object-src 'none'",
-        "manifest-src 'self'",
-        'upgrade-insecure-requests',
+        "upgrade-insecure-requests"
       ].join('; '),
     );
   }
