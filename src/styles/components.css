@@ -430,6 +430,7 @@ a.tarjeta:hover .tarjeta__titulo {
   margin-bottom: var(--espacio-m);
   max-width: none;
   padding-inline-end: var(--espacio-2xs);
+  position: relative;
 }
 
 .bloque-terminal pre {
@@ -440,13 +441,34 @@ a.tarjeta:hover .tarjeta__titulo {
 }
 
 .copiar-codigo {
-  background: var(--papel-contraste);
-  border-color: var(--linea-fuerte);
+  background: transparent;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-s);
   color: var(--tinta-suave);
+  cursor: pointer;
   font-family: var(--fuente-mono);
   font-size: var(--texto-xs);
   min-height: 2rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.6rem;
+  transition: border-color 160ms var(--curva), color 160ms var(--curva), background 160ms var(--curva), box-shadow 160ms var(--curva);
+}
+
+.copiar-codigo:hover {
+  border-color: var(--violet-300);
+  color: var(--text);
+  background: var(--papel-hover);
+}
+
+.copiar-codigo:focus-visible {
+  outline: 2px solid var(--fuchsia);
+  outline-offset: 2px;
+}
+
+.copiar-codigo.copied {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(52, 211, 153, 0.1);
+  box-shadow: 0 0 10px -2px var(--success);
 }
 /* Propiedades animadas --------------------------------------------------- */
 @property --grad-pos {
@@ -703,4 +725,195 @@ a.tarjeta:hover .tarjeta__titulo {
 
 @keyframes rotate-border {
   to { --angle: 360deg; }
+}
+
+/* ==========================================================================
+   SUPERFICIES - Paneles tipo laboratorio, bloques de código, separadores
+   ========================================================================== */
+
+/* Panel de laboratorio ---------------------------------------------------- */
+.panel-lab {
+  background: var(--papel-alto);
+  border: 1px solid transparent;
+  border-radius: var(--radio-l);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.panel-lab::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  background: var(--borde-animado);
+  border-radius: inherit;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotate-border 8s linear infinite;
+  opacity: 0.4;
+}
+
+.panel-lab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 0 0, transparent 12px, var(--linea) 12px),
+    radial-gradient(circle at 100% 0, transparent 12px, var(--linea) 12px),
+    radial-gradient(circle at 0 100%, transparent 12px, var(--linea) 12px),
+    radial-gradient(circle at 100% 100%, transparent 12px, var(--linea) 12px);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  opacity: 0.08;
+  z-index: -1;
+}
+
+/* Grano sutil */
+.panel-lab--grain::after {
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 0 0, transparent 12px, var(--linea) 12px),
+    radial-gradient(circle at 100% 0, transparent 12px, var(--linea) 12px),
+    radial-gradient(circle at 0 100%, transparent 12px, var(--linea) 12px),
+    radial-gradient(circle at 100% 100%, transparent 12px, var(--linea) 12px);
+  background-size: 256px 256px, 24px 24px, 24px 24px, 24px 24px, 24px 24px;
+  opacity: 0.03;
+}
+
+/* Esquinas recortadas (clipped corners) */
+.panel-lab--clipped {
+  clip-path: polygon(
+    12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px),
+    calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px
+  );
+}
+
+.panel-lab--clipped::before {
+  clip-path: polygon(
+    11px 0, calc(100% - 11px) 0, 100% 11px, 100% calc(100% - 11px),
+    calc(100% - 11px) 100%, 11px 100%, 0 calc(100% - 11px), 0 11px
+  );
+}
+
+/* Bloque de código premium ------------------------------------------------ */
+.codigo-bloque {
+  background: var(--terminal-fondo);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-m);
+  overflow: hidden;
+  position: relative;
+}
+
+.codigo-bloque__header {
+  align-items: center;
+  background: color-mix(in srgb, var(--ink-950) 80%, transparent);
+  border-bottom: 1px solid var(--linea);
+  display: flex;
+  justify-content: space-between;
+  padding: var(--espacio-xs) var(--espacio-s);
+}
+
+.codigo-bloque__lenguaje {
+  color: var(--tinta-suave);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.codigo-bloque__lenguaje--red { color: var(--red); }
+.codigo-bloque__lenguaje--blue { color: var(--blue); }
+.codigo-bloque__lenguaje--violet { color: var(--violet-500); }
+.codigo-bloque__lenguaje--fuchsia { color: var(--fuchsia); }
+
+.codigo-bloque__copy {
+  background: transparent;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-s);
+  color: var(--tinta-suave);
+  cursor: pointer;
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  min-height: 2rem;
+  padding: 0.2rem 0.6rem;
+  transition: border-color 160ms var(--curva), color 160ms var(--curva), background 160ms var(--curva), box-shadow 160ms var(--curva);
+}
+
+.codigo-bloque__copy:hover {
+  border-color: var(--violet-300);
+  color: var(--text);
+  background: var(--papel-hover);
+}
+
+.codigo-bloque__copy:focus-visible {
+  outline: 2px solid var(--fuchsia);
+  outline-offset: 2px;
+}
+
+.codigo-bloque__copy.copied {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(52, 211, 153, 0.1);
+  box-shadow: 0 0 10px -2px var(--success);
+}
+
+.codigo-bloque pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: var(--espacio-s);
+  tab-size: 2;
+}
+
+.codigo-bloque code {
+  color: var(--terminal-texto);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-sm);
+  line-height: 1.6;
+}
+
+/* Separador con línea de degradado animada ------------------------------- */
+.separador {
+  height: 1px;
+  background: var(--signal-grad);
+  background-size: 200% 100%;
+  background-position: var(--grad-pos) 0;
+  animation: separador-flow 20s linear infinite;
+  border: none;
+  margin: var(--espacio-xl) 0;
+}
+
+@keyframes separador-flow {
+  to { --grad-pos: 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .separador {
+    animation: none;
+    background-position: 0% 0;
+  }
+}
+
+/* Separador estático para uso en texto */
+.separador--static {
+  animation: none;
+  background-position: 0% 0;
+  opacity: 0.3;
+}
+
+/* Tarjeta sin sombra exagerada (override para evitar nesting) */
+.tarjeta-simple {
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  padding: var(--espacio-m);
+  transition: border-color 200ms var(--curva), box-shadow 200ms var(--curva);
+}
+
+.tarjeta-simple:hover {
+  border-color: var(--linea-fuerte);
+  box-shadow: var(--sombra-1);
 }
