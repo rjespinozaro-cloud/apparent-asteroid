@@ -24,21 +24,24 @@ const equipo = claseEquipo(guia.equipo);
 const resumen = descripcion ?? guia.resumen ?? null;
 ---
 
-<article class:list={['tarjeta', `tarjeta--${equipo}`]}>
+<article class:list={['tarjeta-premium', `tarjeta--${equipo}`]} data-spotlight>
   <div class="tarjeta__meta">
-    <span class:list={['etiqueta', `etiqueta--${equipo}`]}>{nombreEquipo(guia.equipo)}</span>
-    {mostrarNivel && <span class="etiqueta etiqueta--neutro">{nombreNivel(guia.nivel)}</span>}
-    {guia.acceso === 'pago' && <span class="etiqueta etiqueta--pago">PDF</span>}
-    <time datetime={guia.fecha}>{guia.fecha}</time>
+    <span class:list={['chip', `chip--${equipo}`, 'chip--pulse']}>
+      <span class="chip__dot"></span>
+      {nombreEquipo(guia.equipo)}
+    </span>
+    {mostrarNivel && <span class="chip">{nombreNivel(guia.nivel)}</span>}
+    {guia.acceso === 'pago' && <span class="chip chip--fuchsia">PDF</span>}
+    <time class="chip" datetime={guia.fecha}>{guia.fecha}</time>
   </div>
 
   <h3 class="tarjeta__titulo">
-    <a href={`/guias/${guia.slug}/`}>{guia.titulo}</a>
+    <a href={`/guias/${guia.slug}/`} class="stretched-link">{guia.titulo}</a>
   </h3>
 
   {resumen && <p class="tarjeta__resumen">{descripcionDesdeMarkdown(resumen)}</p>}
 
-  <p class="tarjeta__meta">
-    <span>{nombreHerramienta(guia.herramienta)}</span>
-  </p>
+  <div class="tarjeta__meta">
+    <span class="chip">{nombreHerramienta(guia.herramienta)}</span>
+  </div>
 </article>
