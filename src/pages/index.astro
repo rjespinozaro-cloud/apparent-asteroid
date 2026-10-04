@@ -27,7 +27,7 @@ const estadisticas = [
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
 
-<Base>
+<Base class="page-enter">
   <section class="portada portada--hero" aria-labelledby="inicio-titulo">
     <div class="portada--hero__bg" aria-hidden="true">
       <div class="portada--hero__glow portada--hero__glow--red"></div>
@@ -53,7 +53,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </div>
   </section>
 
-  <section class="seccion" aria-labelledby="equipos-titulo">
+  <section class="seccion reveal" aria-labelledby="equipos-titulo">
     <div class="seccion__cabecera">
       <div>
         <p class="eyebrow">Dos claves</p>
@@ -61,7 +61,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </div>
     </div>
 
-    <div class="rejilla-equipos">
+    <div class="rejilla-equipos reveal--stagger">
       <article class="equipo equipo--red">
         <p class="equipo__clave">RED</p>
         <h3 class="equipo__titulo">Ofensiva</h3>
@@ -85,7 +85,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   </section>
 
   {destacadas.length > 0 && (
-    <section class="seccion" aria-labelledby="herramientas-titulo">
+    <section class="seccion reveal" aria-labelledby="herramientas-titulo">
       <div class="seccion__cabecera">
         <div>
           <p class="eyebrow">Explorador</p>
@@ -105,7 +105,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   )}
 
   {ultimas.length > 0 && (
-    <section class="seccion" aria-labelledby="ultimas-titulo">
+    <section class="seccion reveal" aria-labelledby="ultimas-titulo">
       <div class="seccion__cabecera">
         <div>
           <p class="eyebrow">Recién editado</p>
@@ -113,7 +113,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         </div>
         <a class="link--premium" href="/guias/">Ver catálogo completo →</a>
       </div>
-      <ul class="rejilla-tarjetas">
+      <ul class="rejilla-tarjetas reveal--stagger">
         {ultimas.map((guia) => (
           <li><TarjetaGuia guia={guia} /></li>
         ))}
@@ -121,7 +121,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </section>
   )}
 
-  <section class="seccion" aria-labelledby="metodo-titulo">
+  <section class="seccion reveal" aria-labelledby="metodo-titulo">
     <div>
       <p class="eyebrow">Método</p>
       <h2 class="seccion__titulo" id="metodo-titulo">Cómo se escribe cada guía</h2>

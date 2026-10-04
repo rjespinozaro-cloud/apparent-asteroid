@@ -24,7 +24,7 @@ const equipo = claseEquipo(guia.equipo);
 const resumen = descripcion ?? guia.resumen ?? null;
 ---
 
-<article class:list={['tarjeta-premium', `tarjeta--${equipo}`]} data-spotlight>
+<article class:list={['tarjeta-premium', `tarjeta--${equipo}`, 'reveal']} data-spotlight>
   <div class="tarjeta__meta">
     <span class:list={['chip', `chip--${equipo}`, 'chip--pulse']}>
       <span class="chip__dot"></span>

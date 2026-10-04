@@ -8,6 +8,7 @@ import '../styles/tokens.css';
 import '../styles/base.css';
 import '../styles/layout.css';
 import '../styles/components.css';
+import '../styles/motion.css';
 import Menu from '../components/Menu.astro';
 import AvisoLegal from '../components/AvisoLegal.astro';
 
@@ -94,8 +95,14 @@ const imagenOg = new URL(ogImage, origen).href;
       </div>
     </footer>
 
+    <!-- Reading progress bar -->
+    <div class="progreso-lectura" aria-hidden="true"></div>
+
     <script>
       import '../scripts/copiar-codigo.js';
+    </script>
+    <script>
+      import '../scripts/motion.js';
     </script>
   </body>
 </html>
