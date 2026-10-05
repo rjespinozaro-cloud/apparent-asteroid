@@ -1,19 +1,15 @@
 ---
 /**
- * MEGAPORTADA JOANIX GUIDES — una sola pantalla, sin scroll.
+ * MEGAPORTADA JOANIX GUIDES — RED vs BLUE, el choque emerge PURPLE TEAM.
  *
- * Mapeo de color a los tokens del sitio (src/styles/tokens.css):
- *   --bg        <- --ink-950  #05060C   (fondo laboratorio)
- *   --ink       <- --text     #E8EAF6
- *   --ink-dim   <- --text-muted #8A90B2
- *   --red       <- --red      #FF4D6D   (equipo ofensivo, luz izquierda)
- *   --blue      <- --blue     #4D7CFF   (equipo defensivo, luz derecha)
- *   --red-deep / --blue-deep: complementos oscuros para las auroras.
+ * Narrativa: mitad atacante (rojo) y mitad defensa (azul) convergen al centro,
+ * cae un rayo procedural (canvas, único por carga) y el logo se enciende en
+ * violeta con el texto PURPLE TEAM. Una sola pantalla, sin scroll.
  *
- * Tipografía: pila del sistema a propósito (cero fuentes bloqueantes en el
- * LCP; la portada no importa @fontsource). Jerarquía por peso/tamaño/tracking.
- * Logo: public/logo.png intrínseco 640x320 (2:1); los atributos width/height
- * evitan CLS y el CSS lo escala sin deformar.
+ * Color: fondo #05060C; rojo #ff2e4d, azul #2e8bff, violeta de unión #a855f7
+ * (--purple en tokens). Tipografía de sistema a propósito (cero fuentes
+ * bloqueantes en el LCP). Logo public/logo.png intrínseco 640x320 (2:1).
+ * Fotos: public/hero/hero-wide (1024x572) y hero-tall (572x1024).
  */
 
 export const prerender = true;
@@ -24,7 +20,7 @@ const baseBruto = import.meta.env.BASE_URL;
 const base = `${baseBruto.replace(/\/+$/, '')}/`;
 const title = 'JOANIX GUIDES | Cybersecurity Knowledge Lab';
 const description =
-  'JOANIX GUIDES — laboratorio de conocimiento en ciberseguridad: guías prácticas de hacking ético para equipos RED y BLUE.';
+  'JOANIX GUIDES — laboratorio de conocimiento en ciberseguridad: guías prácticas de hacking ético para equipos RED y BLUE. Del choque nace el PURPLE TEAM.';
 const origen = Astro.site ?? Astro.url.origin;
 const canonical = new URL(Astro.url.pathname, origen).href;
 const imagenOg = new URL(`${base}og-image.png`, origen).href;
@@ -43,7 +39,8 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
     <link rel="icon" type="image/png" sizes="32x32" href={`${base}favicon-32.png`} />
     <link rel="icon" href={`${base}favicon.ico`} sizes="any" />
     <link rel="apple-touch-icon" href={`${base}apple-touch-icon.png`} />
-    <link rel="preload" as="image" href={`${base}logo.png`} fetchpriority="high" />
+    <link rel="preload" as="image" href={`${base}hero/hero-tall.avif`} fetchpriority="high" media="(max-aspect-ratio: 1/1)" />
+    <link rel="preload" as="image" href={`${base}hero/hero-wide.avif`} fetchpriority="high" media="(min-aspect-ratio: 1/1)" />
     <link rel="prefetch" href={`${base}inicio/`} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="JOANIX GUIDES" />
@@ -62,14 +59,16 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
     <title>{title}</title>
     <style>
       /* LÉXICO DE MOVIMIENTO (vocabulario preciso):
-         auroras  = Alternate loop (translate+opacity, ease-in-out 9s, contrafase)
-         anillos  = Rotate lineal 26s/40s + glow con Pulse 4s (opacity)
-         logo     = Scale in (.9) + Fade in + Float (translateY 6s)
-         grid     = Loop lineal 40s (background-position, solo pintado)
-         scan     = Loop lineal 7s (translateY)
-         CTA      = Press feedback (scale .98) + borde cónico en Loop lineal 4s
-         parallax = Translate por puntero (rAF, solo hover fino)
-         salida   = Scale + Fade out + Blur (550ms, una vez por visita) */
+         foto      = Fade in + Scale 1.04→1.10 (push-in cinematográfico, 3.2s, una vez)
+         mitades   = Slide in hacia el centro ±2.5% (ease-out fuerte, una vez)
+         chispas   = Float hacia el centro + Pulse (opacity/translate, loops lentos)
+         rayo      = Bolt procedural en canvas (flicker 2-3 veces, único por carga)
+         flash     = Fade out blanco (opacity, 120ms)
+         shake     = Translate amortiguado ±5px (una vez, 500ms)
+         ignición  = State indication (drop-shadow violeta) + anillos Scale+Fade (una vez)
+         equipo    = Tracking settle .55em→.34em + Fade in (state indication)
+         reposo    = Pulse de glow + mini-arcos cada 8-12s (ráfagas cortas, sin loop 60fps)
+         salida    = Scale + Fade out + flash violeta (550ms, una vez por visita) */
 
       @property --angle {
         syntax: '<angle>';
@@ -81,10 +80,11 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         --bg: #05060c;
         --ink: #e8eaf6;
         --ink-dim: #8a90b2;
-        --red: #ff4d6d;
+        --red: #ff2e4d;
         --red-deep: #5e1226;
-        --blue: #4d7cff;
+        --blue: #2e8bff;
         --blue-deep: #16295e;
+        --purple: #a855f7;
         --logo-size: clamp(180px, 38vmin, 460px);
         --pad: clamp(16px, 3.2vmin, 40px);
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -110,7 +110,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       }
 
       ::selection {
-        background: var(--red);
+        background: var(--purple);
         color: #fff;
       }
 
@@ -144,7 +144,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         transition: opacity 0.55s var(--ease), filter 0.55s var(--ease);
       }
 
-      /* ---------- FONDO EN CAPAS ---------- */
+      /* ---------- FONDO DE RESPALDO (si la foto falla) ---------- */
       .cover__bg,
       .cover__bg > i {
         position: absolute;
@@ -152,7 +152,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         pointer-events: none;
       }
       .cover__bg {
-        z-index: -1;
+        z-index: 0;
       }
 
       .aurora {
@@ -231,28 +231,194 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
           rgba(0, 0, 0, 0.28) 3px
         );
       }
-      .scan::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.06) 50%, transparent);
-        height: 22%;
-        transform: translateY(-100%);
-        animation: sweep 7s linear infinite;
-      }
-      @keyframes sweep {
-        to {
-          transform: translateY(560%);
-        }
-      }
 
       .vignette {
         background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
       }
 
+      /* ---------- FOTO NARRATIVA (RED vs BLUE) ---------- */
+      .cover__photo {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        animation: photoIn 3.2s var(--ease) both;
+      }
+      .cover__photo.is-missing {
+        display: none;
+      }
+      @keyframes photoIn {
+        from {
+          opacity: 0;
+          transform: scale(1.04);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+      }
+
+      .cover__half {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .cover__half picture,
+      .cover__half img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+      /* Escritorio: atacante izquierda / defensa derecha, convergen al centro. */
+      .cover__half--red {
+        clip-path: inset(0 50% 0 0);
+        animation: clashLeft 1.4s var(--ease) 0.3s both;
+      }
+      .cover__half--blue {
+        clip-path: inset(0 0 0 50%);
+        animation: clashRight 1.4s var(--ease) 0.3s both;
+      }
+      .cover__half--red::after,
+      .cover__half--blue::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+      }
+      .cover__half--red::after {
+        background: linear-gradient(90deg, rgba(255, 46, 77, 0.28), transparent 70%);
+      }
+      .cover__half--blue::after {
+        background: linear-gradient(270deg, rgba(46, 139, 255, 0.28), transparent 70%);
+      }
+      @keyframes clashLeft {
+        from {
+          transform: translateX(-2.5%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+      @keyframes clashRight {
+        from {
+          transform: translateX(2.5%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      /* ---------- SCRIMS (contraste AA + viñeta lateral móvil) ---------- */
+      .cover__scrim {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .cover__scrim--top {
+        background: linear-gradient(to bottom, rgba(5, 6, 12, 0.72), transparent 32%);
+      }
+      .cover__scrim--bottom {
+        background: linear-gradient(to top, rgba(5, 6, 12, 0.85), transparent 42%);
+      }
+      .cover__scrim--spot {
+        background: radial-gradient(ellipse at center, rgba(5, 6, 12, 0.55), transparent 62%);
+      }
+
+      /* ---------- CHISPAS ---------- */
+      .cover__sparks {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .spark {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        opacity: 0;
+        animation: sparkFloat 5s ease-in-out infinite;
+      }
+      .spark--r {
+        background: var(--red);
+        box-shadow: 0 0 8px 2px rgba(255, 46, 77, 0.8);
+      }
+      .spark--b {
+        background: var(--blue);
+        box-shadow: 0 0 8px 2px rgba(46, 139, 255, 0.8);
+      }
+      .spark:nth-child(1) { left: 12%; top: 46%; --dx: 9vw; --dy: -3vh; animation-delay: 0.4s; }
+      .spark:nth-child(2) { left: 20%; top: 58%; --dx: 7vw; --dy: 3vh; animation-delay: 1.6s; animation-duration: 6s; }
+      .spark:nth-child(3) { left: 8%; top: 36%; --dx: 11vw; --dy: 1vh; animation-delay: 2.4s; animation-duration: 4.2s; }
+      .spark:nth-child(4) { left: 26%; top: 50%; --dx: 5vw; --dy: -4vh; animation-delay: 3s; animation-duration: 5.4s; }
+      .spark:nth-child(5) { left: 88%; top: 44%; --dx: -9vw; --dy: 3vh; animation-delay: 0.9s; }
+      .spark:nth-child(6) { left: 80%; top: 60%; --dx: -7vw; --dy: -3vh; animation-delay: 2s; animation-duration: 6.2s; }
+      .spark:nth-child(7) { left: 92%; top: 54%; --dx: -11vw; --dy: -1vh; animation-delay: 2.8s; animation-duration: 4.6s; }
+      .spark:nth-child(8) { left: 74%; top: 40%; --dx: -5vw; --dy: 4vh; animation-delay: 3.4s; animation-duration: 5.8s; }
+      @keyframes sparkFloat {
+        0% {
+          transform: translate(0, 0);
+          opacity: 0;
+        }
+        25% {
+          opacity: 0.9;
+        }
+        100% {
+          transform: translate(var(--dx), var(--dy));
+          opacity: 0;
+        }
+      }
+
+      /* ---------- RAYO (canvas) + FLASH + SHAKE ---------- */
+      .cover__bolt {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      .cover__flash {
+        position: absolute;
+        inset: 0;
+        z-index: 6;
+        background: radial-gradient(ellipse at center, #fff, transparent 70%);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s ease-out;
+      }
+      .cover__flash.is-on {
+        opacity: 0.55;
+      }
+      .cover.is-leaving .cover__flash {
+        background: radial-gradient(ellipse at center, var(--purple), transparent 70%);
+        opacity: 0.8;
+        transition: opacity 0.5s var(--ease);
+      }
+      .cover.is-shake .cover__shake {
+        animation: shakeX 0.5s var(--ease);
+      }
+      .cover__shake {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        pointer-events: none;
+      }
+      @keyframes shakeX {
+        0%, 100% { transform: translate(0, 0); }
+        20% { transform: translate(5px, -3px); }
+        40% { transform: translate(-4px, 2px); }
+        60% { transform: translate(3px, -1px); }
+        80% { transform: translate(-1px, 1px); }
+      }
+
       /* ---------- HUD ESQUINAS ---------- */
       .hud {
         position: absolute;
+        z-index: 7;
         width: clamp(22px, 5vmin, 54px);
         height: clamp(22px, 5vmin, 54px);
         border: 0 solid rgba(200, 215, 255, 0.35);
@@ -307,9 +473,10 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         }
       }
 
-      /* ---------- WORDMARK (ARRIBA, ABSOLUTE: NO DESPLAZA EL LOGO) ---------- */
+      /* ---------- WORDMARK (ARRIBA, ABSOLUTE) ---------- */
       .cover__top {
         position: absolute;
+        z-index: 8;
         top: max(calc(var(--pad) * 1.8), env(safe-area-inset-top));
         left: 0;
         right: 0;
@@ -327,6 +494,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
+        text-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
       }
       .cover__brand span {
         font-weight: 300;
@@ -344,6 +512,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       /* ---------- LOGO CENTRAL (CENTRO GEOMÉTRICO EXACTO) ---------- */
       .logo {
         position: relative;
+        z-index: 5;
         display: grid;
         place-items: center;
         width: var(--logo-size);
@@ -362,9 +531,15 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         user-select: none;
         -webkit-user-drag: none;
         filter:
-          drop-shadow(-8px 0 24px rgba(255, 77, 109, 0.45))
-          drop-shadow(8px 0 24px rgba(77, 124, 255, 0.45));
+          drop-shadow(-8px 0 24px rgba(255, 46, 77, 0.45))
+          drop-shadow(8px 0 24px rgba(46, 139, 255, 0.45));
         animation: float 6s ease-in-out infinite;
+        transition: filter 0.6s var(--ease);
+      }
+      .logo.is-lit .logo__img {
+        filter:
+          drop-shadow(0 0 18px rgba(168, 85, 247, 0.9))
+          drop-shadow(0 0 46px rgba(168, 85, 247, 0.55));
       }
       .logo__glow {
         position: absolute;
@@ -375,6 +550,15 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         filter: blur(clamp(30px, 6vmin, 70px));
         opacity: 0.35;
         animation: spin 14s linear infinite, pulse 4s ease-in-out infinite;
+      }
+      .logo__glow--violet {
+        background: conic-gradient(from 90deg, var(--purple), transparent 35%, var(--purple) 60%, transparent 85%, var(--purple));
+        opacity: 0;
+        transition: opacity 0.8s var(--ease);
+        animation: spin 18s linear infinite reverse;
+      }
+      .logo.is-lit .logo__glow--violet {
+        opacity: 0.55;
       }
       .logo__ring {
         position: absolute;
@@ -394,6 +578,27 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         border-top-color: transparent;
         border-bottom-color: transparent;
         animation: spin 26s linear infinite reverse;
+      }
+      .logo__ring--burst {
+        inset: -6%;
+        border: 2px solid var(--purple);
+        opacity: 0;
+      }
+      .cover.is-impact .logo__ring--burst {
+        animation: burst 1.2s var(--ease) both;
+      }
+      .cover.is-impact .logo__ring--burst.logo__ring--c {
+        animation-delay: 0.15s;
+      }
+      @keyframes burst {
+        from {
+          transform: scale(0.8);
+          opacity: 0.9;
+        }
+        to {
+          transform: scale(1.7);
+          opacity: 0;
+        }
       }
       @keyframes spin {
         to {
@@ -431,9 +636,38 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         }
       }
 
-      /* ---------- CTA (ABAJO, ABSOLUTE: NO DESPLAZA EL LOGO) ---------- */
+      /* ---------- PURPLE TEAM (HTML real, bajo el logo) ---------- */
+      .cover__team {
+        position: absolute;
+        z-index: 8;
+        top: calc(50% + clamp(70px, 11vmin, 130px));
+        left: 0;
+        right: 0;
+        margin: 0;
+        text-align: center;
+        font-size: clamp(0.8rem, 2.2vmin, 1.15rem);
+        font-weight: 700;
+        letter-spacing: 0.55em;
+        text-indent: 0.55em;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, var(--red), var(--purple) 42%, var(--purple) 58%, var(--blue));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.8);
+        opacity: 0;
+      }
+      .cover.is-impact .cover__team {
+        opacity: 1;
+        letter-spacing: 0.34em;
+        text-indent: 0.34em;
+        transition: opacity 0.9s var(--ease), letter-spacing 1s var(--ease), text-indent 1s var(--ease);
+      }
+
+      /* ---------- CTA (ABAJO, ABSOLUTE) ---------- */
       .cover__bottom {
         position: absolute;
+        z-index: 8;
         bottom: max(calc(var(--pad) * 1.8), env(safe-area-inset-bottom));
         left: 0;
         right: 0;
@@ -489,7 +723,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         transition: transform 0.8s var(--ease);
       }
       .cta__arrow {
-        transition: transform 0.35s var(--ease);
+        transition: transform 0.25s var(--ease);
       }
       .cta:hover,
       .cta:focus-visible {
@@ -516,6 +750,38 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         to {
           --angle: 360deg;
         }
+      }
+
+      /* Arco eléctrico del botón hacia el logo (hover/foco). */
+      .cta-arc {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        width: 110px;
+        height: 56px;
+        transform: translateX(-50%);
+        opacity: 0;
+        overflow: visible;
+        pointer-events: none;
+      }
+      .cta-arc path {
+        fill: none;
+        stroke: var(--purple);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-dasharray: 220;
+        stroke-dashoffset: 220;
+        filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.9));
+      }
+      .cover__bottom:hover .cta-arc path,
+      .cover__bottom:focus-within .cta-arc path {
+        stroke-dashoffset: 0;
+        opacity: 1;
+        transition: stroke-dashoffset 0.3s var(--ease), opacity 0.2s ease;
+      }
+      .cover:has(.cta:hover) .logo__glow--violet,
+      .cover:has(.cta:focus-visible) .logo__glow--violet {
+        opacity: 0.7;
       }
 
       .cover__hint {
@@ -572,7 +838,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         }
       }
 
-      /* ---------- SALIDA CINEMATOGRÁFICA ---------- */
+      /* ---------- SALIDA ---------- */
       .cover.is-leaving {
         opacity: 0;
         filter: blur(6px);
@@ -583,13 +849,68 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         transition: transform 0.6s var(--ease);
       }
 
+      /* ---------- RETRATO: foto vertical, choque arriba/abajo ---------- */
+      @media (max-aspect-ratio: 1/1) {
+        :root {
+          --logo-size: clamp(150px, 34vmin, 300px);
+        }
+        .cover__half--red {
+          clip-path: inset(0 0 50% 0);
+          animation-name: clashTop;
+        }
+        .cover__half--blue {
+          clip-path: inset(50% 0 0 0);
+          animation-name: clashBottom;
+        }
+        .cover__half--red::after {
+          background: linear-gradient(to bottom, rgba(255, 46, 77, 0.28), transparent 70%);
+        }
+        .cover__half--blue::after {
+          background: linear-gradient(to top, rgba(46, 139, 255, 0.28), transparent 70%);
+        }
+        .cover__half img {
+          object-position: 50% 60%;
+        }
+        /* Tapa el reflejo difuso del borde izquierdo cerca del suelo. */
+        .cover__scrim--spot {
+          background:
+            radial-gradient(ellipse at center, rgba(5, 6, 12, 0.55), transparent 62%),
+            linear-gradient(to right, rgba(5, 6, 12, 0.8), transparent 22%);
+        }
+        .spark:nth-child(1) { left: 30%; top: 10%; --dx: 4vw; --dy: 10vh; }
+        .spark:nth-child(2) { left: 60%; top: 16%; --dx: -3vw; --dy: 8vh; }
+        .spark:nth-child(3) { left: 45%; top: 6%; --dx: 2vw; --dy: 12vh; }
+        .spark:nth-child(4) { left: 70%; top: 24%; --dx: -5vw; --dy: 7vh; }
+        .spark:nth-child(5) { left: 28%; top: 88%; --dx: 5vw; --dy: -10vh; }
+        .spark:nth-child(6) { left: 62%; top: 82%; --dx: -4vw; --dy: -8vh; }
+        .spark:nth-child(7) { left: 48%; top: 94%; --dx: 1vw; --dy: -12vh; }
+        .spark:nth-child(8) { left: 74%; top: 76%; --dx: -6vw; --dy: -7vh; }
+      }
+      @keyframes clashTop {
+        from {
+          transform: translateY(-2.5%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+      @keyframes clashBottom {
+        from {
+          transform: translateY(2.5%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+
       /* ---------- RESPONSIVE SIN SCROLL ---------- */
       @media (max-height: 460px) and (orientation: landscape) {
         :root {
           --logo-size: clamp(110px, 34vmin, 200px);
         }
         .cover__tag,
-        .cover__hint {
+        .cover__hint,
+        .cover__alt {
           display: none;
         }
         .cover__top {
@@ -597,6 +918,10 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         }
         .cover__bottom {
           bottom: max(10px, env(safe-area-inset-bottom));
+        }
+        .cover__team {
+          top: calc(50% + 64px);
+          font-size: 0.7rem;
         }
         .cta {
           padding: 0.6em 1.8em;
@@ -657,9 +982,14 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
           background: none;
           color: #fff;
         }
+        .cover__team {
+          background: none;
+          color: #fff;
+        }
       }
       @media (forced-colors: active) {
         .cover__bg,
+        .cover__photo,
         .logo__glow,
         .logo__ring,
         .hud {
@@ -670,7 +1000,8 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
           background: ButtonFace;
           color: ButtonText;
         }
-        .cover__brand {
+        .cover__brand,
+        .cover__team {
           color: CanvasText;
           background: none;
         }
@@ -688,8 +1019,40 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         .aurora--blue {
           transform: translate(62%, -50%);
         }
+        /* Estado final directo: logo violeta + PURPLE TEAM + botón. */
+        .cover__team {
+          opacity: 1;
+          letter-spacing: 0.34em;
+          text-indent: 0.34em;
+        }
+        .logo .logo__img {
+          filter:
+            drop-shadow(0 0 18px rgba(168, 85, 247, 0.9))
+            drop-shadow(0 0 46px rgba(168, 85, 247, 0.55));
+        }
+        .logo__glow--violet {
+          opacity: 0.55;
+        }
       }
     </style>
+    <noscript>
+      <style>
+        /* Sin JS: estado final estático (foto, logo violeta, equipo, botón). */
+        .cover__team {
+          opacity: 1;
+          letter-spacing: 0.34em;
+          text-indent: 0.34em;
+        }
+        .logo .logo__img {
+          filter:
+            drop-shadow(0 0 18px rgba(168, 85, 247, 0.9))
+            drop-shadow(0 0 46px rgba(168, 85, 247, 0.55));
+        }
+        .logo__glow--violet {
+          opacity: 0.55;
+        }
+      </style>
+    </noscript>
   </head>
   <body>
     <main class="cover" id="cover">
@@ -701,6 +1064,39 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         <i class="scan"></i>
         <i class="vignette"></i>
       </div>
+
+      <div class="cover__photo" id="photo" aria-hidden="true">
+        <div class="cover__half cover__half--red">
+          <picture>
+            <source srcset={`${base}hero/hero-tall.avif`} type="image/avif" media="(max-aspect-ratio: 1/1)" />
+            <source srcset={`${base}hero/hero-tall.webp`} type="image/webp" media="(max-aspect-ratio: 1/1)" />
+            <source srcset={`${base}hero/hero-wide.avif`} type="image/avif" />
+            <source srcset={`${base}hero/hero-wide.webp`} type="image/webp" />
+            <img src={`${base}hero/hero-wide.webp`} width="1024" height="572" alt="" fetchpriority="high" decoding="async" data-hero-img />
+          </picture>
+        </div>
+        <div class="cover__half cover__half--blue">
+          <picture>
+            <source srcset={`${base}hero/hero-tall.avif`} type="image/avif" media="(max-aspect-ratio: 1/1)" />
+            <source srcset={`${base}hero/hero-tall.webp`} type="image/webp" media="(max-aspect-ratio: 1/1)" />
+            <source srcset={`${base}hero/hero-wide.avif`} type="image/avif" />
+            <source srcset={`${base}hero/hero-wide.webp`} type="image/webp" />
+            <img src={`${base}hero/hero-wide.webp`} width="1024" height="572" alt="" fetchpriority="high" decoding="async" data-hero-img />
+          </picture>
+        </div>
+      </div>
+      <div class="cover__scrim cover__scrim--top" aria-hidden="true"></div>
+      <div class="cover__scrim cover__scrim--bottom" aria-hidden="true"></div>
+      <div class="cover__scrim cover__scrim--spot" aria-hidden="true"></div>
+
+      <div class="cover__sparks" aria-hidden="true">
+        <i class="spark spark--r"></i><i class="spark spark--r"></i><i class="spark spark--r"></i><i class="spark spark--r"></i><i class="spark spark--b"></i><i class="spark spark--b"></i><i class="spark spark--b"></i><i class="spark spark--b"></i>
+      </div>
+
+      <canvas class="cover__bolt" id="bolt" aria-hidden="true"></canvas>
+      <div class="cover__shake" id="shake" aria-hidden="true"></div>
+      <div class="cover__flash" id="flash" aria-hidden="true"></div>
+
       <i class="hud hud--tl" aria-hidden="true"></i>
       <i class="hud hud--tr" aria-hidden="true"></i>
       <i class="hud hud--bl" aria-hidden="true"></i>
@@ -715,6 +1111,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         <i class="logo__ring logo__ring--a" aria-hidden="true"></i>
         <i class="logo__ring logo__ring--b" aria-hidden="true"></i>
         <i class="logo__glow" aria-hidden="true"></i>
+        <i class="logo__glow logo__glow--violet" aria-hidden="true"></i>
         <img
           class="logo__img"
           src={`${base}logo.png`}
@@ -726,7 +1123,12 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         />
       </div>
 
+      <p class="cover__team" id="team">Purple Team</p>
+
       <footer class="cover__bottom">
+        <svg class="cta-arc" viewBox="0 0 110 56" aria-hidden="true">
+          <path d="M55 54 L48 40 L58 34 L46 16 L54 10 L50 2" />
+        </svg>
         <a class="cta" id="enter" href={`${base}inicio/`}>
           <span class="cta__label">Entrar</span>
           <span class="cta__arrow" aria-hidden="true">→</span>
@@ -737,16 +1139,31 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
     </main>
 
     <script>
+      // @ts-nocheck — micro-script progresivo verificado en navegador; el tipado estricto vive en src/.
       (function () {
         var coverNode = document.getElementById('cover');
         var enterNode = document.getElementById('enter');
         if (!(coverNode instanceof HTMLElement) || !(enterNode instanceof HTMLAnchorElement)) return;
-        var cover = coverNode;
-        var destino = enterNode.href;
+        const cover = coverNode;
+        const destino = enterNode.href;
 
         var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var fineHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        var portrait = window.matchMedia('(max-aspect-ratio: 1/1)').matches;
+        var conexion = navigator.connection || {};
+        var ahorroDatos = conexion.saveData === true || /^(slow-2g|2g)$/.test(conexion.effectiveType || '');
+        var tactil = window.matchMedia('(pointer: coarse)').matches;
+        // En móvil o con ahorro de datos/conexión lenta: destello CSS, sin canvas.
+        var sinCanvas = reduceMotion || ahorroDatos || tactil;
         var saliendo = false;
+
+        // Si la foto falla, cae al fondo aurora+grid sin romperse.
+        var photo = document.getElementById('photo');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-hero-img]'), function (img) {
+          img.addEventListener('error', function () {
+            if (photo instanceof HTMLElement) photo.classList.add('is-missing');
+          });
+        });
 
         function salir() {
           if (saliendo) return;
@@ -758,7 +1175,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
           cover.classList.add('is-leaving');
           window.setTimeout(function () {
             window.location.href = destino;
-          }, 550);
+          }, 500);
         }
 
         enterNode.addEventListener('click', function (evento) {
@@ -776,30 +1193,277 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
           salir();
         });
 
+        /* ---------- RAYO PROCEDURAL (canvas único, DPR<=2) ---------- */
+        var canvasNode = document.getElementById('bolt');
+        const lienzo = canvasNode instanceof HTMLCanvasElement ? canvasNode : null;
+        const trazo = !sinCanvas && lienzo ? lienzo.getContext('2d') : null;
+
+        /**
+         * @param {HTMLCanvasElement} elCanvas
+         * @param {CanvasRenderingContext2D} elCtx
+         */
+        function dimensionar(elCanvas, elCtx) {
+          void elCtx;
+          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          var rect = cover.getBoundingClientRect();
+          elCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+          elCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+          return { w: elCanvas.width, h: elCanvas.height, dpr: dpr };
+        }
+
+        /**
+         * Midpoint displacement hacia el logo, con ramificaciones.
+         * @param {CanvasRenderingContext2D} ctx2d
+         * @param {number} x0
+         * @param {number} y0
+         * @param {number} x1
+         * @param {number} y1
+         * @param {number} semilla
+         * @param {number} ramas
+         */
+        function trazarRayo(ctx2d, x0, y0, x1, y1, semilla, ramas) {
+          var puntos = [{ x: x0, y: y0 }];
+          var segmentos = 6;
+          for (var i = 1; i <= segmentos; i++) {
+            var t = i / segmentos;
+            var dispersion = (1 - Math.abs(t - 0.5) * 1.4) * 46 * semilla;
+            puntos.push({
+              x: x0 + (x1 - x0) * t + (Math.random() - 0.5) * dispersion,
+              y: y0 + (y1 - y0) * t + (Math.random() - 0.5) * dispersion * 0.4,
+            });
+          }
+          /**
+           * @param {Array<{x:number,y:number}>} pts
+           * @param {number} ancho
+           * @param {string} estilo
+           * @param {string} sombra
+           * @param {number} blur
+           */
+          var dibujar = function (pts, ancho, estilo, sombra, blur) {
+            ctx2d.beginPath();
+            ctx2d.moveTo(pts[0].x, pts[0].y);
+            for (var j = 1; j < pts.length; j++) ctx2d.lineTo(pts[j].x, pts[j].y);
+            ctx2d.lineWidth = ancho;
+            ctx2d.strokeStyle = estilo;
+            ctx2d.shadowColor = sombra;
+            ctx2d.shadowBlur = blur;
+            ctx2d.lineCap = 'round';
+            ctx2d.lineJoin = 'round';
+            ctx2d.stroke();
+          };
+          dibujar(puntos, 7, 'rgba(139,92,246,0.55)', 'rgba(139,92,246,0.9)', 26);
+          dibujar(puntos, 3, 'rgba(46,139,255,0.8)', 'rgba(46,139,255,0.9)', 14);
+          dibujar(puntos, 1.4, 'rgba(255,255,255,0.95)', 'rgba(255,255,255,1)', 8);
+          for (var r = 0; r < ramas; r++) {
+            var idx = 1 + Math.floor(Math.random() * (puntos.length - 2));
+            var base = puntos[idx];
+            var ang = (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.5);
+            var len = 40 + Math.random() * 70;
+            dibujar(
+              [base, { x: base.x + Math.cos(ang) * len, y: base.y + Math.abs(Math.sin(ang)) * len }],
+              1.6,
+              'rgba(255,46,77,0.75)',
+              'rgba(255,46,77,0.9)',
+              10
+            );
+          }
+        }
+
+        var rafBolt = 0;
+        function pararRayo() {
+          if (rafBolt) window.cancelAnimationFrame(rafBolt);
+          rafBolt = 0;
+          if (trazo && lienzo) trazo.clearRect(0, 0, lienzo.width, lienzo.height);
+        }
+
+        document.addEventListener('visibilitychange', function () {
+          if (document.hidden) pararRayo();
+        });
+
+        /**
+         * @param {CanvasRenderingContext2D} c
+         * @param {{ w: number, h: number, dpr: number }} dims
+         * @param {number} lx
+         * @param {number} ly
+         * @param {number} sx
+         * @param {number} semilla
+         */
+        function animarBolt(c, dims, lx, ly, sx, semilla) {
+          var fases = [90, 70, 150, 60, 220];
+          var i = 0;
+          var visible = true;
+          var ultimo = 0;
+          var t0 = performance.now();
+          /**
+           * @param {number} ahora
+           */
+          var frame = function (ahora) {
+            if (document.hidden) {
+              pararRayo();
+              return;
+            }
+            if (ahora - ultimo > fases[Math.min(i, fases.length - 1)]) {
+              ultimo = ahora;
+              visible = !visible;
+              i++;
+              c.clearRect(0, 0, dims.w, dims.h);
+              if (visible) trazarRayo(c, sx, -20, lx, ly, semilla, 3);
+              else if (i >= fases.length) {
+                pararRayo();
+                programarArcos();
+                return;
+              }
+            }
+            if (performance.now() - t0 < 1400) rafBolt = window.requestAnimationFrame(frame);
+            else {
+              pararRayo();
+              programarArcos();
+            }
+          };
+          rafBolt = window.requestAnimationFrame(frame);
+        }
+
+        // Bolt completo del choque: parpadea 3 veces y se apaga.
+        function rayoChoque() {
+          if (!trazo || !lienzo) {
+            impacto();
+            return;
+          }
+          if (document.hidden) return;
+          var dims = dimensionar(lienzo, trazo);
+          var rect = cover.getBoundingClientRect();
+          var logo = document.getElementById('logo');
+          var lr = logo instanceof HTMLElement ? logo.getBoundingClientRect() : rect;
+          var lx = (lr.left + lr.width / 2 - rect.left) * dims.dpr;
+          var ly = (lr.top + lr.height / 2 - rect.top) * dims.dpr;
+          var sx = portrait ? dims.w * 0.5 : dims.w * (0.55 + Math.random() * 0.1);
+          animarBolt(trazo, dims, lx, ly, sx, 0.7 + Math.random() * 0.6);
+        }
+
+        // Mini-arcos ocasionales: ráfagas cortas cada 8-12 s, sin loop permanente.
+        var temporizadorArcos = 0;
+        function programarArcos() {
+          window.clearTimeout(temporizadorArcos);
+          temporizadorArcos = window.setTimeout(function () {
+            if (document.hidden || saliendo || !trazo || !lienzo) {
+              programarArcos();
+              return;
+            }
+            var dims = dimensionar(lienzo, trazo);
+            var rect = cover.getBoundingClientRect();
+            var logo = document.getElementById('logo');
+            var lr = logo instanceof HTMLElement ? logo.getBoundingClientRect() : rect;
+            var dpr = dims.dpr;
+            var lx = (lr.left + lr.width / 2 - rect.left) * dpr;
+            var ly = (lr.top - rect.top) * dpr;
+            var t0 = performance.now();
+            var mini = function () {
+              if (document.hidden || saliendo) {
+                pararRayo();
+                programarArcos();
+                return;
+              }
+              trazo.clearRect(0, 0, dims.w, dims.h);
+              trazarRayo(trazo, lx + (Math.random() - 0.5) * 60, ly - 120 * dpr, lx, ly, 0.5, 1);
+              if (performance.now() - t0 < 700) rafBolt = window.requestAnimationFrame(mini);
+              else {
+                pararRayo();
+                programarArcos();
+              }
+            };
+            rafBolt = window.requestAnimationFrame(mini);
+          }, 8000 + Math.random() * 4000);
+        }
+
+        /* ---------- SECUENCIA DE ENTRADA (~3 s) ---------- */
+        var flash = document.getElementById('flash');
+
+        function impacto() {
+          cover.classList.add('is-impact');
+          var logo = document.getElementById('logo');
+          if (logo instanceof HTMLElement) logo.classList.add('is-lit');
+          if (flash instanceof HTMLElement) {
+            flash.classList.add('is-on');
+            window.setTimeout(function () {
+              flash.classList.remove('is-on');
+            }, 140);
+          }
+          cover.classList.add('is-shake');
+          window.setTimeout(function () {
+            cover.classList.remove('is-shake');
+          }, 550);
+        }
+
+        function secuencia() {
+          if (reduceMotion) {
+            // Estado final directo: logo violeta + PURPLE TEAM + botón.
+            cover.classList.add('is-impact');
+            var logo = document.getElementById('logo');
+            if (logo instanceof HTMLElement) logo.classList.add('is-lit');
+            return;
+          }
+          if (sinCanvas) {
+            // Destello CSS simple en lugar del rayo.
+            window.setTimeout(function () {
+              impacto();
+              programarArcos();
+            }, 1400);
+            return;
+          }
+          window.setTimeout(function () {
+            rayoChoque();
+            impacto();
+          }, 1350);
+        }
+
+        if (document.readyState === 'complete') secuencia();
+        else window.addEventListener('load', secuencia, { once: true });
+
+        /* ---------- PARALLAX SUTIL (solo puntero fino) ---------- */
         if (fineHover && !reduceMotion) {
           var logoNode = document.getElementById('logo');
-          if (!(logoNode instanceof HTMLElement)) return;
-          var logo = logoNode;
-          var raf = 0;
-          var mx = 0;
-          var my = 0;
-          cover.addEventListener('pointermove', function (evento) {
-            var x = (evento.clientX / window.innerWidth - 0.5) * 2;
-            var y = (evento.clientY / window.innerHeight - 0.5) * 2;
-            mx = Math.max(-1, Math.min(1, x));
-            my = Math.max(-1, Math.min(1, y));
-            if (!raf) {
-              raf = window.requestAnimationFrame(function () {
-                // La variable vive en .logo (consumidor), no en .cover:
-                // evita recalcular estilos de todo el subárbol en cada frame.
-                logo.style.setProperty('--mx', mx.toFixed(3));
-                logo.style.setProperty('--my', my.toFixed(3));
-                raf = 0;
+          if (logoNode instanceof HTMLElement) {
+            (function (logoEl) {
+              var raf = 0;
+              var mx = 0;
+              var my = 0;
+              cover.addEventListener('pointermove', function (evento) {
+                var x = (evento.clientX / window.innerWidth - 0.5) * 2;
+                var y = (evento.clientY / window.innerHeight - 0.5) * 2;
+                mx = Math.max(-1, Math.min(1, x));
+                my = Math.max(-1, Math.min(1, y));
+                if (!raf) {
+                  raf = window.requestAnimationFrame(function () {
+                    // La variable vive en .logo (consumidor), no en .cover:
+                    // evita recalcular estilos de todo el subárbol en cada frame.
+                    logoEl.style.setProperty('--mx', mx.toFixed(3));
+                    logoEl.style.setProperty('--my', my.toFixed(3));
+                    raf = 0;
+                  });
+                }
               });
-            }
-          });
+            })(logoNode);
+          }
         }
       })();
     </script>
+    <noscript>
+      <style>
+        /* Sin JS: estado final estático (foto, logo violeta, equipo, botón). */
+        .cover__team {
+          opacity: 1;
+          letter-spacing: 0.34em;
+          text-indent: 0.34em;
+        }
+        .logo .logo__img {
+          filter:
+            drop-shadow(0 0 18px rgba(168, 85, 247, 0.9))
+            drop-shadow(0 0 46px rgba(168, 85, 247, 0.55));
+        }
+        .logo__glow--violet {
+          opacity: 0.55;
+        }
+      </style>
+    </noscript>
   </body>
 </html>

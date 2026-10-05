@@ -26,6 +26,8 @@
   --violet-300: #A78BFA;
   --violet-700: #7B2FF7;
   --fuchsia: #E879F9;
+  /* Violeta de unión RED+BLUE (PURPLE TEAM). Solo portada y marca. */
+  --purple: #A855F7;
   --fuchsia-active: #f0abfc;
   --fuchsia-muted: #d946ef;
   --blue: #4D7CFF;
