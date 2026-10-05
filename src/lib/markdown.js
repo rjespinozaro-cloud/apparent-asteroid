@@ -91,6 +91,71 @@ marked.use({ gfm: true, breaks: false, html: false, renderer });
 const OPCIONES = { async: false, gfm: true, breaks: false, html: false };
 
 /**
+ * Notas de equipo con sintaxis propia y segura:
+ *
+ *   :::azul Título opcional
+ *   Contenido en Markdown…
+ *   :::
+ *
+ * Solo existen `roja` y `azul`, con clases fijas (`nota nota--roja|azul`) y
+ * título en texto plano escapado. El HTML crudo sigue desactivado: el bloque
+ * se extrae antes de Marked y el interior se renderiza con el mismo renderer
+ * seguro. Sin línea de cierre `:::`, el texto se deja literal.
+ */
+const NOTA_APERTURA = /^:::(roja|azul)(?:\s+(.+))?$/;
+const NOTA_CIERRE = /^:::\s*$/;
+const NOTA_MARCA = { roja: '▶', azul: '◆' };
+
+/**
+ * Extrae los bloques `:::roja|azul`, renderiza su interior y devuelve el
+ * Markdown con un marcador por bloque más la lista de `<aside>` finales.
+ * @param {string} markdown
+ * @returns {{ texto: string, notas: string[] }}
+ */
+export function extraerNotas(markdown) {
+  const lineas = String(markdown ?? '').split(/\r?\n/);
+  const salida = [];
+  const notas = [];
+  let i = 0;
+  while (i < lineas.length) {
+    const apertura = lineas[i].match(NOTA_APERTURA);
+    if (!apertura) {
+      salida.push(lineas[i]);
+      i += 1;
+      continue;
+    }
+    const [, variante, tituloCrudo] = apertura;
+    const interior = [];
+    let j = i + 1;
+    while (j < lineas.length && !NOTA_CIERRE.test(lineas[j])) {
+      interior.push(lineas[j]);
+      j += 1;
+    }
+    if (j >= lineas.length) {
+      // Sin cierre: se deja literal para que el fallo sea visible, no silencioso.
+      salida.push(lineas[i]);
+      i += 1;
+      continue;
+    }
+    const titulo = escaparHtml((tituloCrudo ?? '').trim());
+    const marcador = `NOTAJOANIX${notas.length}`;
+    // El interior se renderiza aislado para no contaminar los ids de
+    // encabezados del documento principal.
+    const guardadas = new Map(vistosPorRender);
+    vistosPorRender.clear();
+    const interiorHtml = marked.parse(interior.join('\n').trim(), OPCIONES);
+    vistosPorRender.clear();
+    for (const [clave, valor] of guardadas) vistosPorRender.set(clave, valor);
+    notas.push(
+      `<aside class="nota nota--${variante}"><p class="nota__titulo">${NOTA_MARCA[variante]}${titulo ? ` ${titulo}` : ''}</p>${interiorHtml}</aside>`,
+    );
+    salida.push('', marcador, '');
+    i = j + 1;
+  }
+  return { texto: salida.join('\n'), notas };
+}
+
+/**
  * Convierte Markdown en HTML seguro.
  * El HTML crudo se escapa (`html: false` + renderer que escapa) y los enlaces
  * se filtran por protocolo, de modo que el contenido de la base de datos nunca
@@ -100,7 +165,12 @@ const OPCIONES = { async: false, gfm: true, breaks: false, html: false };
  */
 export function markdownAHtml(markdown) {
   vistosPorRender.clear();
-  return marked.parse(String(markdown ?? ''), OPCIONES);
+  const { texto, notas } = extraerNotas(String(markdown ?? ''));
+  let html = marked.parse(texto, OPCIONES);
+  notas.forEach((aside, indice) => {
+    html = html.replace(`<p>NOTAJOANIX${indice}</p>`, aside);
+  });
+  return html;
 }
 
 /**

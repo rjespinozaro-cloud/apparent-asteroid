@@ -73,6 +73,7 @@ export function tiempoLectura(markdown, palabrasPorMinuto = PALABRAS_POR_MINUTO)
 /** Texto plano de una guía para descripciones y buscador. */
 export function textoPlano(markdown, limite = Infinity) {
   const texto = String(markdown ?? '')
+    .replace(/^:::\s*.*$/gm, ' ')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/`([^`]*)`/g, '$1')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
@@ -87,13 +88,17 @@ export function textoPlano(markdown, limite = Infinity) {
 
 /**
  * Descripción SEO: texto plano del cuerpo, sin encabezados (el título ya viaja
- * aparte) ni saltos, recortado en un límite de caracteres.
+ * aparte) ni saltos. Prefiere cortar al final de una frase; si no hay punto
+ * cercano, corta en palabra completa. Nunca a mitad de palabra ni de frase
+ * cuando hay un cierre de frase a mano.
  */
 export function descripcionDesdeMarkdown(markdown, limite = 155) {
   const sinEncabezados = String(markdown ?? '').replace(/^#{1,6}\s+.*$/gm, ' ');
   const texto = textoPlano(sinEncabezados);
   if (texto.length <= limite) return texto;
   const corte = texto.slice(0, limite);
+  const finFrase = Math.max(corte.lastIndexOf('. '), corte.lastIndexOf('? '), corte.lastIndexOf('! '));
+  if (finFrase > limite * 0.4) return `${corte.slice(0, finFrase + 1).trimEnd()}`;
   const ultimoEspacio = corte.lastIndexOf(' ');
   return `${(ultimoEspacio > limite * 0.6 ? corte.slice(0, ultimoEspacio) : corte).trimEnd()}…`;
 }
