@@ -1,6 +1,6 @@
 ---
 import { descripcionDesdeMarkdown } from '../lib/utils/texto.js';
-import { claseEquipo, nombreEquipo, nombreHerramienta, nombreNivel } from '../lib/vocabulario.js';
+import { claseEquipo, nombreAcceso, nombreEquipo, nombreHerramienta, nombreNivel } from '../lib/vocabulario.js';
 
 interface Props {
   guia: {
@@ -23,26 +23,26 @@ const { guia, descripcion, mostrarNivel = true } = Astro.props;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const equipo = claseEquipo(guia.equipo);
 const resumen = descripcion ?? guia.resumen ?? null;
+const destino = `${base}guias/${guia.slug}/`;
 ---
 
 <article class:list={['tarjeta-premium', `tarjeta--${equipo}`, 'reveal']} data-spotlight>
-  <div class="tarjeta__meta">
-    <span class:list={['chip', `chip--${equipo}`, 'chip--pulse']}>
-      <span class="chip__dot"></span>
-      {nombreEquipo(guia.equipo)}
-    </span>
-    {mostrarNivel && <span class="chip">{nombreNivel(guia.nivel)}</span>}
-    {guia.acceso === 'pago' && <span class="chip chip--fuchsia">PDF</span>}
-    <time class="chip" datetime={guia.fecha}>{guia.fecha}</time>
-  </div>
+  <p class:list={['tarjeta__kicker', `tarjeta__kicker--${equipo}`]}>
+    {nombreEquipo(guia.equipo)} · {guia.acceso === 'pago' ? 'Premium' : 'Gratis'}
+  </p>
 
   <h3 class="tarjeta__titulo">
-    <a href={`${base}guias/${guia.slug}/`} class="stretched-link">{guia.titulo}</a>
+    <a href={destino} class="stretched-link">{guia.titulo}</a>
   </h3>
 
   {resumen && <p class="tarjeta__resumen">{descripcionDesdeMarkdown(resumen)}</p>}
 
-  <div class="tarjeta__meta">
-    <span class="chip">{nombreHerramienta(guia.herramienta)}</span>
-  </div>
+  <p class="tarjeta__meta-linea">
+    {nombreHerramienta(guia.herramienta)}{mostrarNivel && ` · ${nombreNivel(guia.nivel)}`}
+  </p>
+  <p class="tarjeta__meta-linea tarjeta__meta-linea--suave">
+    {guia.acceso === 'pago' ? 'Vista previa disponible · PDF completo' : 'Lectura completa gratuita'}
+  </p>
+
+  <span class="tarjeta__accion" aria-hidden="true">Ver guía →</span>
 </article>

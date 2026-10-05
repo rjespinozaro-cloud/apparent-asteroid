@@ -238,6 +238,52 @@ a.tarjeta:hover {
   margin: 0;
 }
 
+.tarjeta__kicker {
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.tarjeta__kicker--red {
+  color: var(--red);
+}
+
+.tarjeta__kicker--blue {
+  color: var(--blue);
+}
+
+.tarjeta__kicker--neutro {
+  color: var(--tinta-suave);
+}
+
+.tarjeta__meta-linea {
+  color: var(--tinta-suave);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.tarjeta__meta-linea--suave {
+  color: var(--tinta-tenue);
+}
+
+.tarjeta__accion {
+  color: var(--tinta);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  margin-top: auto;
+  padding-top: var(--espacio-2xs);
+}
+
+.tarjeta-premium:hover .tarjeta__accion {
+  color: var(--violet-300);
+}
+
 .tarjeta__titulo a {
   color: var(--tinta);
   text-decoration: none;
@@ -416,6 +462,34 @@ a.tarjeta:hover .tarjeta__titulo {
 .candado__aviso {
   color: var(--tinta-tenue);
   font-style: italic;
+}
+
+.candado--red {
+  border-inline-start: 3px solid var(--red);
+}
+
+.candado--blue {
+  border-inline-start: 3px solid var(--blue);
+}
+
+.candado__incluye-titulo {
+  font-weight: 600;
+  margin-bottom: var(--espacio-3xs);
+}
+
+.candado__incluye {
+  color: var(--tinta-suave);
+  font-size: var(--texto-sm);
+  margin: 0 0 var(--espacio-s);
+  padding-inline-start: 1.25rem;
+}
+
+.candado__incluye li + li {
+  margin-top: var(--espacio-3xs);
+}
+
+.candado .boton--premium {
+  margin-top: var(--espacio-xs);
 }
 
 /* Bloque de terminal ------------------------------------------------------ */
@@ -935,104 +1009,4 @@ a.tarjeta:hover .tarjeta__titulo {
   font-feature-settings: 'smcp' on, 'c2sc' on;
 }
 
-/* Efecto decodificación para título de portada */
-.decodificando {
-  display: inline-block;
-  position: relative;
-  overflow: hidden;
-}
-
-.decodificando::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  background: var(--papel);
-  animation: decodificar 600ms var(--curva) forwards;
-}
-
-@keyframes decodificar {
-  0% { clip-path: inset(0 100% 0 0); }
-  100% { clip-path: inset(0 0 0 0); }
-}
-
-/* Cursor parpadeante */
-.cursor-blink {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  background: var(--fuchsia);
-  margin-inline-start: 2px;
-  animation: blink 1s step-end infinite;
-  vertical-align: text-bottom;
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cursor-blink {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-/* Glitch corto en wordmark al hover */
-.wordmark-glitch {
-  position: relative;
-  display: inline-block;
-  transition: color 160ms var(--curva);
-}
-
-.wordmark-glitch:hover {
-  color: var(--fuchsia);
-}
-
-.wordmark-glitch::before,
-.wordmark-glitch::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  clip-path: inset(0 0 0 0);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.wordmark-glitch::before {
-  color: var(--red);
-  animation: glitch-1 200ms ease-out forwards;
-}
-
-.wordmark-glitch::after {
-  color: var(--blue);
-  animation: glitch-2 200ms ease-out forwards;
-}
-
-@keyframes glitch-1 {
-  0% { clip-path: inset(40% 0 50% 0); transform: translateX(-2px); opacity: 1; }
-  25% { clip-path: inset(20% 0 70% 0); transform: translateX(2px); }
-  50% { clip-path: inset(60% 0 30% 0); transform: translateX(-1px); }
-  100% { clip-path: inset(0 0 0 0); transform: translateX(0); opacity: 0; }
-}
-
-@keyframes glitch-2 {
-  0% { clip-path: inset(50% 0 40% 0); transform: translateX(2px); opacity: 1; }
-  25% { clip-path: inset(70% 0 20% 0); transform: translateX(-2px); }
-  50% { clip-path: inset(30% 0 60% 0); transform: translateX(1px); }
-  100% { clip-path: inset(0 0 0 0); transform: translateX(0); opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wordmark-glitch::before,
-  .wordmark-glitch::after {
-    display: none;
-  }
-}
-
-/* Texto con small-caps real usando font-variant */
-.text-small-caps {
-  font-variant-caps: small-caps;
-  font-feature-settings: 'smcp' on, 'c2sc' on;
-  letter-spacing: 0.1em;
-}
+/* (Efectos de portada eliminados: la entrada usa su propio <style> aislado.) */

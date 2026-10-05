@@ -24,6 +24,18 @@
   margin-bottom: 0;
 }
 
+.guia__equipo-linea {
+  color: var(--tinta-suave);
+  font-size: var(--texto-sm);
+  margin: 0;
+  max-width: none;
+}
+
+.guia__equipo-linea strong {
+  color: var(--tinta);
+  letter-spacing: 0.06em;
+}
+
 .guia__etiquetas {
   align-items: center;
   display: flex;
@@ -61,12 +73,17 @@
   padding: var(--espacio-m);
 }
 
-.guia__indice h2 {
+.guia__indice-titulo {
+  cursor: pointer;
   font-size: var(--texto-sm);
   font-family: var(--fuente-mono);
   letter-spacing: 0.12em;
   margin-bottom: var(--espacio-xs);
   text-transform: uppercase;
+}
+
+.guia__indice-titulo::marker {
+  color: var(--tinta-tenue);
 }
 
 .guia__indice ol {
@@ -436,5 +453,15 @@
     align-self: start;
     position: sticky;
     top: calc(var(--alto-cabecera) + var(--espacio-s));
+  }
+
+  /* En escritorio el índice siempre está desplegado: el resumen no alterna. */
+  .guia__indice-titulo {
+    list-style: none;
+    pointer-events: none;
+  }
+
+  .guia__indice-titulo::-webkit-details-marker {
+    display: none;
   }
 }

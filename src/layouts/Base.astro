@@ -93,6 +93,16 @@ const imagenOg = new URL(ogImage, origen).href;
 
     <footer class="pie">
       <div class="pie__interna contenedor">
+        <div class="pie__marca">
+          <p class="pie__nombre">JOANIX GUIDES</p>
+          <p class="pie__lema">Cybersecurity Knowledge Lab</p>
+        </div>
+        <nav class="pie__nav" aria-label="Navegación del pie">
+          <a href={`${baseAsset}guias/`}>Guías</a>
+          <a href={`${baseAsset}herramientas/`}>Herramientas</a>
+          <a href={`${baseAsset}guias/?equipo=red`}>RED</a>
+          <a href={`${baseAsset}guias/?equipo=blue`}>BLUE</a>
+        </nav>
         <AvisoLegal />
       </div>
     </footer>

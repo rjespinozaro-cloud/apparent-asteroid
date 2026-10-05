@@ -103,6 +103,46 @@ export function descripcionDesdeMarkdown(markdown, limite = 155) {
   return `${(ultimoEspacio > limite * 0.6 ? corte.slice(0, ultimoEspacio) : corte).trimEnd()}…`;
 }
 
+/**
+ * Divide una guía en vista previa y resto, cortando siempre en un
+ * encabezado `##`. La previa son la intro más la primera sección; el resto
+ * son solo los títulos reales de las secciones siguientes (para el paywall).
+ * El cuerpo completo nunca debe salir del servidor para guías de pago.
+ * @returns {{ preview: string, resto: string[] }}
+ */
+export function dividirPreview(markdown) {
+  const texto = String(markdown ?? '');
+  const lineas = texto.split(/\r?\n/);
+  const intro = [];
+  const secciones = [];
+  let actual = null;
+  for (const linea of lineas) {
+    if (/^##\s+/.test(linea)) {
+      if (actual) secciones.push(actual);
+      actual = { titulo: linea, lineas: [linea] };
+    } else if (actual) {
+      actual.lineas.push(linea);
+    } else {
+      intro.push(linea);
+    }
+  }
+  if (actual) secciones.push(actual);
+  const limpiarTitulo = (titulo) =>
+    String(titulo ?? '')
+      .replace(/^##\s+/, '')
+      .replace(/[*_`[\]()]/g, '')
+      .replace(/^\d+\s*[.):-]?\s*/, '')
+      .trim();
+  if (secciones.length === 0) return { preview: texto, resto: [] };
+  const primera = secciones[0];
+  const preview = [...intro, ...primera.lineas].join('\n').trim();
+  const resto = secciones
+    .slice(1)
+    .map((seccion) => limpiarTitulo(seccion.titulo))
+    .filter(Boolean);
+  return { preview: `${preview}\n`, resto };
+}
+
 /** Ancla estable para un encabezado: `## 1. Revisar` → `1-revisar`. */
 export function ancla(texto) {
   return String(texto ?? '')

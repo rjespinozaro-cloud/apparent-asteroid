@@ -12,6 +12,8 @@ interface Props {
   nivel: string;
   acceso: string;
   enlaceCompra?: string | null;
+  /** Títulos reales de las secciones que quedan tras el corte (solo pago). */
+  restoTitulos?: string[];
   descripcion?: string;
   fecha?: string;
   tiempoLectura?: number;
@@ -31,6 +33,7 @@ const {
   nivel,
   acceso,
   enlaceCompra = null,
+  restoTitulos = [],
   descripcion,
   fecha,
   tiempoLectura,
@@ -61,13 +64,19 @@ const {
         </ol>
       </nav>
 
-      <p class="eyebrow">Guía de {herramienta}</p>
+      <p class="guia__equipo-linea">
+        <strong>{equipo === 'blue' ? 'BLUE · Defensa' : 'RED · Ofensiva'}</strong>
+        <span aria-hidden="true"> · </span>
+        <span>{acceso === 'pago' ? 'Premium · PDF de pago' : 'Gratis · Lectura completa'}</span>
+      </p>
       <h1>{titulo}</h1>
+
+      {descripcion && <p class="entradilla">{descripcion}</p>}
 
       <ul class="guia__etiquetas" aria-label="Características de la guía">
         <li><span class:list={['etiqueta', `etiqueta--${equipo}`]}>{equipo === 'blue' ? 'BLUE' : 'RED'}</span></li>
         <li><span class="etiqueta etiqueta--neutro">{nivel}</span></li>
-        <li><span class="etiqueta etiqueta--neutro">{acceso === 'pago' ? 'PDF de pago' : 'Gratis'}</span></li>
+        <li><span class="etiqueta etiqueta--neutro">{herramienta}</span></li>
         {fecha && <li><time class="etiqueta etiqueta--neutro" datetime={fecha}>{fecha}</time></li>}
         {tiempoLectura && <li><span class="etiqueta etiqueta--neutro">{tiempoLectura} min de lectura</span></li>}
       </ul>
@@ -79,16 +88,16 @@ const {
 
     <div class="guia__cuerpo">
       {indice.length > 0 && (
-        <aside class="guia__indice" aria-labelledby="indice-titulo">
-          <h2 id="indice-titulo">En esta guía</h2>
-          <ol>
+        <details class="guia__indice" open>
+          <summary class="guia__indice-titulo" id="indice-titulo">En esta guía</summary>
+          <ol aria-labelledby="indice-titulo">
             {indice.map((item) => (
               <li class:list={['guia__indice-item', item.nivel === 3 && 'guia__indice-item--sub']}>
                 <a href={`#${item.id}`}>{item.texto}</a>
               </li>
             ))}
           </ol>
-        </aside>
+        </details>
       )}
       <script>
         import '../scripts/guia-indice.js';
@@ -96,7 +105,7 @@ const {
 
       <div class="guia__contenido">
         <slot />
-        {acceso === 'pago' && <Candado enlaceCompra={enlaceCompra} />}
+        {acceso === 'pago' && <Candado enlaceCompra={enlaceCompra} incluye={restoTitulos} equipo={equipo} />}
       </div>
     </div>
   </article>

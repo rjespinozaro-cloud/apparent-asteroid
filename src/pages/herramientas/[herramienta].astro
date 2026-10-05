@@ -62,6 +62,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
             {plural(guias.length, 'guía publicada', 'guías publicadas')} sobre {titulo}, repartidas entre lectura defensiva
             (BLUE) y práctica ofensiva autorizada (RED).
           </p>
+          <p class="guia__meta-catalogo">
+            {plural(guias.filter((guia) => guia.acceso === 'gratis').length, 'gratuita', 'gratuitas')} · {plural(guias.filter((guia) => guia.acceso === 'pago').length, 'premium', 'premium')}
+          </p>
         </div>
 
         <div class="rejilla-equipos">
