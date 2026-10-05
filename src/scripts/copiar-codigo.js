@@ -1,18 +1,31 @@
 const bloques = document.querySelectorAll('.guia__contenido pre, .bloque-terminal pre, .codigo-bloque pre, .markdown pre');
 
 bloques.forEach((bloque) => {
-  if (bloque.parentElement?.classList.contains('bloque-terminal') || 
+  if (bloque.parentElement?.classList.contains('bloque-terminal') ||
       bloque.parentElement?.classList.contains('codigo-bloque')) {
     return;
   }
 
-  const envoltorio = document.createElement('div');
-  const boton = document.createElement('button');
+  const codigo = bloque.querySelector('code');
+  const clase = codigo?.className ?? '';
+  const coincidencia = clase.match(/language-([\w+-]+)/);
+  const lenguaje = (coincidencia?.[1] ?? 'código').toLowerCase();
 
-  envoltorio.className = 'bloque-terminal';
-  boton.className = 'copiar-codigo';
+  const envoltorio = document.createElement('div');
+  envoltorio.className = 'codigo-bloque';
+
+  const cabecera = document.createElement('div');
+  cabecera.className = 'codigo-bloque__header';
+
+  const etiqueta = document.createElement('span');
+  etiqueta.className = 'codigo-bloque__lenguaje';
+  etiqueta.textContent = lenguaje;
+
+  const boton = document.createElement('button');
+  boton.className = 'codigo-bloque__copy';
   boton.type = 'button';
   boton.textContent = 'Copiar';
+  boton.setAttribute('aria-label', `Copiar bloque de ${lenguaje}`);
   boton.addEventListener('click', async () => {
     await navigator.clipboard.writeText(bloque.textContent ?? '');
     boton.textContent = 'Copiado';
@@ -23,6 +36,7 @@ bloques.forEach((bloque) => {
     }, 2000);
   });
 
+  cabecera.append(etiqueta, boton);
   bloque.replaceWith(envoltorio);
-  envoltorio.append(bloque, boton);
+  envoltorio.append(cabecera, bloque);
 });

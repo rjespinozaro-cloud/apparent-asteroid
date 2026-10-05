@@ -205,6 +205,20 @@
   font-size: var(--texto-sm);
 }
 
+.filtros__activos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2xs);
+  list-style: none;
+  margin: 0 0 var(--espacio-xs);
+  padding: 0;
+}
+
+.filtros__activos .chip {
+  min-height: 44px;
+  text-decoration: none;
+}
+
 /* Buscador --------------------------------------------------------------- */
 
 .buscador {

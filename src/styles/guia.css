@@ -89,6 +89,16 @@
   padding-inline-start: var(--espacio-l);
 }
 
+.guia__indice-item--activo {
+  border-inline-start-color: var(--violet-500);
+}
+
+.guia__indice-item--activo a,
+.guia__indice-item a[aria-current='true'] {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
 .guia__indice-item a {
   color: var(--tinta-suave);
   text-decoration: none;

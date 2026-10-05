@@ -75,6 +75,38 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </p>
     </div>
 
+    {hayFiltros && (
+      <ul class="filtros__activos" aria-label="Filtros activos">
+        {equipo && (
+          <li>
+            <a class="chip" href={enlaceCon({ equipo: '' })} aria-label={`Quitar filtro de equipo ${nombreEquipo(equipo)}`}>
+              {nombreEquipo(equipo)} <span aria-hidden="true">×</span>
+            </a>
+          </li>
+        )}
+        {nivel && (
+          <li>
+            <a class="chip" href={enlaceCon({ nivel: '' })} aria-label={`Quitar filtro de nivel ${nombreNivel(nivel)}`}>
+              {nombreNivel(nivel)} <span aria-hidden="true">×</span>
+            </a>
+          </li>
+        )}
+        {herramienta && (
+          <li>
+            <a class="chip" href={enlaceCon({ herramienta: '' })} aria-label={`Quitar filtro de herramienta ${nombreHerramienta(herramienta)}`}>
+              {nombreHerramienta(herramienta)} <span aria-hidden="true">×</span>
+            </a>
+          </li>
+        )}
+      </ul>
+    )}
+
+    <p class="paginacion__estado" role="status">
+      {total > 0
+        ? plural(total, 'guía encontrada', 'guías encontradas')
+        : 'Sin resultados para estos filtros.'}
+    </p>
+
     <form class="filtros" method="get" action={`${base}guias/`} aria-labelledby="filtros-titulo">
       <h2 class="visualmente-oculto" id="filtros-titulo">Filtrar guías</h2>
 

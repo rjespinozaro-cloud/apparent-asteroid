@@ -34,12 +34,6 @@ function activo(href: string) {
         <a class="link--premium" href={enlace.href} aria-current={activo(enlace.href) ? 'page' : undefined}>{enlace.texto}</a>
       </li>
     ))}
-    <li class="menu__buscar">
-      <a href={`${base}buscar/`} class="menu__boton-buscar">
-        <span aria-hidden="true">⌕</span>
-        <span class="visualmente-oculto">Buscar guías</span>
-      </a>
-    </li>
     <li aria-hidden="true"><span class="menu__indicator"></span></li>
   </ul>
 </nav>

@@ -30,12 +30,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <div class="portada--hero__scrim"></div>
     </div>
     <div class="portada--hero__contenido">
-      <img src={`${base}logo.png`} alt="JOANIX GUIDES" width="480" height="240" fetchpriority="high" decoding="async" class="portada--hero__logo" />
-      <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
-      <h1 id="inicio-titulo" class="decodificando" data-text="Aprende seguridad ofensiva y defensiva desde una misma plataforma.">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</h1>
-      <p class="portada--hero__descriptor">
-        <span class="cursor-blink" aria-hidden="true"></span>
-      </p>
+      <h1 id="inicio-titulo" class="decodificando" data-text="JOANIX GUIDES">JOANIX GUIDES</h1>
+      <p class="portada--hero__descriptor">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</p>
       <div class="portada__acciones portada--hero__acciones">
         <a class="boton--premium" href={`${base}guias/`}>Explorar guías</a>
         <a class="boton--ghost" href={`${base}herramientas/`}>Explorar herramientas</a>
@@ -50,7 +46,6 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   <section class="seccion reveal" aria-labelledby="equipos-titulo">
     <div class="seccion__cabecera">
       <div>
-        <p class="eyebrow">Dos claves</p>
         <h2 class="seccion__titulo" id="equipos-titulo">El mismo escenario, dos lecturas</h2>
       </div>
     </div>
@@ -82,19 +77,35 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     <section class="seccion reveal" aria-labelledby="herramientas-titulo">
       <div class="seccion__cabecera">
         <div>
-          <p class="eyebrow">Explorador</p>
           <h2 class="seccion__titulo" id="herramientas-titulo">Herramientas documentadas</h2>
         </div>
-        <a class="link--premium" href={`${base}herramientas/`}>Ver todas →</a>
+        <a class="link--premium" href={`${base}herramientas/`}>Ver todas</a>
       </div>
-      <ul class="lista-herramientas">
-        {destacadas.map((item) => (
-          <li class="lista-herramientas__item">
-            <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
-            <span class="lista-herramientas__conteo">{plural(item.total, 'guía', 'guías')}</span>
-          </li>
-        ))}
-      </ul>
+      {herramientas.length < 3 ? (
+        <div class="rejilla-tarjetas">
+          {destacadas.map((item) => (
+            <article class="tarjeta tarjeta--destacada">
+              <h3 class="tarjeta__titulo">
+                <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+              </h3>
+              <p class="tarjeta__meta">
+                <span>{plural(item.total, 'guía', 'guías')}</span>
+                {item.blue > 0 && <span>{plural(item.blue, 'defensiva', 'defensivas')} (BLUE)</span>}
+                {item.red > 0 && <span>{plural(item.red, 'ofensiva', 'ofensivas')} (RED)</span>}
+              </p>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <ul class="lista-herramientas">
+          {destacadas.map((item) => (
+            <li class="lista-herramientas__item">
+              <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+              <span class="lista-herramientas__conteo">{plural(item.total, 'guía', 'guías')}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )}
 
@@ -102,10 +113,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     <section class="seccion reveal" aria-labelledby="ultimas-titulo">
       <div class="seccion__cabecera">
         <div>
-          <p class="eyebrow">Recién editado</p>
           <h2 class="seccion__titulo" id="ultimas-titulo">Últimas guías</h2>
         </div>
-        <a class="link--premium" href={`${base}guias/`}>Ver catálogo completo →</a>
+        <a class="link--premium" href={`${base}guias/`}>Ver catálogo completo</a>
       </div>
       <ul class="rejilla-tarjetas reveal--stagger">
         {ultimas.map((guia) => (
@@ -117,7 +127,6 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
   <section class="seccion reveal" aria-labelledby="metodo-titulo">
     <div>
-      <p class="eyebrow">Método</p>
       <h2 class="seccion__titulo" id="metodo-titulo">Cómo se escribe cada guía</h2>
     </div>
     <div class="rejilla-notas">
@@ -125,11 +134,11 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         Cada guía declara el laboratorio mínimo, los datos de entrada y el resultado esperado antes de
         mostrar el primer comando.
       </Nota>
-      <Nota titulo="Interpretación" variante="azul">
+      <Nota titulo="Interpretación" variante="neutra">
         No basta con ejecutar: cada salida se interpreta y se conecta con la señal que debería ver el
         lado defensivo.
       </Nota>
-      <Nota titulo="Legalidad" variante="roja">
+      <Nota titulo="Legalidad" variante="neutra">
         Todo el material es educativo y va dirigido a redes propias o a sistemas con autorización
         escrita.
       </Nota>
