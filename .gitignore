@@ -1,34 +1,32 @@
 # build output
 dist/
-.dev.vars
-.wrangler/
-
-# generated types
-.astro/
 
 # dependencies
 node_modules/
 
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# cloudflare local state
+.wrangler/
+.dev.vars
+# se conserva .dev.vars.example como plantilla pública
+
+# generated types
+.astro/
 
 # environment variables
 .env
-.env.production
+.env.*
+
+# logs
+*.log
 
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
-node_modules/
-dist/
-.wrangler/
-.dev.vars
-.env
-.env.*
-*.log
-.astro/
+
+# binarios descargados por skills (no versionar ejecutables)
+.opencode/skills/impeccable/scripts/bin/
+.impeccable/*.png
+.impeccable/review/
+.impeccable/live/sessions/
