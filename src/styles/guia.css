@@ -436,6 +436,16 @@
   padding-top: var(--espacio-l);
 }
 
+/* La sección anidada ya vive dentro del contenedor del artículo: no se
+   recentra ni se acolcha en horizontal (solo ritmo vertical propio). */
+.guia .guia__relacionadas {
+  border-top: var(--borde);
+  margin-inline: 0;
+  max-width: none;
+  padding: var(--espacio-l) 0 0;
+  width: 100%;
+}
+
 .guia--blue .guia__contenido h2 {
   border-top-color: color-mix(in srgb, var(--blue) 30%, var(--linea));
 }

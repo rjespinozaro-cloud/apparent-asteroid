@@ -104,43 +104,157 @@ export function descripcionDesdeMarkdown(markdown, limite = 155) {
 }
 
 /**
- * Divide una guía en vista previa y resto, cortando siempre en un
- * encabezado `##`. La previa son la intro más la primera sección; el resto
- * son solo los títulos reales de las secciones siguientes (para el paywall).
- * El cuerpo completo nunca debe salir del servidor para guías de pago.
+ * Tamaño máximo de la vista previa de una guía de pago, en caracteres.
+ * El corte se hace siempre en límite de palabra (nunca a mitad de palabra).
+ */
+const LIMITE_PREVIEW = 800;
+
+/** Mínimo razonable de vista previa: se prefiere un corte posterior a este tamaño. */
+const MINIMO_PREVIEW = 240;
+
+/** Índice de la primera línea a partir de `desde` que cumple `patron`. */
+function primeraLinea(lineas, patron, desde = 0) {
+  for (let i = desde; i < lineas.length; i += 1) {
+    if (patron.test(lineas[i])) return i;
+  }
+  return -1;
+}
+
+/** Offset de carácter en el que empieza la línea `indice` (cuenta los saltos). */
+function offsetLinea(lineas, indice) {
+  let offset = 0;
+  for (let i = 0; i < indice; i += 1) offset += lineas[i].length + 1;
+  return offset;
+}
+
+/** Fin de la próxima oración (`.`, `?`, `!` o `…`) desde `desde`, o -1. */
+function finOracion(texto, desde) {
+  const coincidencia = texto.slice(desde).match(/[.!?…](\s|$)/);
+  return coincidencia ? desde + coincidencia.index + coincidencia[0].length : -1;
+}
+
+/**
+ * Título legible de un encabezado: quita la almohadilla, la numeración y el
+ * formato en Markdown. Es lo que lista el candado bajo «El PDF continúa con».
+ * @param {string} titulo
+ * @returns {string}
+ */
+function tituloLimpio(titulo) {
+  return String(titulo ?? '')
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/[*_`[\]()[\]]/g, '')
+    .replace(/^\d+\s*[.):-]?\s*/, '')
+    .trim();
+}
+
+/**
+ * Punto de corte para una guía sin par de bloques `##`, dentro de `[min, max]`.
+ * Busca el primer punto razonable en este orden: encabezado `###`, fin del
+ * primer bloque de párrafo que alcanza el mínimo y fin de oración.
+ * @param {string} texto cuerpo completo
+ * @param {string[]} lineas
+ * @param {number} min mínimo razonable de vista previa
+ * @param {number} max tope máximo de vista previa
+ * @returns {number} offset de carácter donde cortar, o -1
+ */
+function corteRazonable(texto, lineas, min, max) {
+  // a) `###` posterior al mínimo: es un título real de la guía.
+  let desde = 0;
+  while (desde < lineas.length) {
+    const indice = primeraLinea(lineas, /^###\s+/, desde);
+    if (indice < 0) break;
+    const offset = offsetLinea(lineas, indice);
+    if (offset > max) break;
+    if (offset >= min && offset < texto.length) return offset;
+    desde = indice + 1;
+  }
+  // b) Fin del primer bloque de párrafo que alcanza el mínimo.
+  for (let i = 0; i < lineas.length; i += 1) {
+    if (lineas[i].trim() === '') continue;
+    const finBloque = offsetLinea(lineas, i) + lineas[i].length;
+    const esFinDeBloque = i + 1 >= lineas.length || lineas[i + 1].trim() === '';
+    if (esFinDeBloque && finBloque >= min && finBloque < Math.min(max, texto.length)) return finBloque;
+  }
+  // c) Fin de oración dentro del rango.
+  let buscando = 0;
+  while (buscando < texto.length) {
+    const fin = finOracion(texto, buscando);
+    if (fin < 0) break;
+    if (fin > max) break;
+    if (fin >= min && fin < texto.length) return fin;
+    buscando = fin;
+  }
+  return -1;
+}
+
+/**
+ * Divide una guía en vista previa y resto, cortando siempre en un punto
+ * razonable de la estructura real del documento.
+ *
+ * Regla P0: la vista previa de una guía de pago NUNCA puede ser el cuerpo
+ * entero. Con dos o más bloques `##` corta en el primero (previa = intro más
+ * la primera sección, comportamiento histórico). Sin par de `##` —también
+ * cuando hay un único `##` o el `##` no abre línea— corta en el primer punto
+ * razonable (`###`, fin de párrafo, fin de oración) o, en el peor caso, en el
+ * límite de caracteres. El `resto` solo lleva títulos reales (`##`/`###`)
+ * que siguen tras el corte: nunca se inventan.
+ * El cuerpo completo jamás debe salir del servidor para guías de pago.
+ * @param {string} markdown
  * @returns {{ preview: string, resto: string[] }}
  */
 export function dividirPreview(markdown) {
-  const texto = String(markdown ?? '');
+  const texto = String(markdown ?? '').trim();
+  if (!texto) return { preview: '', resto: [] };
   const lineas = texto.split(/\r?\n/);
-  const intro = [];
-  const secciones = [];
-  let actual = null;
-  for (const linea of lineas) {
-    if (/^##\s+/.test(linea)) {
-      if (actual) secciones.push(actual);
-      actual = { titulo: linea, lineas: [linea] };
-    } else if (actual) {
-      actual.lineas.push(linea);
-    } else {
-      intro.push(linea);
+
+  const limitesH2 = [];
+  lineas.forEach((linea, i) => {
+    if (/^##\s+/.test(linea)) limitesH2.push(i);
+  });
+
+  let corte;
+  let desdeLinea = 0;
+
+  if (limitesH2.length > 1) {
+    // Histórico: previa = intro + primera sección `##`.
+    corte = offsetLinea(lineas, limitesH2[1]);
+    desdeLinea = limitesH2[1];
+  } else {
+    corte = corteRazonable(texto, lineas, MINIMO_PREVIEW, LIMITE_PREVIEW);
+    if (corte < 0) {
+      // Último recurso con tope: corte en el último límite de palabra permitido.
+      const enPalabra = texto.lastIndexOf(' ', LIMITE_PREVIEW);
+      corte = enPalabra > MINIMO_PREVIEW / 2 ? enPalabra : -1;
+    }
+    if (corte < 0) {
+      // Texto sin estructura (sin espacios ni oraciones): corte duro garantizado.
+      corte = Math.max(1, Math.floor(texto.length * 0.7));
+    }
+    // Primera línea posterior al corte que abre un título real.
+    let consumido = 0;
+    desdeLinea = lineas.length;
+    for (let i = 0; i < lineas.length; i += 1) {
+      if (consumido >= corte && /^#{2,6}\s+/.test(lineas[i])) {
+        desdeLinea = i;
+        break;
+      }
+      consumido += lineas[i].length + 1;
     }
   }
-  if (actual) secciones.push(actual);
-  const limpiarTitulo = (titulo) =>
-    String(titulo ?? '')
-      .replace(/^##\s+/, '')
-      .replace(/[*_`[\]()]/g, '')
-      .replace(/^\d+\s*[.):-]?\s*/, '')
-      .trim();
-  if (secciones.length === 0) return { preview: texto, resto: [] };
-  const primera = secciones[0];
-  const preview = [...intro, ...primera.lineas].join('\n').trim();
-  const resto = secciones
-    .slice(1)
-    .map((seccion) => limpiarTitulo(seccion.titulo))
+
+  const previaCruda = texto.slice(0, corte).trimEnd();
+  // Garantía: la previa de una guía de pago nunca puede ser el cuerpo entero.
+  const previa = previaCruda.length > 0 && previaCruda.length < texto.length
+    ? previaCruda
+    : texto.slice(0, Math.max(1, Math.floor(texto.length * 0.7)));
+
+  const resto = lineas
+    .slice(desdeLinea)
+    .filter((linea) => /^#{2,6}\s+/.test(linea))
+    .map(tituloLimpio)
     .filter(Boolean);
-  return { preview: `${preview}\n`, resto };
+
+  return { preview: `${previa}\n`, resto };
 }
 
 /** Ancla estable para un encabezado: `## 1. Revisar` → `1-revisar`. */

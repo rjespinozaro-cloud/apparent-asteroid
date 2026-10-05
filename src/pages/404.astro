@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import AssistantMascot from '../components/AssistantMascot.astro';
 
 export const prerender = false;
 
@@ -14,7 +15,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60');
   description="La página que buscas no existe o ha cambiado de dirección."
   noindex
 >
-  <article class="pagina-error">
+  <article class="pagina-error contenedor">
+    <AssistantMascot estado="sad" tamano="lg" decorativa />
     <p class="eyebrow">Error 404</p>
     <h1>No hemos encontrado esa página</h1>
     <p>
