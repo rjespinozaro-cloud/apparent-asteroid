@@ -20,6 +20,7 @@ interface Props {
 }
 
 const { guia, descripcion, mostrarNivel = true } = Astro.props;
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const equipo = claseEquipo(guia.equipo);
 const resumen = descripcion ?? guia.resumen ?? null;
 ---
@@ -36,7 +37,7 @@ const resumen = descripcion ?? guia.resumen ?? null;
   </div>
 
   <h3 class="tarjeta__titulo">
-    <a href={`/guias/${guia.slug}/`} class="stretched-link">{guia.titulo}</a>
+    <a href={`${base}guias/${guia.slug}/`} class="stretched-link">{guia.titulo}</a>
   </h3>
 
   {resumen && <p class="tarjeta__resumen">{descripcionDesdeMarkdown(resumen)}</p>}

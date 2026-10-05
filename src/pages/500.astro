@@ -3,6 +3,8 @@ import Base from '../layouts/Base.astro';
 
 export const prerender = false;
 
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
 Astro.response.headers.set('Cache-Control', 'no-store');
 ---
 
@@ -16,11 +18,11 @@ Astro.response.headers.set('Cache-Control', 'no-store');
     <h1>Algo ha ido mal por nuestra parte</h1>
     <p>
       El fallo ya está registrado en el servidor. Vuelve a intentarlo en unos minutos; si persiste,
-      escríbenos desde el <a href="/aviso-legal/">aviso legal</a>.
+      escríbenos desde el <a href={`${base}aviso-legal/`}>aviso legal</a>.
     </p>
     <p class="pagina-error__acciones">
-      <a class="boton" href="/inicio/">Volver al inicio</a>
-      <a class="boton boton--secundario" href="/guias/">Ver todas las guías</a>
+      <a class="boton" href={`${base}inicio/`}>Volver al inicio</a>
+      <a class="boton boton--secundario" href={`${base}guias/`}>Ver todas las guías</a>
     </p>
   </article>
 </Base>

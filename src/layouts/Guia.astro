@@ -21,6 +21,8 @@ interface Props {
   noindex?: boolean;
 }
 
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
 const {
   titulo,
   herramienta,
@@ -52,9 +54,9 @@ const {
     <header class="guia__cabecera">
       <nav aria-label="Migas de pan">
         <ol class="migas">
-          <li><a href="/inicio/">Inicio</a></li>
-          <li><a href="/guias/">Guías</a></li>
-          <li><a href={`/herramientas/${herramientaSlug}/`}>{herramienta}</a></li>
+          <li><a href={`${base}inicio/`}>Inicio</a></li>
+          <li><a href={`${base}guias/`}>Guías</a></li>
+          <li><a href={`${base}herramientas/${herramientaSlug}/`}>{herramienta}</a></li>
           <li aria-current="page">{titulo}</li>
         </ol>
       </nav>

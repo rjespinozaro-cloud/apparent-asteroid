@@ -16,6 +16,7 @@ const [ultimas, herramientas] = await Promise.all([
 ]);
 
 const destacadas = herramientas.slice(0, 6);
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
@@ -29,15 +30,15 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <div class="portada--hero__scrim"></div>
     </div>
     <div class="portada--hero__contenido">
-      <img src="/logo.png" alt="JOANIX GUIDES" width="480" height="240" fetchpriority="high" decoding="async" class="portada--hero__logo" />
+      <img src={`${base}logo.png`} alt="JOANIX GUIDES" width="480" height="240" fetchpriority="high" decoding="async" class="portada--hero__logo" />
       <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
       <h1 id="inicio-titulo" class="decodificando" data-text="Aprende seguridad ofensiva y defensiva desde una misma plataforma.">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</h1>
       <p class="portada--hero__descriptor">
         <span class="cursor-blink" aria-hidden="true"></span>
       </p>
       <div class="portada__acciones portada--hero__acciones">
-        <a class="boton--premium" href="/guias/">Explorar guías</a>
-        <a class="boton--ghost" href="/herramientas/">Explorar herramientas</a>
+        <a class="boton--premium" href={`${base}guias/`}>Explorar guías</a>
+        <a class="boton--ghost" href={`${base}herramientas/`}>Explorar herramientas</a>
       </div>
       <div class="portada--hero__scroll" aria-hidden="true">
         <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
@@ -62,7 +63,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           Reconocimiento, enumeración y explotación con autorización explícita. El adelanto de cada guía
           es público; la marcha completa va en PDF.
         </p>
-        <a class="boton--ghost chip--red chip--pulse" href="/guias/?equipo=red">Ver guías RED</a>
+        <a class="boton--ghost chip--red chip--pulse" href={`${base}guias/?equipo=red`}>Ver guías RED</a>
       </article>
 
       <article class="equipo equipo--blue">
@@ -72,7 +73,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           Detección, validación y endurecimiento. Guías gratuitas y abiertas para que el equipo defensivo
           pueda practicar sin fricción.
         </p>
-        <a class="boton--ghost chip--blue chip--pulse" href="/guias/?equipo=blue">Ver guías BLUE</a>
+        <a class="boton--ghost chip--blue chip--pulse" href={`${base}guias/?equipo=blue`}>Ver guías BLUE</a>
       </article>
     </div>
   </section>
@@ -84,12 +85,12 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           <p class="eyebrow">Explorador</p>
           <h2 class="seccion__titulo" id="herramientas-titulo">Herramientas documentadas</h2>
         </div>
-        <a class="link--premium" href="/herramientas/">Ver todas →</a>
+        <a class="link--premium" href={`${base}herramientas/`}>Ver todas →</a>
       </div>
       <ul class="lista-herramientas">
         {destacadas.map((item) => (
           <li class="lista-herramientas__item">
-            <a href={`/herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+            <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
             <span class="lista-herramientas__conteo">{plural(item.total, 'guía', 'guías')}</span>
           </li>
         ))}
@@ -104,7 +105,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           <p class="eyebrow">Recién editado</p>
           <h2 class="seccion__titulo" id="ultimas-titulo">Últimas guías</h2>
         </div>
-        <a class="link--premium" href="/guias/">Ver catálogo completo →</a>
+        <a class="link--premium" href={`${base}guias/`}>Ver catálogo completo →</a>
       </div>
       <ul class="rejilla-tarjetas reveal--stagger">
         {ultimas.map((guia) => (

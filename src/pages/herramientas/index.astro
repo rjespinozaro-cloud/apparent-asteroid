@@ -10,6 +10,7 @@ export const prerender = false;
 const database = getDatabase(env);
 const herramientas = await listarHerramientasPublicadas(database);
 const totalGuias = herramientas.reduce((suma, item) => suma + item.total, 0);
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
@@ -20,7 +21,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 >
   <nav aria-label="Migas de pan">
     <ol class="migas">
-      <li><a href="/inicio/">Inicio</a></li>
+      <li><a href={`${base}inicio/`}>Inicio</a></li>
       <li aria-current="page">Herramientas</li>
     </ol>
   </nav>
@@ -41,7 +42,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <ul class="lista-herramientas lista-herramientas--detalle">
           {herramientas.map((item) => (
             <li class="lista-herramientas__item">
-              <a href={`/herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+              <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
               <span class="lista-herramientas__conteo">
                 {item.blue > 0 && <span class="etiqueta etiqueta--blue">BLUE {item.blue}</span>}
                 {item.red > 0 && <span class="etiqueta etiqueta--red">RED {item.red}</span>}
@@ -52,7 +53,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         </ul>
       ) : (
         <p>
-          Aún no hay guías publicadas. Vuelve pronto o revisa el <a class="link--premium" href="/guias/">catálogo</a>.
+          Aún no hay guías publicadas. Vuelve pronto o revisa el <a class="link--premium" href={`${base}guias/`}>catálogo</a>.
         </p>
       )
     }

@@ -18,6 +18,7 @@ export async function getStaticPaths() {
   return herramientas.map((item) => ({ params: { herramienta: item.herramienta } }));
 }
 
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const herramienta = (Astro.params.herramienta ?? '').toLowerCase();
 const database = getDatabase(env);
 const existe = /^[a-z0-9][a-z0-9-]{1,39}$/.test(herramienta)
@@ -44,10 +45,10 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <nav aria-label="Migas de pan">
         <ol class="migas">
           <li>
-            <a href="/inicio/">Inicio</a>
+            <a href={`${base}inicio/`}>Inicio</a>
           </li>
           <li>
-            <a href="/herramientas/">Herramientas</a>
+            <a href={`${base}herramientas/`}>Herramientas</a>
           </li>
           <li aria-current="page">{titulo}</li>
         </ol>
@@ -112,8 +113,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           explorador de herramientas.
         </p>
         <p class="pagina-error__acciones">
-          <a class="boton" href="/herramientas/">Ver herramientas</a>
-          <a class="boton boton--secundario" href="/buscar/">Buscar por texto</a>
+          <a class="boton" href={`${base}herramientas/`}>Ver herramientas</a>
+          <a class="boton boton--secundario" href={`${base}buscar/`}>Buscar por texto</a>
         </p>
       </article>
     </Base>

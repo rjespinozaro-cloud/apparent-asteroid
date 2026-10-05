@@ -6,11 +6,15 @@ interface Props {
 
 const { ruta = '/' } = Astro.props;
 
+// Prefijo de subpath (Pages: '/apparent-asteroid', Cloudflare: '/').
+// En Cloudflare el resultado es idéntico a las rutas de antes.
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
 const enlaces = [
-  { href: '/guias/', texto: 'Guías' },
-  { href: '/herramientas/', texto: 'Herramientas' },
-  { href: '/buscar/', texto: 'Buscar' },
-  { href: '/aviso-legal/', texto: 'Aviso legal' },
+  { href: `${base}guias/`, texto: 'Guías' },
+  { href: `${base}herramientas/`, texto: 'Herramientas' },
+  { href: `${base}buscar/`, texto: 'Buscar' },
+  { href: `${base}aviso-legal/`, texto: 'Aviso legal' },
 ];
 
 /**
@@ -31,7 +35,7 @@ function activo(href: string) {
       </li>
     ))}
     <li class="menu__buscar">
-      <a href="/buscar/" class="menu__boton-buscar">
+      <a href={`${base}buscar/`} class="menu__boton-buscar">
         <span aria-hidden="true">⌕</span>
         <span class="visualmente-oculto">Buscar guías</span>
       </a>

@@ -15,6 +15,7 @@ const database = getDatabase(env);
 const { guias, hayMas } = termino.length >= 2 ? await buscarGuias(database, termino, { limite: 20 }) : { guias: [], hayMas: false };
 
 const hayTermino = termino.length >= 2;
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 Astro.response.headers.set('Cache-Control', 'no-store');
 ---
 
@@ -30,7 +31,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       <p class="entradilla">Busca por título, herramienta o texto del contenido. Mínimo dos caracteres.</p>
     </div>
 
-    <form class="buscador" method="get" action="/buscar/" role="search">
+    <form class="buscador" method="get" action={`${base}buscar/`} role="search">
       <label class="visualmente-oculto" for="q">Texto de búsqueda</label>
       <input
         id="q"
@@ -68,14 +69,14 @@ Astro.response.headers.set('Cache-Control', 'no-store');
               No hay guías que coincidan con “{recortar(termino, 60)}”. Prueba con el nombre de la herramienta
               o con un término más corto.
             </p>
-            <a class="boton--premium" href="/guias/">Ver todas las guías</a>
+            <a class="boton--premium" href={`${base}guias/`}>Ver todas las guías</a>
           </div>
         )
       ) : (
         <div class="vacio">
           <h2>¿Qué quieres aprender hoy?</h2>
           <p>Introduce al menos dos caracteres. También puedes filtrar el catálogo por equipo, nivel o herramienta.</p>
-          <a class="boton--ghost" href="/guias/">Ir al catálogo</a>
+          <a class="boton--ghost" href={`${base}guias/`}>Ir al catálogo</a>
         </div>
       )
     }

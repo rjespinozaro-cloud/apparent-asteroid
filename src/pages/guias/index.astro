@@ -26,6 +26,7 @@ const [resultado, herramientas] = await Promise.all([
 
 const { guias, total, pagina: paginaActual, paginas } = resultado;
 const hayFiltros = Boolean(equipo || nivel || herramienta);
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 /**
  * Construye la misma ruta cambiando solo los parámetros indicados.
@@ -40,7 +41,7 @@ function enlaceCon(cambios: Record<string, string | number>) {
     if (valor && !(clave === 'pagina' && Number(valor) === 1)) parametros.set(clave, String(valor));
   }
   const cadena = parametros.toString();
-  return cadena ? `/guias/?${cadena}` : '/guias/';
+  return cadena ? `${base}guias/?${cadena}` : `${base}guias/`;
 }
 
 const titulo = [
@@ -58,7 +59,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 >
   <nav aria-label="Migas de pan">
     <ol class="migas">
-      <li><a href="/inicio/">Inicio</a></li>
+      <li><a href={`${base}inicio/`}>Inicio</a></li>
       <li aria-current="page">Guías</li>
     </ol>
   </nav>
@@ -74,7 +75,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </p>
     </div>
 
-    <form class="filtros" method="get" action="/guias/" aria-labelledby="filtros-titulo">
+    <form class="filtros" method="get" action={`${base}guias/`} aria-labelledby="filtros-titulo">
       <h2 class="visualmente-oculto" id="filtros-titulo">Filtrar guías</h2>
 
       <div class="filtros__campo">
@@ -110,7 +111,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
       <div class="filtros__acciones">
         <button type="submit">Aplicar filtros</button>
-        {hayFiltros && <a class="filtros__limpiar" href="/guias/">Limpiar</a>}
+        {hayFiltros && <a class="filtros__limpiar" href={`${base}guias/`}>Limpiar</a>}
       </div>
     </form>
 
@@ -139,7 +140,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     ) : (
       <div class="vacio">
         <p>No encontramos guías con esa combinación de filtros.</p>
-        <a class="boton" href="/guias/">Ver todas las guías</a>
+        <a class="boton" href={`${base}guias/`}>Ver todas las guías</a>
       </div>
     )}
   </section>
