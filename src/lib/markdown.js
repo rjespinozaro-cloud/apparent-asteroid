@@ -168,7 +168,9 @@ export function markdownAHtml(markdown) {
   const { texto, notas } = extraerNotas(String(markdown ?? ''));
   let html = marked.parse(texto, OPCIONES);
   notas.forEach((aside, indice) => {
-    html = html.replace(`<p>NOTAJOANIX${indice}</p>`, aside);
+    // Función de reemplazo: el contenido puede traer `$&`, `$'` o `$1`
+    // literales y String.replace los interpretaría como patrones.
+    html = html.replace(`<p>NOTAJOANIX${indice}</p>`, () => aside);
   });
   return html;
 }
