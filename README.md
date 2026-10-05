@@ -1,3 +1,5 @@
+> **Publicar en el repo y en GitHub Pages:** ver [README-PUBLICAR.md](README-PUBLICAR.md).
+
 # Astro Starter Kit: Basics
 
 ```sh
