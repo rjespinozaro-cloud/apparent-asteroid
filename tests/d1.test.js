@@ -145,6 +145,30 @@ test('la búsqueda ordena por relevancia y avisa si hay más resultados', async 
   assert.equal(resultado.hayMas, true);
 });
 
+test('la búsqueda en pago ignora la parte bloqueada del cuerpo', async () => {
+  const db = crearBase();
+  await crearGuia(db, {
+    ...GUIA_RED,
+    acceso: 'pago',
+    enlaceCompra: 'https://pago.example.com/nmap-basico',
+    titulo: 'Nmap básico: descubrir hosts',
+    cuerpoMd: '## 1. Adelanto\n\nTexto visible del adelanto.\n\n## 2. Procedimiento completo\n\nLa palabra secreta es zancudo.\n',
+  });
+  const bloqueada = await buscarGuias(db, 'zancudo');
+  assert.equal(bloqueada.guias.length, 0, 'palabra solo en la parte bloqueada: sin resultados');
+  const visible = await buscarGuias(db, 'adelanto');
+  assert.equal(visible.guias.length, 1, 'la vista previa sí se busca');
+  assert.equal(visible.guias[0].cuerpo_md, undefined, 'sin cuerpo en la respuesta');
+  assert.ok(!JSON.stringify(visible).includes('zancudo'), 'sin fragmentos bloqueados');
+});
+
+test('la búsqueda en gratis sí usa el cuerpo completo', async () => {
+  const db = crearBase();
+  await crearGuia(db, { ...GUIA_BLUE, cuerpoMd: '## Notas\n\nLa palabra es zancudo.\n' });
+  const resultado = await buscarGuias(db, 'zancudo');
+  assert.equal(resultado.guias.length, 1, 'en gratis el cuerpo es público');
+});
+
 test('las guías vecinas y relacionadas se resuelven por slug', async () => {
   const db = crearBase();
   await crearGuia(db, GUIA_BLUE);

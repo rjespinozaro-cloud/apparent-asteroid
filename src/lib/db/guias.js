@@ -2,6 +2,7 @@
  * Consultas de la tabla `guias`.
  * Todas las consultas usan parámetros enlazados (?): nunca se concatena entrada del usuario.
  */
+import { dividirPreview } from '../utils/texto.js';
 
 /** @typedef {{ id: number, slug: string, titulo: string, herramienta: string, equipo: 'blue'|'red', nivel: string, acceso: 'gratis'|'pago', enlace_compra: string|null, guia_pareja: string|null, fecha: string, cuerpo_md: string, publicada: number, actualizado_en: string, actualizado_por: number|null }} GuiaFila */
 
@@ -163,31 +164,74 @@ export async function listarGuiasPublicadas(database, filtros = {}) {
 }
 
 /**
- * Búsqueda de texto libre sobre título, slug, herramienta y cuerpo.
+ * Búsqueda de texto libre.
+ *
+ * Modelo de acceso (P1): en guías de pago solo se busca en campos públicos
+ * (título, slug, herramienta, equipo) y en el texto de la vista previa
+ * visible —nunca en la parte bloqueada del cuerpo—. En guías gratis, cuyo
+ * cuerpo es público entero, también se busca en `cuerpo_md`. La respuesta
+ * nunca incluye `cuerpo_md` ni fragmentos del contenido bloqueado.
+ * (No existe columna `resumen`: el texto visible lo aporta la preview.)
+ *
  * LIMIT protege la respuesta: LIKE no usa índices y el corpus es pequeño por diseño.
  * @returns {Promise<{guias: GuiaResumen[], hayMas: boolean}>}
  */
 export async function buscarGuias(database, termino, { limite = 20 } = {}) {
   const patron = `%${escaparLike(termino)}%`;
   const total = Math.min(Math.max(Number(limite) || 20, 1), 40) + 1;
-  const resultado = await database.prepare(
-    `SELECT ${COLUMNAS_LISTADO}, cuerpo_md
-     FROM guias
+  const ordenRelevancia = `ORDER BY
+        CASE WHEN titulo LIKE ? ESCAPE '\\' THEN 0
+             WHEN herramienta LIKE ? ESCAPE '\\' THEN 1
+             ELSE 2 END,
+        fecha DESC, id DESC`;
+
+  // 1) Campos públicos: vale para gratis y pago.
+  const publicas = await database.prepare(
+    `SELECT ${COLUMNAS_LISTADO} FROM guias
      WHERE publicada = 1
        AND (titulo LIKE ? ESCAPE '\\' OR slug LIKE ? ESCAPE '\\' OR herramienta LIKE ? ESCAPE '\\'
-            OR equipo LIKE ? ESCAPE '\\' OR cuerpo_md LIKE ? ESCAPE '\\')
-     ORDER BY
-       CASE WHEN titulo LIKE ? ESCAPE '\\' THEN 0
-            WHEN herramienta LIKE ? ESCAPE '\\' THEN 1
-            ELSE 2 END,
-       fecha DESC, id DESC
+            OR equipo LIKE ? ESCAPE '\\')
+     ${ordenRelevancia}
      LIMIT ?`,
-  ).bind(patron, patron, patron, patron, patron, patron, patron, total).all();
+  ).bind(patron, patron, patron, patron, patron, patron, total).all();
+  const vistas = new Set(publicas.results.map((fila) => fila.id));
+  const hueco = () => total - vistas.size;
 
-  const filas = resultado.results.map((fila) => {
-    const { cuerpo_md, ...resto } = fila;
-    return /** @type {GuiaResumen} */ (resto);
-  });
+  // 2) Cuerpo completo, solo en gratis (todo visible).
+  const cuerpoGratis = vistas.size < total ? await database.prepare(
+    `SELECT ${COLUMNAS_LISTADO} FROM guias
+     WHERE publicada = 1 AND acceso = 'gratis' AND cuerpo_md LIKE ? ESCAPE '\\'
+       ${vistas.size > 0 ? `AND id NOT IN (${[...vistas].map(() => '?').join(',')})` : ''}
+     ORDER BY fecha DESC, id DESC
+     LIMIT ?`,
+  ).bind(patron, ...vistas, hueco()).all() : { results: [] };
+  for (const fila of cuerpoGratis.results) vistas.add(fila.id);
+
+  // 3) Pago: solo si la vista previa visible contiene el término (en JS,
+  // para no exponer la parte bloqueada ni siquiera como coincidencia).
+  const aguja = String(termino ?? '').toLowerCase();
+  let previas = [];
+  if (vistas.size < total && aguja) {
+    const candidatas = await database.prepare(
+      `SELECT ${COLUMNAS_LISTADO}, cuerpo_md FROM guias
+       WHERE publicada = 1 AND acceso = 'pago'
+         ${vistas.size > 0 ? `AND id NOT IN (${[...vistas].map(() => '?').join(',')})` : ''}
+       ORDER BY fecha DESC, id DESC
+       LIMIT ?`,
+    ).bind(...vistas, hueco()).all();
+    previas = candidatas.results
+      .filter((fila) => dividirPreview(fila.cuerpo_md).preview.toLowerCase().includes(aguja))
+      .map((fila) => {
+        const { cuerpo_md, ...restoFila } = fila;
+        return restoFila;
+      });
+  }
+
+  // Mismo orden histórico: relevancia y, dentro del mismo nivel, fecha e id.
+  const resto = [...cuerpoGratis.results, ...previas].sort(
+    (a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : b.id - a.id),
+  );
+  const filas = [...publicas.results, ...resto];
   return { guias: filas.slice(0, total - 1), hayMas: filas.length > total - 1 };
 }
 
