@@ -38,6 +38,7 @@ const integracionPaginas = {
 
 // https://astro.build/config
 export default defineConfig({
+	devToolbar: { enabled: false },
 	site: esPaginas ? sitioPaginas : sitio,
 	base: esPaginas ? '/apparent-asteroid' : undefined,
 	output: esPaginas ? 'static' : 'server',

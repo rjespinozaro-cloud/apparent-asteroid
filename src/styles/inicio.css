@@ -1,0 +1,372 @@
+/**
+ * Contenedor único y portada de /inicio/.
+ *
+ * Se carga DESPUÉS de guias-listado.css para ganar por orden (misma
+ * especificidad, sin !important): ese archivo trae reglas antiguas de
+ * .portada--hero/.equipo que aquí se sustituyen.
+ * Tokens y composición: Impeccable. Movimiento: emil-design-eng.
+ */
+
+:root {
+  --ancho-max: 72rem;
+  --pad-x: clamp(1rem, 4vw, 3rem);
+  --espacio-seccion: clamp(3.5rem, 9vw, 7rem);
+}
+
+/* 1. Un solo contenedor para cabecera, secciones y pie ------------------- */
+
+.contenedor,
+.cabecera__interna,
+.seccion,
+.pie__interna {
+  width: 100%;
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding-inline: var(--pad-x);
+}
+
+.seccion {
+  padding-block: var(--espacio-seccion);
+}
+
+/* La portada arranca pegada a la cabecera: sin esta regla, el padding
+   superior de .site-main dejaba una franja oscura entre ambas. */
+.site-main:has(.portada--hero) {
+  padding-block-start: 0;
+}
+
+.site-main__interior {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+
+.site-main__interior > * {
+  min-width: 0;
+}
+
+.menu__enlaces a {
+  font-size: 0.9375rem;
+  padding: 0.55rem 0.8rem;
+}
+
+/* 2. Cabecera de sección --------------------------------------------------- */
+
+.seccion__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.seccion__titulo {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* 3. Portada a sangre ------------------------------------------------------- */
+
+.portada--hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  max-width: none;
+  margin: 0;
+  min-height: calc(100vh - 4.5rem);
+  min-height: calc(100svh - 4.5rem);
+  padding: clamp(4rem, 12vh, 8rem) var(--pad-x);
+}
+
+.portada--hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.portada--hero__glow {
+  position: absolute;
+  inset: -20%;
+  width: auto;
+  height: auto;
+  will-change: transform;
+  /* Anula el blur(120px) heredado: el degradado ya cae a transparente y el
+     blur gigante apagaba las luces (y fundía GPUs móviles). */
+  filter: none;
+  opacity: 0.55;
+}
+
+.portada--hero__glow--red {
+  background: radial-gradient(closest-side, rgba(255, 77, 109, 0.5), transparent 72%);
+  background-repeat: no-repeat;
+  background-size: 95% 115%;
+  background-position: 5% 48%;
+  animation: hero-red 22s ease-in-out infinite alternate;
+}
+
+.portada--hero__glow--blue {
+  background: radial-gradient(closest-side, rgba(77, 124, 255, 0.5), transparent 72%);
+  background-repeat: no-repeat;
+  background-size: 95% 115%;
+  background-position: 95% 52%;
+  animation: hero-blue 26s ease-in-out infinite alternate;
+}
+
+@keyframes hero-red {
+  to {
+    transform: translate(26%, -6%) scale(1.15);
+  }
+}
+
+@keyframes hero-blue {
+  to {
+    transform: translate(-26%, 6%) scale(1.1);
+  }
+}
+
+.portada--hero__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 72%);
+  mask-image: radial-gradient(ellipse at center, #000 25%, transparent 72%);
+}
+
+.portada--hero__scrim {
+  position: absolute;
+  inset: auto 0 0;
+  height: 40%;
+  background: linear-gradient(transparent, var(--papel));
+}
+
+.portada--hero__contenido {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+  max-width: 44rem;
+}
+
+.portada--hero h1 {
+  margin: 0;
+  font-size: clamp(2.75rem, 9vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  background: linear-gradient(90deg, #ff8fa3, #c4b5fd 50%, #8fadff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.portada--hero__contenido > p:not(.portada--hero__eyebrow) {
+  margin: 0;
+  max-width: 36ch;
+  font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+  color: var(--tinta-suave);
+}
+
+.portada--hero__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.boton--premium,
+.boton--ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding-inline: 1.5rem;
+}
+
+.boton--premium:active,
+.boton--ghost:active {
+  transform: scale(0.98);
+  transition-duration: 50ms;
+}
+
+/* Solo las dos luces son infinitas: el resto queda estático. */
+.portada--hero__scroll-line {
+  animation: none;
+}
+
+.portada--hero .cursor-blink {
+  animation: none;
+  opacity: 1;
+}
+
+.rejilla-equipos .chip--pulse .chip__dot {
+  animation: none;
+}
+
+/* 4. Equipos RED / BLUE ------------------------------------------------------ */
+
+.rejilla-equipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.equipo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  min-height: 16rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  background: var(--papel-alto);
+}
+
+.equipo p {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--tinta-suave);
+}
+
+.equipo__titulo {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.equipo .boton--ghost {
+  margin-top: auto;
+  width: auto;
+}
+
+.equipo--red {
+  border-color: rgba(255, 77, 109, 0.35);
+  background: linear-gradient(165deg, rgba(255, 77, 109, 0.14), transparent 55%), var(--papel-alto);
+}
+
+.equipo--blue {
+  border-color: rgba(77, 124, 255, 0.35);
+  background: linear-gradient(165deg, rgba(77, 124, 255, 0.14), transparent 55%), var(--papel-alto);
+}
+
+/* 5. Herramientas y guías ----------------------------------------------------- */
+
+.lista-herramientas,
+.rejilla-tarjetas {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-herramientas {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+}
+
+.rejilla-tarjetas {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+}
+
+.lista-herramientas__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  background: var(--papel-alto);
+}
+
+.lista-herramientas__item a {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.lista-herramientas__conteo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-family: var(--fuente-mono);
+  font-size: 0.8125rem;
+  color: var(--tinta-suave);
+}
+
+.rejilla-tarjetas > li {
+  display: flex;
+}
+
+.tarjeta-premium {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.tarjeta__titulo {
+  margin: 0;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  line-height: 1.25;
+}
+
+.tarjeta__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.tarjeta__meta:last-child {
+  margin-top: auto;
+}
+
+.tarjeta__resumen {
+  font-size: 1rem;
+}
+
+/* 5b. Movimiento de entradas (emil-design-eng) --------------------------------- */
+
+.reveal {
+  transition-duration: 450ms;
+}
+
+.reveal--stagger > * {
+  transition-duration: 450ms;
+}
+
+.tarjeta-premium,
+.equipo,
+.lista-herramientas__item {
+  transition-duration: 175ms;
+}
+
+@media (max-width: 47.99rem) {
+  .portada--hero {
+    min-height: calc(100vh - 7rem);
+    min-height: calc(100svh - 7rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portada--hero__glow {
+    animation: none;
+  }
+}
+

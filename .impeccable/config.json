@@ -108,6 +108,24 @@
         ],
         "createdAt": "2026-10-04T22:52:57.703Z",
         "reason": "Grid técnico de laboratorio exigido por el brief"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/styles/inicio.css"
+        ],
+        "createdAt": "2026-10-05T03:19:38.230Z",
+        "reason": "h1 de portada con degradado de marca, verificado AA (9.2+)"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "src/styles/inicio.css"
+        ],
+        "createdAt": "2026-10-05T03:19:38.238Z",
+        "reason": "grid técnico de la portada, mismo patrón ya aceptado en guias-listado"
       }
     ]
   }
