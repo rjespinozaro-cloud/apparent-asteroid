@@ -1,0 +1,52 @@
+---
+import '../styles/asistente.css';
+
+/** Estados visuales de JOANIX AI. Cada uno tiene su asset en `public/assets/assistant/`. */
+export type EstadoMascota =
+  | 'assistant'
+  | 'curious'
+  | 'happy'
+  | 'sad'
+  | 'excellent'
+  | 'searching'
+  | 'thinking'
+  | 'suggestion';
+
+interface Props {
+  /** Estado que representa. La expresión siempre corresponde a un estado real de la interfaz. */
+  estado?: EstadoMascota;
+  /** `md`: respuestas (48px desktop / 40px móvil). `lg`: estados destacados y vacíos. */
+  tamano?: 'md' | 'lg';
+  /** En `true` el `alt` queda vacío: úsalo cuando el texto vecino ya comunica el estado. */
+  decorativa?: boolean;
+  /** Carga ansiosa solo para mascotas visibles de inmediato; el resto, diferida. */
+  eager?: boolean;
+  /** Clase extra para ajustes puntuales del consumidor. */
+  clase?: string;
+}
+
+const { estado = 'assistant', tamano = 'md', decorativa = false, eager = false, clase } = Astro.props;
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
+const ALT: Record<EstadoMascota, string> = {
+  assistant: 'JOANIX AI, tu asistente',
+  curious: 'JOANIX AI, con curiosidad',
+  happy: 'JOANIX AI: encontró resultados',
+  sad: 'JOANIX AI: sin resultados',
+  excellent: 'JOANIX AI: recomendación destacada',
+  searching: 'JOANIX AI buscando',
+  thinking: 'JOANIX AI analizando',
+  suggestion: 'JOANIX AI con una sugerencia',
+};
+---
+
+<img
+  class:list={['asistente-mascota', `asistente-mascota--${tamano}`, clase]}
+  src={`${base}assets/assistant/${estado}.webp`}
+  alt={decorativa ? '' : ALT[estado]}
+  width="192"
+  height="192"
+  loading={eager ? 'eager' : 'lazy'}
+  decoding="async"
+  data-mascota
+/>

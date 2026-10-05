@@ -1,5 +1,6 @@
 ---
 import Guia from '../../layouts/Guia.astro';
+import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { getDatabase, guiasRelacionadas, guiasVecinas, listarGuiasPublicadas, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
@@ -139,3 +140,5 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
     </Guia>
   )
 }
+
+<AsistenteFlotante />

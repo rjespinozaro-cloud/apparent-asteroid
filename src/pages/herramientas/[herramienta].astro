@@ -1,5 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
+import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import AssistantMascot from '../../components/AssistantMascot.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { getDatabase, listarGuiasDeHerramienta, existeHerramientaPublicada, listarHerramientasPublicadas } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
@@ -42,7 +44,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       title={`Guías de ${titulo} | JOANIX GUIDES`}
       description={`Guías de ${titulo} para equipos RED y BLUE: ${plural(guias.length, 'guía', 'guías')} sobre ${titulo}.`}
     >
-      <nav aria-label="Migas de pan">
+      <nav class="contenedor" aria-label="Migas de pan">
         <ol class="migas">
           <li>
             <a href={`${base}inicio/`}>Inicio</a>
@@ -105,10 +107,13 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           </section>
         </div>
       </section>
+
+      <AsistenteFlotante />
     </Base>
   ) : (
     <Base title="Herramienta no encontrada | JOANIX GUIDES" noindex>
-      <article class="pagina-error">
+      <article class="pagina-error contenedor">
+        <AssistantMascot estado="sad" tamano="lg" decorativa />
         <p class="eyebrow">Error 404</p>
         <h1>No tenemos guías sobre esa herramienta</h1>
         <p>
@@ -120,6 +125,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           <a class="boton boton--secundario" href={`${base}buscar/`}>Buscar por texto</a>
         </p>
       </article>
+
+      <AsistenteFlotante />
     </Base>
   )
 }

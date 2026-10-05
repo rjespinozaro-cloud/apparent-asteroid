@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import { getDatabase, listarHerramientasPublicadas } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
 import { nombreHerramienta } from '../../lib/vocabulario.js';
@@ -19,7 +20,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   title="Herramientas | JOANIX GUIDES"
   description={`Explora las ${herramientas.length} herramientas documentadas en JOANIX GUIDES y encuentra las guías RED y BLUE de cada una.`}
 >
-  <nav aria-label="Migas de pan">
+  <nav class="contenedor" aria-label="Migas de pan">
     <ol class="migas">
       <li><a href={`${base}inicio/`}>Inicio</a></li>
       <li aria-current="page">Herramientas</li>
@@ -58,4 +59,6 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       )
     }
   </section>
+
+  <AsistenteFlotante />
 </Base>

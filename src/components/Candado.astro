@@ -1,4 +1,6 @@
 ---
+import AssistantMascot from './AssistantMascot.astro';
+
 interface Props {
   /** URL externa de compra (normalmente una pasarela de pago). Puede ser null si no hay. */
   enlaceCompra?: string | null;
@@ -21,7 +23,10 @@ const { enlaceCompra, incluye = [], equipo = 'blue' } = Astro.props;
   </p>
   {incluye.length > 0 ? (
     <>
-      <p class="candado__incluye-titulo">El PDF continúa con:</p>
+      <div class="candado__recomienda">
+        <AssistantMascot estado="suggestion" decorativa />
+        <p class="candado__incluye-titulo">El PDF continúa con:</p>
+      </div>
       <ul class="candado__incluye">
         {incluye.map((seccion) => (
           <li>{seccion}</li>

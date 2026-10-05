@@ -1,0 +1,263 @@
+/**
+ * JOANIX AI: mascota y panel del asistente.
+ * Lenguaje del sitio (cyber dark editorial): sin neones, sin infantilismos.
+ * La mascota acompaña; nunca domina: 40–56px en respuestas.
+ */
+
+/* Mascota --------------------------------------------------------------- */
+
+.asistente-mascota {
+  aspect-ratio: 1;
+  border-radius: var(--radio-m);
+  flex: none;
+  height: 3rem;
+  object-fit: contain;
+  width: 3rem;
+}
+
+.asistente-mascota--lg {
+  height: 4.5rem;
+  width: 4.5rem;
+}
+
+@media (max-width: 47.99rem) {
+  .asistente-mascota {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+
+  .asistente-mascota--lg {
+    height: 3.5rem;
+    width: 3.5rem;
+  }
+}
+
+/* Flotante: launcher + aviso + panel --------------------------------------- */
+
+.ai {
+  inset: auto 0 0 auto;
+  position: fixed;
+  z-index: 40;
+}
+
+.ai-launcher {
+  align-items: center;
+  background: var(--papel-alto);
+  border: var(--borde);
+  border-radius: var(--radio-full);
+  bottom: calc(var(--espacio-m) + env(safe-area-inset-bottom, 0px));
+  cursor: pointer;
+  display: flex;
+  height: 3.5rem;
+  justify-content: center;
+  padding: 0;
+  position: fixed;
+  right: calc(var(--espacio-m) + env(safe-area-inset-right, 0px));
+  touch-action: manipulation;
+  width: 3.5rem;
+}
+
+.ai-launcher .asistente-mascota {
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.ai-launcher:hover {
+  border-color: var(--linea-fuerte);
+}
+
+.ai-aviso {
+  background: var(--papel-alto);
+  border: var(--borde);
+  border-radius: var(--radio-l);
+  bottom: calc(4.5rem + var(--espacio-m) + env(safe-area-inset-bottom, 0px));
+  box-shadow: var(--sombra-2);
+  max-width: 19rem;
+  padding: var(--espacio-s);
+  position: fixed;
+  right: calc(var(--espacio-m) + env(safe-area-inset-right, 0px));
+}
+
+.ai-aviso[hidden] {
+  display: none;
+}
+
+.ai-aviso__texto {
+  color: var(--tinta-suave);
+  margin: 0 0 var(--espacio-xs);
+  max-width: none;
+}
+
+.ai-aviso__texto strong {
+  color: var(--tinta);
+}
+
+.ai-aviso__acciones {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2xs);
+}
+
+.ai-aviso__acciones .boton--ghost {
+  min-height: 2.75rem;
+}
+
+.ai-aviso__cerrar {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radio-s);
+  color: var(--tinta-tenue);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--texto-md);
+  justify-content: center;
+  line-height: 1;
+  margin-inline-start: auto;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  touch-action: manipulation;
+}
+
+.ai-panel {
+  background: var(--papel-alto);
+  border: var(--borde);
+  border-radius: var(--radio-l);
+  bottom: calc(4.5rem + var(--espacio-m) + env(safe-area-inset-bottom, 0px));
+  box-shadow: var(--sombra-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-s);
+  max-height: min(70dvh, 34rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--espacio-m);
+  position: fixed;
+  right: calc(var(--espacio-m) + env(safe-area-inset-right, 0px));
+  width: min(24rem, calc(100dvw - 2 * var(--espacio-m)));
+}
+
+.ai-panel[hidden] {
+  display: none;
+}
+
+.ai-panel__cabecera {
+  align-items: start;
+  display: flex;
+  gap: var(--espacio-s);
+}
+
+.ai-panel__titulo {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-panel__titulo h2 {
+  color: var(--tinta);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  margin: 0 0 var(--espacio-3xs);
+  text-transform: uppercase;
+}
+
+.ai-panel__titulo p {
+  color: var(--tinta-suave);
+  margin: 0;
+  max-width: none;
+}
+
+.ai-cerrar {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radio-s);
+  color: var(--tinta-tenue);
+  cursor: pointer;
+  display: inline-flex;
+  flex: none;
+  font-size: var(--texto-lg);
+  justify-content: center;
+  line-height: 1;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  touch-action: manipulation;
+}
+
+.ai-form {
+  display: flex;
+  gap: var(--espacio-2xs);
+}
+
+.ai-form input {
+  flex: 1;
+  min-height: var(--alto-control);
+  min-width: 0;
+}
+
+.ai-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2xs);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ai-acciones .chip {
+  cursor: pointer;
+  min-height: 2.75rem;
+  touch-action: manipulation;
+}
+
+.ai-resultados[hidden] {
+  display: none;
+}
+
+.ai-resultados .rejilla-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-s);
+  margin: 0 0 var(--espacio-s);
+}
+
+.ai-vertodo {
+  width: 100%;
+}
+
+@media (max-width: 47.99rem) {
+  .ai-panel {
+    left: var(--espacio-s);
+    right: var(--espacio-s);
+    width: auto;
+  }
+
+  .ai-form {
+    flex-direction: column;
+  }
+}
+
+/* Estados vacíos y de error ------------------------------------------------ */
+
+.vacio.vacio--con-mascota {
+  align-items: start;
+  flex-direction: row;
+}
+
+.vacio--con-mascota > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2xs);
+}
+
+.candado__recomienda {
+  align-items: center;
+  display: flex;
+  gap: var(--espacio-xs);
+}
+
+.candado__recomienda .candado__incluye-titulo {
+  margin: 0;
+}

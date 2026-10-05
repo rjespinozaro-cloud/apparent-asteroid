@@ -1,0 +1,83 @@
+---
+import AssistantMascot from './AssistantMascot.astro';
+
+/**
+ * JOANIX AI flotante: launcher + invitación + diálogo.
+ * Uso explícito por página (nunca en el portal): catálogo, guías,
+ * herramientas y búsqueda. Una sola instancia por página.
+ */
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+---
+
+<div class="ai" data-ai data-base={base}>
+  <div class="ai-aviso" data-ai-aviso hidden>
+    <p class="ai-aviso__texto">
+      <strong>¿Necesitas ayuda?</strong><br />
+      Te ayudo a encontrar una guía, herramienta o tema.
+    </p>
+    <div class="ai-aviso__acciones">
+      <button type="button" class="boton--ghost" data-ai-aviso-abrir>Buscar una guía</button>
+      <button type="button" class="boton--ghost" data-ai-aviso-sugerir>Sugerencia</button>
+      <button type="button" class="ai-aviso__cerrar" aria-label="Descartar aviso" data-ai-aviso-cerrar>
+        ×
+      </button>
+    </div>
+  </div>
+
+  <section
+    id="ai-panel"
+    class="ai-panel"
+    role="dialog"
+    aria-modal="false"
+    aria-labelledby="ai-titulo"
+    data-ai-panel
+    hidden
+  >
+    <div class="ai-panel__cabecera">
+      <AssistantMascot estado="curious" eager />
+      <div class="ai-panel__titulo">
+        <h2 id="ai-titulo">JOANIX AI</h2>
+        <p role="status" data-ai-mensaje>Hola, soy JOANIX AI. ¿Qué quieres aprender hoy?</p>
+      </div>
+      <button type="button" class="ai-cerrar" aria-label="Cerrar asistente" data-ai-cerrar>×</button>
+    </div>
+
+    <form class="ai-form" method="get" action={`${base}buscar/`} role="search" data-ai-form>
+      <label class="visualmente-oculto" for="ai-q">Pregunta a JOANIX AI</label>
+      <input
+        id="ai-q"
+        name="q"
+        type="search"
+        maxlength="80"
+        autocomplete="off"
+        enterkeyhint="search"
+        placeholder="p. ej.: detectar escaneos nmap"
+        data-ai-campo
+      />
+      <button class="boton--premium" type="submit" data-ai-boton>Preguntar</button>
+    </form>
+
+    <ul class="ai-acciones" aria-label="Acciones rápidas">
+      <li><button type="button" class="chip" data-ai-accion="buscar">Buscar una guía</button></li>
+      <li><button type="button" class="chip" data-ai-accion="sugerir">Dame una sugerencia</button></li>
+      <li><button type="button" class="chip" data-ai-accion="duda">Tengo una duda</button></li>
+    </ul>
+
+    <div class="ai-resultados" aria-live="polite" data-ai-resultados hidden></div>
+  </section>
+
+  <button
+    type="button"
+    class="ai-launcher"
+    aria-label="Abrir JOANIX AI"
+    aria-expanded="false"
+    aria-controls="ai-panel"
+    data-ai-abrir
+  >
+    <AssistantMascot estado="assistant" decorativa eager />
+  </button>
+</div>
+
+<script>
+  import '../scripts/asistente.js';
+</script>

@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import AsistenteFlotante from '../components/AsistenteFlotante.astro';
 import Nota from '../components/Nota.astro';
 import TarjetaGuia from '../components/TarjetaGuia.astro';
 import { getDatabase, listarHerramientasPublicadas, listarUltimasGuias } from '../lib/db.js';
@@ -144,4 +145,6 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </Nota>
     </div>
   </section>
+
+  <AsistenteFlotante />
 </Base>

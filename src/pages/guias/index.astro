@@ -1,5 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
+import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import AssistantMascot from '../../components/AssistantMascot.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { contarGuiasPublicadas, getDatabase, listarGuiasPublicadas, listarHerramientasPublicadas } from '../../lib/db.js';
 import { opcion } from '../../lib/validar.js';
@@ -60,7 +62,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   title={`${titulo} | JOANIX GUIDES`}
   description={`${plural(total, 'guía publicada', 'guías publicadas')} de ciberseguridad en JOANIX GUIDES. Filtra por equipo, nivel y herramienta.`}
 >
-  <nav aria-label="Migas de pan">
+  <nav class="contenedor" aria-label="Migas de pan">
     <ol class="migas">
       <li><a href={`${base}inicio/`}>Inicio</a></li>
       <li aria-current="page">Guías</li>
@@ -190,10 +192,15 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         )}
       </>
     ) : (
-      <div class="vacio">
-        <p>No encontramos guías con esa combinación de filtros.</p>
-        <a class="boton" href={`${base}guias/`}>Ver todas las guías</a>
+      <div class="vacio vacio--con-mascota">
+        <AssistantMascot estado="sad" tamano="lg" decorativa />
+        <div>
+          <p>No encontramos guías con esa combinación de filtros.</p>
+          <p><a class="boton" href={`${base}guias/`}>Ver todas las guías</a></p>
+        </div>
       </div>
     )}
   </section>
+
+  <AsistenteFlotante />
 </Base>
