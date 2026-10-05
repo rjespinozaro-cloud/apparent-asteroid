@@ -27,7 +27,7 @@ listo=0; for _ in $(seq 1 30); do curl -sf -o /dev/null "http://127.0.0.1:$PUERT
 [ "$listo" = 1 ] || { echo 'ERROR: el servidor estático no respondió' >&2; exit 1; }
 # wget devuelve 8 si algún recurso suelto (p. ej. /favicon.ico en raíz) da 404:
 # se tolera, y en su lugar se exige el conjunto mínimo del espejo.
-wget --mirror --convert-links --adjust-extension --page-requisites --no-parent --no-host-directories --no-verbose -P "$MIR" "http://127.0.0.1:$PUERTO$RUTA" "http://127.0.0.1:$PUERTO${RUTA}404.html" || [ $? -eq 8 ]
+wget --mirror --convert-links --adjust-extension --page-requisites --no-parent --no-host-directories --no-verbose -P "$MIR" "http://127.0.0.1:$PUERTO$RUTA" "http://127.0.0.1:$PUERTO${RUTA}404.html" "http://127.0.0.1:$PUERTO${RUTA}sitemap.xml" "http://127.0.0.1:$PUERTO${RUTA}robots.txt" || [ $? -eq 8 ]
 for requerido in index.html inicio/index.html guias/index.html hero/hero-wide.avif hero/hero-tall.avif logo.png sitemap.xml 404.html; do
   [ -f "$MIR/apparent-asteroid/$requerido" ] || { echo "ERROR: falta $requerido en el espejo" >&2; exit 1; }
 done
