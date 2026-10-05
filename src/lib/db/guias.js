@@ -4,10 +4,10 @@
  */
 import { dividirPreview } from '../utils/texto.js';
 
-/** @typedef {{ id: number, slug: string, titulo: string, herramienta: string, equipo: 'blue'|'red', nivel: string, acceso: 'gratis'|'pago', enlace_compra: string|null, guia_pareja: string|null, fecha: string, cuerpo_md: string, publicada: number, actualizado_en: string, actualizado_por: number|null }} GuiaFila */
+/** @typedef {{ id: number, slug: string, titulo: string, herramienta: string, equipo: 'blue'|'red', nivel: string, acceso: 'gratis'|'pago', enlace_compra: string|null, guia_pareja: string|null, fecha: string, cuerpo_md: string, publicada: number, destacada: number, lectura_min: number|null, actualizado_en: string, actualizado_por: number|null }} GuiaFila */
 
 /** Columnas ligeras para listados: nunca se trae `cuerpo_md` si no se va a renderizar. */
-const COLUMNAS_LISTADO = 'id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en';
+const COLUMNAS_LISTADO = 'id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en, destacada, lectura_min';
 
 /** @typedef {Omit<GuiaFila, 'cuerpo_md' | 'enlace_compra' | 'guia_pareja' | 'actualizado_por'>} GuiaResumen */
 
@@ -554,8 +554,8 @@ export async function contarGuiasPublicadas(database) {
 
 export async function crearGuia(database, datos) {
   return database.prepare(
-    `INSERT INTO guias (slug, titulo, herramienta, equipo, nivel, acceso, enlace_compra, guia_pareja, fecha, cuerpo_md, publicada, actualizado_por)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO guias (slug, titulo, herramienta, equipo, nivel, acceso, enlace_compra, guia_pareja, fecha, cuerpo_md, publicada, destacada, lectura_min, actualizado_por)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(
     datos.slug,
     datos.titulo,
@@ -568,6 +568,8 @@ export async function crearGuia(database, datos) {
     datos.fecha,
     datos.cuerpoMd,
     datos.publicada,
+    datos.destacada ?? 0,
+    datos.lecturaMin ?? null,
     datos.actualizadoPor ?? null,
   ).run();
 }
@@ -576,8 +578,8 @@ export async function actualizarGuia(database, id, datos) {
   return database.prepare(
     `UPDATE guias
      SET slug = ?, titulo = ?, herramienta = ?, equipo = ?, nivel = ?, acceso = ?, enlace_compra = ?,
-         guia_pareja = ?, fecha = ?, cuerpo_md = ?, publicada = ?, actualizado_en = CURRENT_TIMESTAMP,
-         actualizado_por = ?
+         guia_pareja = ?, fecha = ?, cuerpo_md = ?, publicada = ?, destacada = ?, lectura_min = ?,
+         actualizado_en = CURRENT_TIMESTAMP, actualizado_por = ?
      WHERE id = ?`,
   ).bind(
     datos.slug,
@@ -591,6 +593,8 @@ export async function actualizarGuia(database, id, datos) {
     datos.fecha,
     datos.cuerpoMd,
     datos.publicada,
+    datos.destacada ?? 0,
+    datos.lecturaMin ?? null,
     datos.actualizadoPor ?? null,
     id,
   ).run();

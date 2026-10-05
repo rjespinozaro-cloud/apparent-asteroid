@@ -78,7 +78,7 @@ const {
         <li><span class="etiqueta etiqueta--neutro">{nivel}</span></li>
         <li><span class="etiqueta etiqueta--neutro">{herramienta}</span></li>
         {fecha && <li><time class="etiqueta etiqueta--neutro" datetime={fecha}>{fecha}</time></li>}
-        {tiempoLectura && <li><span class="etiqueta etiqueta--neutro">{tiempoLectura} min de lectura</span></li>}
+        {tiempoLectura && <li><span class="etiqueta etiqueta--neutro">{acceso === 'pago' ? `Vista previa · PDF completo, ~${tiempoLectura} min` : `${tiempoLectura} min de lectura`}</span></li>}
       </ul>
 
       <p class="guia__aviso">

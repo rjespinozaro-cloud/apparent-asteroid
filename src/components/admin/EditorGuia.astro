@@ -14,6 +14,7 @@ type FilaGuia = {
   fecha?: string;
   cuerpo_md?: string;
   publicada?: number;
+  destacada?: number;
 };
 
 interface Props {
@@ -100,6 +101,10 @@ const tieneId = guia?.id !== undefined && guia?.id !== null;
       <div class="admin-form__campo">
         <label for="guiaPareja">Guía pareja</label>
         <input id="guiaPareja" name="guiaPareja" type="text" placeholder="red/nmap-basico" value={guia?.guia_pareja ?? ''} />
+      </div>
+      <div class="admin-form__campo admin-form__campo--check">
+        <input id="destacada" name="destacada" type="checkbox" value="1" checked={Boolean(guia?.destacada)} />
+        <label for="destacada">Destacada en el catálogo</label>
       </div>
     </div>
   </section>

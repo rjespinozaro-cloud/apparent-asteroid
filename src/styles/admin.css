@@ -844,6 +844,25 @@
   outline: none;
 }
 
+/* Fila de casilla: el checkbox no lleva el marco de los campos de texto. */
+.admin-form__campo--check {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  gap: var(--adm-space-sm);
+}
+
+.admin-form__campo--check input[type='checkbox'] {
+  appearance: auto;
+  background: none;
+  border: initial;
+  border-radius: initial;
+  height: 1.1rem;
+  min-height: 0;
+  padding: 0;
+  width: 1.1rem;
+}
+
 .admin-form input::placeholder,
 .admin-form textarea::placeholder {
   color: var(--adm-text-subtle);

@@ -78,7 +78,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
       enlaceCompra={guia.enlace_compra}
       descripcion={descripcionDesdeMarkdown(cuerpoVisible)}
       fecha={guia.fecha}
-      tiempoLectura={tiempoLectura(cuerpoVisible)}
+      tiempoLectura={esPago ? (guia.lectura_min ?? tiempoLectura(cuerpoVisible)) : tiempoLectura(cuerpoVisible)}
       restoTitulos={seccionesRestantes}
       indice={indice}
       jsonLd={jsonLd}

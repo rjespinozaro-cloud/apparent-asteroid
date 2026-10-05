@@ -2,6 +2,7 @@
  * Validación de entrada. Todo lo que llega de formularios, query params o
  * cuerpos JSON se normaliza aquí antes de tocar D1.
  */
+import { tiempoLectura } from './utils/texto.js';
 
 const USUARIO_RE = /^[a-z0-9._-]{3,40}$/;
 const SLUG_RE = /^[a-z0-9]+(?:[/-][a-z0-9-]+)*$/;
@@ -66,7 +67,11 @@ export function validarGuiaEntrada(entrada, { existenteId = null } = {}) {
     fecha: texto(entrada?.fecha),
     cuerpoMd: typeof entrada?.cuerpoMd === 'string' ? entrada.cuerpoMd.trim() : '',
     publicada: esVerdadero(entrada?.publicada) ? 1 : 0,
+    destacada: esVerdadero(entrada?.destacada) ? 1 : 0,
   };
+  // Minutos del contenido COMPLETO (también en pago: la página muestra la
+  // cifra sin enviar el cuerpo). Se recalcula en cada guardado.
+  datos.lecturaMin = tiempoLectura(datos.cuerpoMd);
   const errores = [];
 
   if (datos.titulo.length < 3) errores.push(error('titulo', 'El título debe tener al menos 3 caracteres.'));

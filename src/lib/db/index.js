@@ -32,6 +32,13 @@ export {
 } from './guias.js';
 
 export {
+  listarGuiasDestacadas,
+  listarHerramientasDestacadas,
+  listarRutas,
+  obtenerRutaPorSlug,
+} from './rutas.js';
+
+export {
   actualizarPasswordUsuario,
   cambiarEstadoUsuario,
   cambiarRolUsuario,

@@ -30,11 +30,17 @@ import {
   listarUltimasGuias,
   obtenerGuiaPorSlug,
 } from '../src/lib/db/guias.js';
+import {
+  listarGuiasDestacadas,
+  listarHerramientasDestacadas,
+  listarRutas,
+  obtenerRutaPorSlug,
+} from '../src/lib/db/rutas.js';
 import { hashPassword, crearSesion, destruirSesion, obtenerSesion, claveIntento, claveIntentoIp, loginBloqueado, limpiarIntentos, registrarIntentoFallido, cookieSesion, csrfValido } from '../src/lib/auth.js';
 import { crearUsuario, eliminarUsuario, listarUsuarios, purgarSesionesCaducadas } from '../src/lib/db/usuarios.js';
 import { registrarAuditoria, listarAuditoria, listarFacetasAuditoria, ultimasAcciones } from '../src/lib/db/auditoria.js';
 
-const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql']
+const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql', '0005_catalogo.sql']
   .map((nombre) => fs.readFileSync(path.join(import.meta.dirname, '..', 'migrations', nombre), 'utf8'))
   .join('\n');
 
@@ -167,6 +173,50 @@ test('la búsqueda en gratis sí usa el cuerpo completo', async () => {
   await crearGuia(db, { ...GUIA_BLUE, cuerpoMd: '## Notas\n\nLa palabra es zancudo.\n' });
   const resultado = await buscarGuias(db, 'zancudo');
   assert.equal(resultado.guias.length, 1, 'en gratis el cuerpo es público');
+});
+
+test('las rutas listan y el paso con guía sin publicar no enlaza', async () => {
+  const db = crearBase();
+  await crearGuia(db, { ...GUIA_BLUE, publicada: 1 });
+  await crearGuia(db, { ...GUIA_RED, acceso: 'pago', enlaceCompra: 'https://pago.example.com/x', publicada: 0 });
+  const azul = await obtenerGuiaPorSlug(db, GUIA_BLUE.slug);
+  const roja = await obtenerGuiaPorSlug(db, GUIA_RED.slug);
+  await db.prepare('INSERT INTO rutas (slug, titulo, descripcion, nivel, orden, destacada, publicada) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind('ruta-prueba', 'Ruta de prueba', 'Desc.', 'basico', 1, 1, 1).run();
+  const ruta = await db.prepare('SELECT id FROM rutas WHERE slug = ?').bind('ruta-prueba').first();
+  await db.prepare('INSERT INTO ruta_pasos (ruta_id, orden, guia_id, nota) VALUES (?, ?, ?, ?)')
+    .bind(ruta.id, 1, azul.id, 'Paso visible').run();
+  await db.prepare('INSERT INTO ruta_pasos (ruta_id, orden, guia_id, nota) VALUES (?, ?, ?, ?)')
+    .bind(ruta.id, 2, roja.id, 'Paso oculto').run();
+
+  const todas = await listarRutas(db);
+  assert.ok(todas.some((r) => r.slug === 'ruta-prueba'));
+  assert.ok(todas.every((r) => r.publicada === 1));
+  const detalle = await obtenerRutaPorSlug(db, 'ruta-prueba');
+  assert.equal(detalle.pasos.length, 2);
+  assert.equal(detalle.pasos[0].guia.slug, GUIA_BLUE.slug);
+  assert.equal(detalle.pasos[1].guia, null, 'guía sin publicar: Próximamente sin enlazar');
+  assert.equal(await obtenerRutaPorSlug(db, 'no-existe'), null);
+});
+
+test('las destacadas solo traen guías publicadas y marcadas', async () => {
+  const db = crearBase();
+  await crearGuia(db, { ...GUIA_BLUE, publicada: 1 });
+  await crearGuia(db, { ...GUIA_RED, acceso: 'pago', enlaceCompra: 'https://pago.example.com/x', publicada: 1 });
+  let destacadas = await listarGuiasDestacadas(db);
+  assert.equal(destacadas.length, 0);
+  const roja = await obtenerGuiaPorSlug(db, GUIA_RED.slug);
+  await actualizarGuia(db, roja.id, {
+    slug: roja.slug, titulo: roja.titulo, herramienta: roja.herramienta, equipo: roja.equipo,
+    nivel: roja.nivel, acceso: roja.acceso, enlaceCompra: roja.enlace_compra, guiaPareja: roja.guia_pareja,
+    fecha: roja.fecha, cuerpoMd: roja.cuerpo_md, publicada: 1, destacada: 1, lecturaMin: 3,
+  });
+  destacadas = await listarGuiasDestacadas(db);
+  assert.equal(destacadas.length, 1);
+  assert.equal(destacadas[0].slug, GUIA_RED.slug);
+  assert.equal(destacadas[0].lectura_min, 3);
+  const herramientas = await listarHerramientasDestacadas(db);
+  assert.ok(Array.isArray(herramientas));
 });
 
 test('las guías vecinas y relacionadas se resuelven por slug', async () => {
