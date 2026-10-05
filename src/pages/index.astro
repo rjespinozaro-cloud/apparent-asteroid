@@ -61,14 +61,17 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       /* LÉXICO DE MOVIMIENTO (vocabulario preciso):
          foto      = Fade in + Scale 1.04→1.10 (push-in cinematográfico, 3.2s, una vez)
          mitades   = Slide in hacia el centro ±2.5% (ease-out fuerte, una vez)
+         seam      = Charge en la grieta (scaleY + Fade, sincronizada a --t-hit)
+         bars      = Apertura letterbox (height 11dvh→0, una vez al cargar)
          chispas   = Float hacia el centro + Pulse (opacity/translate, loops lentos)
          rayo      = Bolt procedural en canvas (flicker 2-3 veces, único por carga)
          flash     = Fade out blanco (opacity, 120ms)
-         shake     = Translate amortiguado ±5px (una vez, 500ms)
-         ignición  = State indication (drop-shadow violeta) + anillos Scale+Fade (una vez)
-         equipo    = Tracking settle .55em→.34em + Fade in (state indication)
+         shake     = Translate amortiguado ±5px sobre foto+rayo (una vez, 500ms)
+         ignición  = State indication (drop-shadow violeta) + anillos Burst (Scale+Fade, una vez)
+         equipo    = Tracking settle + Fade in + Glitch RGB por data-text (state indication)
+         botón     = Glass + Press feedback + glow radial que sigue al puntero (--px/--py)
          reposo    = Pulse de glow + mini-arcos cada 8-12s (ráfagas cortas, sin loop 60fps)
-         salida    = Scale + Fade out + flash violeta (550ms, una vez por visita) */
+         salida    = Scale + Fade out + flash violeta (500ms, una vez por visita) */
 
       @property --angle {
         syntax: '<angle>';
@@ -80,14 +83,17 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         --bg: #05060c;
         --ink: #e8eaf6;
         --ink-dim: #8a90b2;
+        --ink-hint: #b9c1d6;
         --red: #ff2e4d;
         --red-deep: #5e1226;
         --blue: #2e8bff;
         --blue-deep: #16295e;
         --purple: #a855f7;
+        --purple-hot: #d8b4fe;
         --logo-size: clamp(180px, 38vmin, 460px);
         --pad: clamp(16px, 3.2vmin, 40px);
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --t-hit: 1.35s;
         --mx: 0;
         --my: 0;
         color-scheme: dark;
@@ -217,9 +223,18 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       }
 
       .noise {
+        inset: -10%;
         opacity: 0.08;
         mix-blend-mode: overlay;
         background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        animation: grain 1s steps(5) infinite;
+      }
+      @keyframes grain {
+        0% { transform: translate(0, 0); }
+        25% { transform: translate(-3%, 2%); }
+        50% { transform: translate(2%, -3%); }
+        75% { transform: translate(-2%, -2%); }
+        100% { transform: translate(3%, 3%); }
       }
 
       .scan {
@@ -234,6 +249,83 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
 
       .vignette {
         background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+      }
+
+      /* Barras letterbox: abren la escena al cargar y se retraen. */
+      .bars {
+        position: absolute;
+        left: 0;
+        right: 0;
+        z-index: 7;
+        height: 0;
+        background: #000;
+        pointer-events: none;
+      }
+      .bars--t {
+        top: 0;
+      }
+      .bars--b {
+        bottom: 0;
+      }
+      /* Apertura cinematográfica: las barras se retraen solas al cargar
+         (scaleY con origen en el borde: GPU, sin layout). */
+      .bars {
+        height: 11dvh;
+        animation: barsOpen 1.4s var(--ease) both;
+      }
+      .bars--t {
+        transform-origin: top;
+      }
+      .bars--b {
+        transform-origin: bottom;
+      }
+      @keyframes barsOpen {
+        from {
+          transform: scaleY(1);
+        }
+        to {
+          transform: scaleY(0);
+        }
+      }
+      @keyframes bars {
+        from {
+          height: 11dvh;
+        }
+        to {
+          height: 0;
+        }
+      }
+
+      /* Costura de luz en la grieta del choque. */
+      .seam {
+        position: absolute;
+        z-index: 2;
+        left: 50%;
+        top: -10%;
+        bottom: -10%;
+        width: 3px;
+        translate: -50% 0;
+        opacity: 0.3;
+        background: linear-gradient(to bottom, transparent, var(--purple-hot) 22%, #fff 50%, var(--purple-hot) 78%, transparent);
+        box-shadow: 0 0 22px 5px rgba(168, 85, 247, 0.65);
+        pointer-events: none;
+      }
+      .seam {
+        animation: seamCharge 2.6s var(--t-hit) var(--ease) both;
+      }
+      @keyframes seamCharge {
+        0% {
+          opacity: 0;
+          transform: scaleY(0.2);
+        }
+        25% {
+          opacity: 1;
+          transform: scaleY(1);
+        }
+        100% {
+          opacity: 0.3;
+          transform: scaleY(1);
+        }
       }
 
       /* ---------- FOTO NARRATIVA (RED vs BLUE) ---------- */
@@ -321,7 +413,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         background: linear-gradient(to bottom, rgba(5, 6, 12, 0.72), transparent 32%);
       }
       .cover__scrim--bottom {
-        background: linear-gradient(to top, rgba(5, 6, 12, 0.85), transparent 42%);
+        background: linear-gradient(to top, rgba(5, 6, 12, 0.92), transparent 50%);
       }
       .cover__scrim--spot {
         background: radial-gradient(ellipse at center, rgba(5, 6, 12, 0.55), transparent 62%);
@@ -398,14 +490,10 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         opacity: 0.8;
         transition: opacity 0.5s var(--ease);
       }
-      .cover.is-shake .cover__shake {
+      /* El shake mueve la escena visible (foto + rayo), no un div vacío. */
+      .cover.is-shake .cover__photo,
+      .cover.is-shake .cover__bolt {
         animation: shakeX 0.5s var(--ease);
-      }
-      .cover__shake {
-        position: absolute;
-        inset: 0;
-        z-index: 4;
-        pointer-events: none;
       }
       @keyframes shakeX {
         0%, 100% { transform: translate(0, 0); }
@@ -528,6 +616,9 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         height: auto;
         aspect-ratio: 2 / 1;
         object-fit: contain;
+        /* El asset trae la X casi pegada al borde derecho: aire para el
+           glifo y sitio para que el drop-shadow no se recorte. */
+        padding: 1% 4% 2% 0;
         user-select: none;
         -webkit-user-drag: none;
         filter:
@@ -548,7 +639,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         border-radius: 50%;
         background: conic-gradient(from 0deg, var(--red), transparent 30%, var(--blue) 55%, transparent 80%, var(--red));
         filter: blur(clamp(30px, 6vmin, 70px));
-        opacity: 0.35;
+        opacity: 0.26;
         animation: spin 14s linear infinite, pulse 4s ease-in-out infinite;
       }
       .logo__glow--violet {
@@ -644,24 +735,64 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         left: 0;
         right: 0;
         margin: 0;
+        padding-inline: 8px;
         text-align: center;
-        font-size: clamp(0.8rem, 2.2vmin, 1.15rem);
-        font-weight: 700;
+        font-size: clamp(1.15rem, 4.4vmin, 2.4rem);
+        font-weight: 800;
         letter-spacing: 0.55em;
         text-indent: 0.55em;
         text-transform: uppercase;
-        background: linear-gradient(90deg, var(--red), var(--purple) 42%, var(--purple) 58%, var(--blue));
+        white-space: nowrap;
+        background: linear-gradient(90deg, var(--red) 0%, #ff8fd1 22%, #fff 50%, #9fc8ff 78%, var(--blue) 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
-        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.8);
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 14px rgba(168, 85, 247, 0.55));
         opacity: 0;
       }
       .cover.is-impact .cover__team {
         opacity: 1;
-        letter-spacing: 0.34em;
-        text-indent: 0.34em;
+        letter-spacing: 0.42em;
+        text-indent: 0.42em;
         transition: opacity 0.9s var(--ease), letter-spacing 1s var(--ease), text-indent 1s var(--ease);
+      }
+      /* Glitch RGB del texto por data-text (una vez al impacto + eco ocasional). */
+      .cover__team::before,
+      .cover__team::after {
+        content: attr(data-text);
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        mix-blend-mode: screen;
+        background: none;
+        -webkit-text-fill-color: currentColor;
+        pointer-events: none;
+      }
+      .cover__team::before {
+        color: var(--red);
+      }
+      .cover__team::after {
+        color: var(--blue);
+      }
+      .cover.is-impact .cover__team::before {
+        animation: glitchHit 0.5s steps(1) forwards, glitchIdle 9s 4s infinite steps(1);
+      }
+      .cover.is-impact .cover__team::after {
+        animation: glitchHit 0.5s 0.04s steps(1) forwards, glitchIdle 9s 4.06s infinite steps(1);
+      }
+      @keyframes glitchHit {
+        0% { opacity: 1; clip-path: inset(10% 0 70% 0); transform: translate(-6px, 0); }
+        20% { clip-path: inset(60% 0 10% 0); transform: translate(5px, 0); }
+        40% { clip-path: inset(30% 0 40% 0); transform: translate(-3px, 0); }
+        60% { clip-path: inset(75% 0 5% 0); transform: translate(4px, 0); }
+        80% { clip-path: inset(5% 0 80% 0); transform: translate(-2px, 0); }
+        100% { opacity: 0; clip-path: inset(0); transform: none; }
+      }
+      @keyframes glitchIdle {
+        0%, 94%, 100% { opacity: 0; }
+        95% { opacity: 1; clip-path: inset(20% 0 55% 0); transform: translate(-4px, 0); }
+        97% { opacity: 1; clip-path: inset(60% 0 15% 0); transform: translate(3px, 0); }
       }
 
       /* ---------- CTA (ABAJO, ABSOLUTE) ---------- */
@@ -673,7 +804,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         right: 0;
         display: grid;
         justify-items: center;
-        gap: 0.9em;
+        gap: 1.2em;
         animation: riseIn 1s 0.35s var(--ease) both;
       }
       .cta {
@@ -688,16 +819,17 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         color: var(--ink);
         font-size: clamp(0.85rem, 2vmin, 1.05rem);
         font-weight: 700;
+        line-height: 1;
         letter-spacing: 0.28em;
         text-indent: 0.28em;
         text-transform: uppercase;
         text-decoration: none;
-        background: rgba(8, 12, 22, 0.72);
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
         isolation: isolate;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0)), rgba(12, 9, 24, 0.55);
+        -webkit-backdrop-filter: blur(14px) saturate(1.4);
+        backdrop-filter: blur(14px) saturate(1.4);
         transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 8px 30px -10px rgba(168, 85, 247, 0.5);
       }
       .cta::before {
         content: '';
@@ -706,7 +838,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         z-index: -1;
         border-radius: inherit;
         padding: 2px;
-        background: conic-gradient(from var(--angle), var(--red), var(--blue), var(--red));
+        background: conic-gradient(from var(--angle), var(--red), var(--purple), var(--blue), var(--purple), var(--red));
         -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
         -webkit-mask-composite: xor;
         mask-composite: exclude;
@@ -718,9 +850,9 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         inset: 0;
         z-index: -1;
         border-radius: inherit;
-        background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.22) 50%, transparent 70%);
-        transform: translateX(-120%);
-        transition: transform 0.8s var(--ease);
+        opacity: 0;
+        transition: opacity 0.25s;
+        background: radial-gradient(120px circle at var(--px, 50%) var(--py, 50%), rgba(216, 180, 254, 0.3), transparent 62%);
       }
       .cta__arrow {
         transition: transform 0.25s var(--ease);
@@ -728,11 +860,11 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       .cta:hover,
       .cta:focus-visible {
         transform: translateY(-2px) scale(1.04);
-        box-shadow: 0 10px 40px -8px rgba(255, 77, 109, 0.45), 0 10px 40px -8px rgba(77, 124, 255, 0.45);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 14px 44px -8px rgba(168, 85, 247, 0.75);
       }
       .cta:hover::after,
       .cta:focus-visible::after {
-        transform: translateX(120%);
+        opacity: 1;
       }
       .cta:hover .cta__arrow,
       .cta:focus-visible .cta__arrow {
@@ -752,54 +884,28 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         }
       }
 
-      /* Arco eléctrico del botón hacia el logo (hover/foco). */
-      .cta-arc {
-        position: absolute;
-        bottom: calc(100% + 6px);
-        left: 50%;
-        width: 110px;
-        height: 56px;
-        transform: translateX(-50%);
-        opacity: 0;
-        overflow: visible;
-        pointer-events: none;
-      }
-      .cta-arc path {
-        fill: none;
-        stroke: var(--purple);
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-dasharray: 220;
-        stroke-dashoffset: 220;
-        filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.9));
-      }
-      .cover__bottom:hover .cta-arc path,
-      .cover__bottom:focus-within .cta-arc path {
-        stroke-dashoffset: 0;
-        opacity: 1;
-        transition: stroke-dashoffset 0.3s var(--ease), opacity 0.2s ease;
-      }
       .cover:has(.cta:hover) .logo__glow--violet,
       .cover:has(.cta:focus-visible) .logo__glow--violet {
         opacity: 0.7;
       }
 
       .cover__hint {
-        margin: 0;
+        margin: 0.2em 0 0;
         font-size: clamp(0.6rem, 1.4vmin, 0.75rem);
         letter-spacing: 0.3em;
         text-transform: uppercase;
-        color: var(--ink-dim);
-        opacity: 0.8;
+        /* #ink-hint a opacidad .8 ≈ 7:1 sobre el fondo (AA holgado). */
+        color: var(--ink-hint);
+        opacity: 0.9;
         animation: blink 3s ease-in-out infinite;
       }
       @keyframes blink {
         0%,
         100% {
-          opacity: 0.55;
+          opacity: 0.8;
         }
         50% {
-          opacity: 0.95;
+          opacity: 1;
         }
       }
 
@@ -870,6 +976,16 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         }
         .cover__half img {
           object-position: 50% 60%;
+        }
+        .seam {
+          left: -10%;
+          right: -10%;
+          top: 50%;
+          bottom: auto;
+          width: auto;
+          height: 3px;
+          translate: 0 -50%;
+          background: linear-gradient(to right, transparent, var(--purple-hot) 22%, #fff 50%, var(--purple-hot) 78%, transparent);
         }
         /* Tapa el reflejo difuso del borde izquierdo cerca del suelo. */
         .cover__scrim--spot {
@@ -972,7 +1088,9 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       @media (prefers-contrast: more) {
         .grid,
         .noise,
-        .scan {
+        .scan,
+        .cover__sparks,
+        .seam {
           display: none;
         }
         .cta {
@@ -992,7 +1110,10 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         .cover__photo,
         .logo__glow,
         .logo__ring,
-        .hud {
+        .hud,
+        .seam,
+        .cover__sparks,
+        .bars {
           display: none;
         }
         .cta {
@@ -1088,13 +1209,15 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       <div class="cover__scrim cover__scrim--top" aria-hidden="true"></div>
       <div class="cover__scrim cover__scrim--bottom" aria-hidden="true"></div>
       <div class="cover__scrim cover__scrim--spot" aria-hidden="true"></div>
+      <i class="seam" id="seam" aria-hidden="true"></i>
+      <i class="bars bars--t" aria-hidden="true"></i>
+      <i class="bars bars--b" aria-hidden="true"></i>
 
       <div class="cover__sparks" aria-hidden="true">
         <i class="spark spark--r"></i><i class="spark spark--r"></i><i class="spark spark--r"></i><i class="spark spark--r"></i><i class="spark spark--b"></i><i class="spark spark--b"></i><i class="spark spark--b"></i><i class="spark spark--b"></i>
       </div>
 
       <canvas class="cover__bolt" id="bolt" aria-hidden="true"></canvas>
-      <div class="cover__shake" id="shake" aria-hidden="true"></div>
       <div class="cover__flash" id="flash" aria-hidden="true"></div>
 
       <i class="hud hud--tl" aria-hidden="true"></i>
@@ -1123,12 +1246,9 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         />
       </div>
 
-      <p class="cover__team" id="team">Purple Team</p>
+      <p class="cover__team" id="team" data-text="PURPLE TEAM">Purple Team</p>
 
       <footer class="cover__bottom">
-        <svg class="cta-arc" viewBox="0 0 110 56" aria-hidden="true">
-          <path d="M55 54 L48 40 L58 34 L46 16 L54 10 L50 2" />
-        </svg>
         <a class="cta" id="enter" href={`${base}inicio/`}>
           <span class="cta__label">Entrar</span>
           <span class="cta__arrow" aria-hidden="true">→</span>
@@ -1156,6 +1276,10 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         // En móvil o con ahorro de datos/conexión lenta: destello CSS, sin canvas.
         var sinCanvas = reduceMotion || ahorroDatos || tactil;
         var saliendo = false;
+
+        // Sincronía con el CSS: el rayo cae en el instante --t-hit.
+        var tHit = parseFloat(window.getComputedStyle(cover).getPropertyValue('--t-hit')) * 1000;
+        if (!(tHit > 0)) tHit = 1350;
 
         // Si la foto falla, cae al fondo aurora+grid sin romperse.
         var photo = document.getElementById('photo');
@@ -1407,19 +1531,25 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
             window.setTimeout(function () {
               impacto();
               programarArcos();
-            }, 1400);
+            }, tHit);
             return;
           }
           window.setTimeout(function () {
             rayoChoque();
             impacto();
-          }, 1350);
+          }, tHit);
         }
 
         if (document.readyState === 'complete') secuencia();
         else window.addEventListener('load', secuencia, { once: true });
 
         /* ---------- PARALLAX SUTIL (solo puntero fino) ---------- */
+        // Brillo del botón que sigue al puntero.
+        enterNode.addEventListener('pointermove', function (evento) {
+          var r = enterNode.getBoundingClientRect();
+          if (r.width > 0) enterNode.style.setProperty('--px', (((evento.clientX - r.left) / r.width) * 100).toFixed(1) + '%');
+          if (r.height > 0) enterNode.style.setProperty('--py', (((evento.clientY - r.top) / r.height) * 100).toFixed(1) + '%');
+        });
         if (fineHover && !reduceMotion) {
           var logoNode = document.getElementById('logo');
           if (logoNode instanceof HTMLElement) {
