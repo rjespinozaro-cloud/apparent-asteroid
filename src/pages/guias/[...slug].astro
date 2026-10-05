@@ -104,11 +104,11 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
       </nav>
 
       {relacionadas.length > 0 && (
-        <section class="seccion guia__relacionadas" aria-labelledby="relacionadas-titulo">
-          <div class="seccion__cabecera">
-            <h2 class="seccion__titulo" id="relacionadas-titulo">
-              Guías relacionadas
-            </h2>
+      <section class="seccion guia__relacionadas" aria-labelledby="relacionadas-titulo">
+        <div class="seccion__cabecera">
+          <h2 class="seccion__titulo" id="relacionadas-titulo">
+            Continúa aprendiendo
+          </h2>
             <a href={`${base}herramientas/${guia.herramienta}/`}>Ver todo sobre {nombreHerramienta(guia.herramienta)}</a>
           </div>
           <ul class="rejilla-tarjetas">
