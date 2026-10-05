@@ -47,6 +47,10 @@ git -C "$WT" rm -rq .
 cp -r "$MIR/." "$WT/"
 touch "$WT/.nojekyll"
 git -C "$WT" add -A
-git -C "$WT" commit -m "Vista previa estática $(date -u +%F)"
-git -C "$WT" push origin HEAD:gh-pages
-echo "OK: gh-pages actualizado (Pages tarda 1-3 min en publicar)"
+if git -C "$WT" diff --cached --quiet; then
+  echo 'OK: sin cambios, nada que publicar'
+else
+  git -C "$WT" commit -m "Vista previa estática $(date -u +%F)"
+  git -C "$WT" push origin HEAD:gh-pages
+  echo "OK: gh-pages actualizado (Pages tarda 1-3 min en publicar)"
+fi
