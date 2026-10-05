@@ -191,6 +191,27 @@
   text-decoration: none;
 }
 
+/* Chips rápidos: mismo idioma que .chip, con estado pulsado visible. */
+.chips-rapidos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2xs);
+  list-style: none;
+  margin: 0 0 var(--espacio-s);
+  padding: 0;
+}
+
+.chips-rapidos .chip {
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.chips-rapidos .chip[aria-pressed='true'] {
+  background: var(--papel-contraste);
+  border-color: var(--linea-fuerte);
+  color: var(--tinta);
+}
+
 .guia__meta-catalogo {
   color: var(--tinta-suave);
   font-family: var(--fuente-mono);

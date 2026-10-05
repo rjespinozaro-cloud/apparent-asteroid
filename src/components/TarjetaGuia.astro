@@ -11,6 +11,8 @@ interface Props {
     nivel: string;
     acceso: string;
     fecha: string;
+    /** Minutos de lectura (columna `lectura_min` desde la Fase 2; ausente = no se muestra). */
+    lectura_min?: number | null;
     /** Solo si viene del detalle; en listados se resume desde el meta. */
     resumen?: string | null;
   };
@@ -38,7 +40,7 @@ const destino = `${base}guias/${guia.slug}/`;
   {resumen && <p class="tarjeta__resumen">{descripcionDesdeMarkdown(resumen)}</p>}
 
   <p class="tarjeta__meta-linea">
-    {nombreHerramienta(guia.herramienta)}{mostrarNivel && ` · ${nombreNivel(guia.nivel)}`}
+    {nombreHerramienta(guia.herramienta)}{mostrarNivel && ` · ${nombreNivel(guia.nivel)}`}{guia.lectura_min ? ` · ${guia.lectura_min} min` : ''}
   </p>
   <p class="tarjeta__meta-linea tarjeta__meta-linea--suave">
     {guia.acceso === 'pago' ? 'Vista previa disponible · PDF completo' : 'Lectura completa gratuita'}
