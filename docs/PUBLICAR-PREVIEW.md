@@ -65,9 +65,9 @@ contenido primero (el script por sí solo fallará).
 ### 3. Espejo con wget
 
 La lista de rutas sale del `/sitemap.xml` servido en vivo (cubre `/`,
-`/inicio/`, `/guias/`, `/herramientas/`, `/aviso-legal/`,
-`/herramientas/nmap/` y cada guía), más `/buscar/` y `/robots.txt`
-que no van en el sitemap. Si el sitemap expone `/admin`, `/api`,
+`/inicio/`, `/guias/`, `/rutas/`, cada ruta publicada, `/herramientas/`,
+`/aviso-legal/`, `/herramientas/nmap/` y cada guía), más `/buscar/` y
+`/robots.txt` que no van en el sitemap. Si el sitemap expone `/admin`, `/api`,
 `login` o `instalar`, se aborta.
 
 ```sh

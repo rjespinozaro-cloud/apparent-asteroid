@@ -175,6 +175,25 @@ test('la búsqueda en gratis sí usa el cuerpo completo', async () => {
   assert.equal(resultado.guias.length, 1, 'en gratis el cuerpo es público');
 });
 
+test('lectura_min se guarda al crear y ningún resultado expone cuerpo_md', async () => {
+  const db = crearBase();
+  await crearGuia(db, {
+    ...GUIA_RED,
+    acceso: 'pago',
+    enlaceCompra: 'https://pago.example.com/y',
+    cuerpoMd: `## 1. Adelanto\n\n${'Palabra '.repeat(400)}`,
+    lecturaMin: 2,
+  });
+  const guia = await obtenerGuiaPorSlug(db, GUIA_RED.slug);
+  assert.equal(guia.lectura_min, 2);
+  const resultado = await buscarGuias(db, 'nmap');
+  assert.ok(resultado.guias.length > 0);
+  for (const fila of resultado.guias) {
+    assert.ok(!('cuerpo_md' in fila), 'la respuesta nunca trae el cuerpo');
+  }
+  assert.ok(!JSON.stringify(resultado).includes('Palabra '.repeat(5).trim()), 'sin fragmentos');
+});
+
 test('las rutas listan y el paso con guía sin publicar no enlaza', async () => {
   const db = crearBase();
   await crearGuia(db, { ...GUIA_BLUE, publicada: 1 });

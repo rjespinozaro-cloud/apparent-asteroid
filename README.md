@@ -1,5 +1,13 @@
 > **Publicar en el repo y en GitHub Pages:** ver [README-PUBLICAR.md](README-PUBLICAR.md).
 
+# JOANIX GUIDES — Cybersecurity Knowledge Lab
+
+Astro + Cloudflare Workers + D1. Catálogo en `/inicio/` y `/guias/`
+(filtros, destacadas), rutas de aprendizaje en `/rutas/`, búsqueda en
+`/buscar/`, asistente JOANIX AI con mascota oficial. Documentos de
+operación en `docs/` (`PUBLICAR-PREVIEW.md` para la vista previa
+estática) y reglas del proyecto en `AGENTS.md`.
+
 # Astro Starter Kit: Basics
 
 ```sh
