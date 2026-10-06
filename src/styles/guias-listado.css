@@ -191,7 +191,7 @@
   text-decoration: none;
 }
 
-/* Chips rápidos: mismo idioma que .chip, con estado pulsado visible. */
+/* Chips rápidos: fila que los agrupa (el aspecto vive en catalogo.css). */
 .chips-rapidos {
   display: flex;
   flex-wrap: wrap;
@@ -199,17 +199,6 @@
   list-style: none;
   margin: 0 0 var(--espacio-s);
   padding: 0;
-}
-
-.chips-rapidos .chip {
-  min-height: 44px;
-  text-decoration: none;
-}
-
-.chips-rapidos .chip[aria-pressed='true'] {
-  background: var(--papel-contraste);
-  border-color: var(--linea-fuerte);
-  color: var(--tinta);
 }
 
 .guia__meta-catalogo {

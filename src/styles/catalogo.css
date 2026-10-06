@@ -1,0 +1,59 @@
+/**
+ * Estilo vivo del catálogo (Fase 4).
+ * Vivo pero legible: violeta/fucsia como acentos; rojo y azul SOLO para equipos.
+ * Se importa tras tokens, base, layout y components.
+ */
+
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes giro{to{--ang:360deg}}
+
+.catalogo-stats{display:flex;flex-wrap:wrap;gap:1rem 2.5rem;margin:0;padding:0;list-style:none}
+.catalogo-stats strong{display:block;font-size:clamp(1.9rem,4.5vw,2.75rem);line-height:1;letter-spacing:-.03em;
+  background:linear-gradient(90deg,#FF8FA3,#C4B5FD 55%,#8FADFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.catalogo-stats span{font-size:.875rem;color:var(--text-muted,#9AA0C3)}
+
+.chip-filtro{display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:0 1rem;border:1px solid var(--line,#232842);
+  border-radius:999px;background:transparent;color:inherit;cursor:pointer;transition:border-color .2s,background-color .2s,transform .15s}
+.chip-filtro:hover{border-color:#A78BFA;background:rgba(139,92,246,.12)}
+.chip-filtro:active{transform:scale(.97)}
+.chip-filtro[aria-pressed="true"]{border-color:transparent;background:linear-gradient(135deg,#8B5CF6,#E879F9);color:#0B0714;font-weight:600}
+
+.ruta-card{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:1rem;padding:1.5rem;border-radius:18px;overflow:hidden;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(139,92,246,.2),transparent 60%),var(--ink-850,#0D0F1A);transition:transform .2s cubic-bezier(.22,1,.36,1)}
+.ruta-card::before{content:"";position:absolute;inset:0;z-index:-1;padding:1.5px;border-radius:inherit;opacity:.5;transition:opacity .25s;
+  background:conic-gradient(from var(--ang),#FF4D6D,#8B5CF6,#4D7CFF,#E879F9,#FF4D6D);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:giro 9s linear infinite}
+.ruta-card:hover{transform:translateY(-3px)}
+.ruta-card:hover::before{opacity:1}
+
+.ruta-pasos{counter-reset:paso;display:grid;gap:.75rem;margin:0;padding:0;list-style:none}
+.ruta-pasos li{position:relative;display:flex;align-items:center;gap:.875rem;padding-left:0}
+.ruta-pasos li::before{counter-increment:paso;content:counter(paso);display:grid;place-items:center;flex:none;width:2rem;height:2rem;border-radius:50%;
+  font:600 .8125rem var(--fuente-mono,ui-monospace,monospace);color:#0B0714;background:linear-gradient(135deg,#C4B5FD,#E879F9)}
+.ruta-pasos li:not(:last-child)::after{content:"";position:absolute;left:1rem;top:2rem;width:2px;height:.75rem;background:linear-gradient(#C4B5FD,transparent)}
+.ruta-pasos .proximamente{opacity:.6}
+.ruta-pasos .proximamente::before{background:var(--line,#232842);color:var(--text-muted,#9AA0C3)}
+
+@media (prefers-reduced-motion:reduce){.ruta-card::before{animation:none}.ruta-card:hover{transform:none}}
+
+/* --- Añadidos Fase 4 (no formaban parte del bloque solicitado) --- */
+
+/* Spotlight que sigue al cursor, solo con puntero fino (táctil: nunca). */
+@media (pointer:fine){
+  .ruta-card::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;
+    background:radial-gradient(circle at var(--mouse-x,50%) var(--mouse-y,50%),rgba(139,92,246,.22),transparent 55%)}
+  .ruta-card:hover::after{opacity:1}
+}
+
+/* El borde animado corre solo en pantalla (lo alterna ruta-anim.js).
+   Especificidad alta a propósito: motion.css pausa `[data-spotlight]::before`
+   y carga después; sin el atributo en el selector, esa regla ganaría siempre. */
+.ruta-card::before{animation-play-state:paused}
+.ruta-card.en-pantalla[data-spotlight]::before{animation-play-state:running}
+
+/* Contraste alto: borde sólido y texto sin degradado. */
+@media (prefers-contrast:more){
+  .ruta-card::before{animation:none;opacity:1;background:#A78BFA}
+  .catalogo-stats strong{background:none;color:#fff}
+  .chip-filtro[aria-pressed="true"]{background:#C4B5FD;color:#000}
+}

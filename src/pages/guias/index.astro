@@ -78,9 +78,12 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <p class="entradilla">
         Conocimiento práctico de ciberseguridad para ofensiva y defensa.
       </p>
-      <p class="guia__meta-catalogo">
-        {plural(conteo.total, 'guía', 'guías')} · {plural(conteo.red, 'RED', 'RED')} · {plural(conteo.blue, 'BLUE', 'BLUE')} · {plural(premium, 'premium', 'premium')}
-      </p>
+      <ul class="catalogo-stats" aria-label="Totales del catálogo">
+        <li><strong>{conteo.total}</strong><span>{plural(conteo.total, 'guía', 'guías')}</span></li>
+        <li><strong>{conteo.red}</strong><span>RED</span></li>
+        <li><strong>{conteo.blue}</strong><span>BLUE</span></li>
+        <li><strong>{premium}</strong><span>{plural(premium, 'premium', 'premium')}</span></li>
+      </ul>
       <form class="buscador" method="get" action={`${base}buscar/`} role="search">
         <label class="visualmente-oculto" for="buscar-catalogo">Buscar en el catálogo</label>
         <input
@@ -149,13 +152,13 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </p>
 
     <ul class="chips-rapidos" aria-label="Filtros rápidos">
-      <li><a class="chip" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-pressed={equipo === 'red' ? 'true' : 'false'}>RED</a></li>
-      <li><a class="chip" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-pressed={equipo === 'blue' ? 'true' : 'false'}>BLUE</a></li>
-      <li><a class="chip" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-pressed={acceso === 'gratis' ? 'true' : 'false'}>Gratis</a></li>
-      <li><a class="chip" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-pressed={acceso === 'pago' ? 'true' : 'false'}>Premium</a></li>
-      <li><a class="chip" href={enlaceCon({ nivel: nivel === 'basico' ? '' : 'basico', pagina: 1 })} aria-pressed={nivel === 'basico' ? 'true' : 'false'}>Básico</a></li>
-      <li><a class="chip" href={enlaceCon({ nivel: nivel === 'intermedio' ? '' : 'intermedio', pagina: 1 })} aria-pressed={nivel === 'intermedio' ? 'true' : 'false'}>Intermedio</a></li>
-      <li><a class="chip" href={enlaceCon({ nivel: nivel === 'avanzado' ? '' : 'avanzado', pagina: 1 })} aria-pressed={nivel === 'avanzado' ? 'true' : 'false'}>Avanzado</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-pressed={equipo === 'red' ? 'true' : 'false'}>RED</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-pressed={equipo === 'blue' ? 'true' : 'false'}>BLUE</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-pressed={acceso === 'gratis' ? 'true' : 'false'}>Gratis</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-pressed={acceso === 'pago' ? 'true' : 'false'}>Premium</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'basico' ? '' : 'basico', pagina: 1 })} aria-pressed={nivel === 'basico' ? 'true' : 'false'}>Básico</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'intermedio' ? '' : 'intermedio', pagina: 1 })} aria-pressed={nivel === 'intermedio' ? 'true' : 'false'}>Intermedio</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'avanzado' ? '' : 'avanzado', pagina: 1 })} aria-pressed={nivel === 'avanzado' ? 'true' : 'false'}>Avanzado</a></li>
     </ul>
 
     <form class="filtros" method="get" action={`${base}guias/`} aria-labelledby="filtros-titulo">

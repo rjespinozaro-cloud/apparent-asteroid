@@ -47,7 +47,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <ul class="rejilla-tarjetas">
         {detalles.map(({ ruta, pasos }) => (
           <li>
-            <article class="tarjeta-premium">
+            <article class="ruta-card" data-spotlight>
               <p class="tarjeta__kicker">Ruta · {plural(pasos.length, 'paso', 'pasos')}</p>
               <h2 class="tarjeta__titulo">
                 <a href={`${base}rutas/${ruta.slug}/`} class="stretched-link" data-ruta-titulo={ruta.titulo.toLowerCase()}>{ruta.titulo}</a>
@@ -73,3 +73,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
   <AsistenteFlotante />
 </Base>
+
+<script>
+  import '../../scripts/ruta-anim.js';
+</script>
