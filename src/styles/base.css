@@ -40,6 +40,11 @@ h4 {
   text-wrap: balance;
 }
 
+h2[id],
+h3[id] {
+  scroll-margin-top: calc(var(--alto-cabecera) + var(--espacio-s));
+}
+
 h1 {
   font-size: var(--texto-2xl);
   letter-spacing: -0.02em;

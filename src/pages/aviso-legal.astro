@@ -2,12 +2,95 @@
 import Base from '../layouts/Base.astro';
 
 export const prerender = false;
+
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
+const secciones = [
+  { id: 'finalidad', titulo: 'Finalidad educativa y uso autorizado' },
+  { id: 'responsabilidad', titulo: 'Responsabilidad del usuario' },
+  { id: 'limitacion', titulo: 'Limitación de responsabilidad' },
+  { id: 'propiedad', titulo: 'Propiedad intelectual' },
+  { id: 'pago', titulo: 'Contenido de pago: entrega y reembolsos' },
+  { id: 'privacidad', titulo: 'Privacidad y almacenamiento local' },
+  { id: 'contacto', titulo: 'Contacto y ley aplicable' },
+];
 ---
 
-<Base title="Aviso legal | JOANIX GUIDES">
+<Base title="Aviso legal | JOANIX GUIDES" description="Aviso legal de JOANIX GUIDES: uso educativo autorizado, responsabilidad, contenido de pago y privacidad.">
+  <nav class="contenedor" aria-label="Migas de pan">
+    <ol class="migas">
+      <li><a href={`${base}inicio/`}>Inicio</a></li>
+      <li aria-current="page">Aviso legal</li>
+    </ol>
+  </nav>
+
   <article class="contenedor" aria-labelledby="aviso-titulo">
     <p class="eyebrow">Información legal</p>
     <h1 id="aviso-titulo">Aviso legal</h1>
-    <p>Todo el contenido es educativo. Practica solo en tu laboratorio propio o en entornos con autorización expresa.</p>
+    <p class="entradilla">
+      Documento en borrador, pendiente de revisión por un abogado antes de su
+      publicación definitiva.
+    </p>
+
+    <nav aria-label="Índice del aviso legal">
+      <ol class="migas">
+        {secciones.map((seccion) => (
+          <li><a href={`#${seccion.id}`}>{seccion.titulo}</a></li>
+        ))}
+      </ol>
+    </nav>
+
+    <div>
+      <h2 id="finalidad">Finalidad educativa y uso autorizado</h2>
+      <p>
+        Todo el contenido es educativo. Practica solo en tu laboratorio propio
+        o en entornos con autorización expresa. Queda prohibido usar estas
+        guías contra sistemas ajenos sin permiso.
+      </p>
+
+      <h2 id="responsabilidad">Responsabilidad del usuario</h2>
+      <p>
+        Eres responsable de cumplir la ley vigente y de contar con
+        autorización escrita antes de ejecutar cualquier técnica descrita.
+        El uso indebido es responsabilidad exclusiva de quien lo realiza.
+      </p>
+
+      <h2 id="limitacion">Limitación de responsabilidad</h2>
+      <p>
+        El contenido se ofrece tal cual, sin garantías de exactitud ni de
+        resultados. [NOMBRE] no responde de daños derivados de su uso o de
+        la indisponibilidad temporal del sitio.
+      </p>
+
+      <h2 id="propiedad">Propiedad intelectual</h2>
+      <p>
+        Los textos, marcas y diseños pertenecen a [NOMBRE] o a sus
+        titulares. Puedes compartir enlaces, pero no republicar el contenido
+        íntegro sin permiso.
+      </p>
+
+      <h2 id="pago">Contenido de pago: entrega y reembolsos</h2>
+      <p>
+        Las guías premium se entregan en PDF mediante el enlace de compra de
+        cada ficha. Si el documento no llega o presenta defectos, escribe a
+        [CORREO] con tu comprobante para gestionar la entrega o el reembolso.
+      </p>
+
+      <h2 id="privacidad">Privacidad y almacenamiento local</h2>
+      <p>
+        No pedimos registro ni rastreamos tu actividad. El sitio guarda en tu
+        propio navegador (localStorage) la última guía leída para la función
+        "Continúa donde lo dejaste"; puedes borrarla desde los ajustes de tu
+        navegador. No se envían datos personales a ningún servidor por este
+        concepto.
+      </p>
+
+      <h2 id="contacto">Contacto y ley aplicable</h2>
+      <p>
+        Para dudas legales o solicitudes: [CORREO]. Este aviso se rige por la
+        normativa aplicable al domicilio de [NOMBRE], pendiente de concreción
+        en la revisión legal.
+      </p>
+    </div>
   </article>
 </Base>
