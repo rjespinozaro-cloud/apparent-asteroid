@@ -134,10 +134,16 @@ echo "NOTA: las clases CSS .admin-* van en el bundle global; no son el panel (no
 echo "== 8. sustituir URLs locales por la pública =="
 grep -rl "localhost:$PUERTO\|127.0.0.1:$PUERTO\|localhost:4321" "$ESPEJO" --include='*.html' --include='*.css' --include='*.xml' --include='*.txt' --include='*.json' \
   | xargs -r sed -i -e "s#http://localhost:$PUERTO#$BASE_PUBLICA#g" -e "s#http://127.0.0.1:$PUERTO#$BASE_PUBLICA#g" -e "s#http://localhost:4321#$BASE_PUBLICA#g"
-grep -rl '%3Fequipo=' "$ESPEJO" --include='*.html' \
-  | xargs -r sed -i -E 's|index\.html%3Fequipo=([a-z]+)\.html|?equipo=\1|g'
+grep -rl '%3F' "$ESPEJO" --include='*.html' \
+  | xargs -r sed -i -E 's|index\.html%3F([^"'"'"' ]*)\.html|index.html?\1|g'
 find "$ESPEJO" -name '*[?]*' -type f -delete
-echo "OK: sustitución aplicada"
+find "$ESPEJO" -name '*%3F*' -type f -delete
+restos3f=$(grep -rl '%3F' "$ESPEJO" --include='*.html' || true)
+if [ -n "$restos3f" ]; then
+  printf '%s\n' "$restos3f" | head -3 >&2
+  echo "ERROR: quedan enlaces %3F" >&2; exit 1
+fi
+echo "OK: filtros ?param= restaurados"
 
 echo "== 9. revisar canonical, og:url y og:image =="
 grep -rhoE '<link[^>]*canonical[^>]*>|<meta property="og:(url|image)"[^>]*>' "$ESPEJO/index.html" | head -5
@@ -147,6 +153,59 @@ if [ -n "$locales" ]; then
   echo "ERROR: canonical u OG con URL local" >&2; exit 1
 fi
 echo "OK: canonical y OG sin URLs locales"
+
+echo "== 9b. canonical absoluto (wget --convert-links lo relativiza) =="
+find "$ESPEJO" -name '*.html' -print0 | while IFS= read -r -d '' html; do
+  rel="${html#$ESPEJO/}"
+  case "$rel" in
+    index.html) ruta="/" ;;
+    */index.html) ruta="/${rel%/index.html}/" ;;
+    *) ruta="/$rel" ;;
+  esac
+  python3 - "$html" "$BASE_PUBLICA$ruta" <<'PY'
+import re, sys
+ruta_archivo, canonica = sys.argv[1], sys.argv[2]
+html = open(ruta_archivo, encoding='utf-8').read()
+nuevo, n = re.subn(r'<link[^>]*rel="canonical"[^>]*>', f'<link rel="canonical" href="{canonica}">', html, count=1)
+if n:
+    open(ruta_archivo, 'w', encoding='utf-8').write(nuevo)
+PY
+done
+if grep -rhoP '<link rel="canonical" href="(?!https://)[^"]*"' "$ESPEJO" --include='*.html' | head -3; then
+  echo "ERROR: canonical relativo tras restaurar" >&2; exit 1
+fi
+echo "OK: canonical absoluto en todas las páginas"
+
+echo "== 9c. enlaces internos del espejo =="
+roto=$(python3 - "$ESPEJO" <<'PY'
+import os, re, sys, urllib.parse
+raiz = sys.argv[1]
+fallos = []
+for dirpath, _, files in os.walk(raiz):
+    for f in files:
+        if not f.endswith(('.html', '.xml')):
+            continue
+        ruta = os.path.join(dirpath, f)
+        base = os.path.dirname(ruta)
+        html = open(ruta, encoding='utf-8').read()
+        for m in re.finditer(r'''(?:href|src)="([^"#?]+?)(?:[?#][^"]*)?"''', html):
+            url = m.group(1).strip()
+            if not url or url.startswith(('http://', 'https://', 'mailto:', 'tel:', 'data:')):
+                continue
+            objetivo = os.path.normpath(os.path.join(base, urllib.parse.unquote(url)))
+            if os.path.isdir(objetivo):
+                objetivo = os.path.join(objetivo, 'index.html')
+            if not os.path.isfile(objetivo):
+                fallos.append(f'{os.path.relpath(ruta, raiz)} -> {url}')
+for f in sorted(set(fallos))[:10]:
+    print(f)
+PY
+)
+if [ -n "$roto" ]; then
+  printf '%s\n' "$roto" >&2
+  echo "ERROR: enlaces internos rotos" >&2; exit 1
+fi
+echo "OK: enlaces internos resueltos"
 
 echo "== 10. .nojekyll y robots =="
 touch "$ESPEJO/.nojekyll"

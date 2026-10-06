@@ -111,6 +111,11 @@ URL local:
 grep -rhoE '<link[^>]*canonical[^>]*>|<meta property="og:(url|image)"[^>]*>' espejo/index.html
 ```
 
+Y se restaura el canonical absoluto, porque `wget --convert-links`
+lo relativiza (`href="index.html"`): se reescribe desde la ruta del
+fichero (`inicio/index.html` → `…/apparent-asteroid/inicio/`) y se
+comprueba que no quede ningún canonical relativo.
+
 ### 5. Excluir todo lo privado
 
 Nunca se piden `/admin`, `/api`, login ni instalar. Del espejo se borra
