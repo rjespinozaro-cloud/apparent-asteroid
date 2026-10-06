@@ -245,7 +245,9 @@
   font-size: clamp(2.75rem, 9vw, 6rem);
   line-height: 0.95;
   letter-spacing: -0.04em;
-  background: linear-gradient(90deg, #ff8fa3, #c4b5fd 50%, #8fadff);
+  /* Blanco frío con matiz azul/violeta: el punto más oscuro (#B9C6FF)
+     contrasta 12:1 sobre el fondo con scrim (AA de sobra). */
+  background: linear-gradient(180deg, #FFFFFF 0%, #DCE4FF 55%, #B9C6FF 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -255,7 +257,7 @@
   margin: 0;
   max-width: 36ch;
   font-size: clamp(1.05rem, 2.2vw, 1.3rem);
-  color: var(--tinta-suave);
+  color: #DCE1F5;
 }
 
 .portada--hero__acciones {
@@ -283,8 +285,15 @@
 
 /* Solo las dos luces son infinitas: el resto queda estático. */
 .portada--hero__descriptor {
-  color: var(--tinta-suave);
+  color: #DCE1F5;
   text-align: center;
+}
+
+/* Placeholder del buscador del hero (solo aquí: el resto de
+   buscadores conserva el estilo global). */
+.portada--hero__contenido .buscador input::placeholder {
+  color: #9AA3C9;
+  opacity: 1;
 }
 
 .portada--hero__scroll {
@@ -293,7 +302,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--espacio-2xs);
-  color: var(--tinta-tenue);
+  color: #A6AED1;
   font-family: var(--fuente-mono);
   font-size: var(--texto-xs);
 }
