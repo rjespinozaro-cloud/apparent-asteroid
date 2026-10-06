@@ -31,24 +31,22 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 <Base clase="page-enter">
   <section class="portada portada--hero" aria-labelledby="inicio-titulo">
     <div class="portada--hero__bg" aria-hidden="true">
+      <picture class="portada--hero__fondo" aria-hidden="true">
+        <img
+          src={`${base}hero/fondo.png`}
+          width="1024"
+          height="572"
+          alt=""
+          fetchpriority="high"
+          decoding="async"
+        />
+      </picture>
       <div class="portada--hero__glow portada--hero__glow--red"></div>
       <div class="portada--hero__glow portada--hero__glow--blue"></div>
       <div class="portada--hero__grid"></div>
       <div class="portada--hero__scrim"></div>
     </div>
     <div class="portada--hero__contenido">
-      <picture class="portada--hero__fondo" aria-hidden="true">
-        <img
-          src={`${base}hero/hero-fondo-1024.webp`}
-          srcset={`${base}hero/hero-fondo-1024.webp 1024w, ${base}hero/hero-fondo-1920.webp 1920w`}
-          sizes="(max-width: 700px) 100vw, 72rem"
-          width="1920"
-          height="1080"
-          alt=""
-          fetchpriority="high"
-          decoding="async"
-        />
-      </picture>
       <h1 id="inicio-titulo">JOANIX GUIDES</h1>
       <p class="portada--hero__descriptor">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</p>
       <div class="portada__acciones portada--hero__acciones">

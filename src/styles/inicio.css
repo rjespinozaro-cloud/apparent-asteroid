@@ -81,8 +81,8 @@
   text-align: center;
   max-width: none;
   margin: 0;
-  min-height: calc(100vh - 4.5rem);
-  min-height: calc(100svh - 4.5rem);
+  min-height: 100vh;
+  min-height: 100svh;
   padding: clamp(4rem, 12vh, 8rem) var(--pad-x);
 }
 
@@ -93,23 +93,19 @@
   pointer-events: none;
 }
 
-/* Constelación arriba, texto debajo: banner con fundido inferior y
-   desvanecido al hacer scroll (visible si no hay soporte). */
+/* Fondo del hero a sangre: mismo fondo.png ambiental, sin recortes. */
 .portada--hero__fondo {
-  display: block;
-  width: min(100%, 72rem);
-  margin-inline: auto;
-  height: clamp(200px, 36svh, 400px);
-  position: relative;
-  -webkit-mask-image: linear-gradient(#000 55%, transparent 100%);
-  mask-image: linear-gradient(#000 55%, transparent 100%);
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(#000 60%, transparent 100%);
+  mask-image: linear-gradient(#000 60%, transparent 100%);
 }
 
 .portada--hero__fondo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--radio-l);
+  object-position: center top;
 }
 
 @supports (animation-timeline: scroll()) {
@@ -124,9 +120,23 @@
   }
 }
 
-@media (max-height: 700px) {
-  .portada--hero__fondo {
-    height: clamp(140px, 24svh, 240px);
+/* Texto alineado al fondo del hero; en viewports bajos se compacta. */
+.portada--hero__contenido {
+  align-self: end;
+  padding-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+@media (max-height: 680px) {
+  .portada--hero__contenido {
+    gap: 0.75rem;
+  }
+
+  .portada--hero h1 {
+    font-size: clamp(2rem, 7vh, 3rem);
+  }
+
+  .portada--hero__contenido > p:not(.portada--hero__eyebrow) {
+    font-size: 1rem;
   }
 }
 
@@ -184,10 +194,9 @@
 
 .portada--hero__scrim {
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 60% at center, rgb(5 6 12 / 0.72), transparent 70%),
-    linear-gradient(transparent 55%, var(--papel));
+  inset: auto 0 0;
+  height: 55%;
+  background: linear-gradient(transparent, rgb(5 6 12 / 0.85));
 }
 
 .portada--hero__contenido {
