@@ -360,19 +360,6 @@
   flex-shrink: 0;
 }
 
-.admin-kpi__trend {
-  align-items: center;
-  color: var(--adm-success-text);
-  display: inline-flex;
-  font-size: 0.75rem;
-  font-weight: 500;
-  gap: 0.25rem;
-}
-
-.admin-kpi__trend--down {
-  color: var(--adm-danger);
-}
-
 .admin-kpi__value {
   font-family: var(--adm-font-mono);
   font-size: 2rem;
@@ -883,18 +870,6 @@
   padding-right: 2.5rem;
 }
 
-.admin-form__error {
-  color: var(--adm-danger);
-  font-size: 0.8125rem;
-  margin: 0;
-}
-
-.admin-form__campo--error input,
-.admin-form__campo--error select,
-.admin-form__campo--error textarea {
-  border-color: var(--adm-danger);
-}
-
 .admin-form__campo--ancho {
   grid-column: 1 / -1;
 }
@@ -970,11 +945,6 @@
 .admin-alerta--error {
   background: var(--adm-danger-bg);
   border-left-color: var(--adm-danger);
-}
-
-.admin-alerta--info {
-  background: var(--adm-blue-bg);
-  border-left-color: var(--adm-blue);
 }
 
 /* ==========================================================================
@@ -1132,41 +1102,6 @@
 
 .admin-grid--2 {
   grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
-}
-
-.admin-grid--3 {
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-}
-
-/* ==========================================================================
-   TABS
-   ========================================================================== */
-
-.admin-tabs {
-  border-bottom: 1px solid var(--adm-border);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--adm-space-xs);
-  margin-bottom: var(--adm-space-lg);
-}
-
-.admin-tabs__link {
-  border-bottom: 2px solid transparent;
-  color: var(--adm-text-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
-  padding: var(--adm-space-sm) var(--adm-space-md);
-  transition: color var(--adm-duration-fast) var(--adm-ease-out), border-color var(--adm-duration-fast) var(--adm-ease-out);
-}
-
-.admin-tabs__link:hover {
-  color: var(--adm-text);
-}
-
-.admin-tabs__link[aria-selected='true'] {
-  border-bottom-color: var(--adm-yellow);
-  color: var(--adm-text);
-  font-weight: 600;
 }
 
 /* ==========================================================================

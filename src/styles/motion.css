@@ -237,11 +237,6 @@
   }
 }
 
-/* Named view transitions for specific elements */
-.page-transition {
-  view-transition-name: page-content;
-}
-
 /* ==========================================================================
    SPOTLIGHT CURSOR - Solo puntero fino (no touch)
    ========================================================================== */

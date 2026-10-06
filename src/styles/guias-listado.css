@@ -270,21 +270,10 @@
   margin-top: var(--espacio-s) !important;
 }
 
-/* Rejilla de notas -------------------------------------------------------- */
-
-.rejilla-notas {
-  display: grid;
-  gap: var(--espacio-m);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-  list-style: none;
-  margin: 0;
-  max-width: none;
-  padding: 0;
-}
-
-.rejilla-notas > * {
-  margin: 0;
-}
+/* NOTA: el bloque "Portada hero animada" de abajo duplica reglas de
+   inicio.css solo en parte: varias de sus propiedades (glow, línea de
+   scroll) siguen pintando el hero de /inicio/ (verificado por píxeles).
+   No borrar sin comparar antes/después: el portal no admite cambios. */
 /* Portada hero animada -------------------------------------------------- */
 @property --g1 {
   syntax: '<percentage>';

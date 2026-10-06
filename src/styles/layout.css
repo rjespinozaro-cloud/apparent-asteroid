@@ -157,21 +157,6 @@
   color: var(--tinta);
 }
 
-.pie__legal {
-  max-width: 70ch;
-}
-
-.pie__legal a {
-  color: var(--tinta-suave);
-}
-
-.pie__firma {
-  color: var(--tinta-tenue);
-  font-family: var(--fuente-mono);
-  font-size: var(--texto-xs);
-  letter-spacing: 0.04em;
-}
-
 @media (min-width: 48rem) {
   .pie__interna {
     align-items: baseline;

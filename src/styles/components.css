@@ -123,11 +123,6 @@
   color: var(--text-muted);
 }
 
-.etiqueta--pago {
-  border-color: color-mix(in srgb, var(--aviso) 45%, var(--linea));
-  color: var(--aviso);
-}
-
 /* Botones legacy (mantenidos para compatibilidad, redirigen a premium) */
 
 .boton {
@@ -194,23 +189,6 @@
   background: var(--papel-hover);
   border-color: var(--violet-300);
   box-shadow: 0 0 15px -5px var(--glow-violet);
-  transform: translateY(-1px);
-}
-
-.boton--red {
-  background: transparent;
-  color: var(--red);
-  border: 1px solid color-mix(in srgb, var(--red) 40%, var(--linea));
-}
-
-.boton--red::before {
-  display: none;
-}
-
-.boton--red:hover {
-  background: var(--red-tenue);
-  border-color: var(--red);
-  box-shadow: 0 0 15px -5px var(--glow-red);
   transform: translateY(-1px);
 }
 
@@ -740,11 +718,6 @@ a.tarjeta:hover .tarjeta__titulo {
   color: var(--blue); 
   border-color: color-mix(in srgb, var(--blue) 40%, var(--linea)); 
 }
-.chip--fuchsia {
-  color: var(--fuchsia);
-  border-color: color-mix(in srgb, var(--fuchsia) 40%, var(--linea));
-}
-
 /* Chip used as button modifier */
 .boton--ghost.chip,
 .link--premium.chip {
@@ -846,33 +819,6 @@ a.tarjeta:hover .tarjeta__titulo {
   z-index: -1;
 }
 
-/* Grano sutil */
-.panel-lab--grain::after {
-  background-image: 
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"),
-    radial-gradient(circle at 0 0, transparent 12px, var(--linea) 12px),
-    radial-gradient(circle at 100% 0, transparent 12px, var(--linea) 12px),
-    radial-gradient(circle at 0 100%, transparent 12px, var(--linea) 12px),
-    radial-gradient(circle at 100% 100%, transparent 12px, var(--linea) 12px);
-  background-size: 256px 256px, 24px 24px, 24px 24px, 24px 24px, 24px 24px;
-  opacity: 0.03;
-}
-
-/* Esquinas recortadas (clipped corners) */
-.panel-lab--clipped {
-  clip-path: polygon(
-    12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px),
-    calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px
-  );
-}
-
-.panel-lab--clipped::before {
-  clip-path: polygon(
-    11px 0, calc(100% - 11px) 0, 100% 11px, 100% calc(100% - 11px),
-    calc(100% - 11px) 100%, 11px 100%, 0 calc(100% - 11px), 0 11px
-  );
-}
-
 /* Bloque de código premium ------------------------------------------------ */
 .codigo-bloque {
   background: var(--terminal-fondo);
@@ -899,10 +845,10 @@ a.tarjeta:hover .tarjeta__titulo {
   text-transform: uppercase;
 }
 
-.codigo-bloque__lenguaje--red { color: var(--red); }
-.codigo-bloque__lenguaje--blue { color: var(--blue); }
-.codigo-bloque__lenguaje--violet { color: var(--violet-500); }
-.codigo-bloque__lenguaje--fuchsia { color: var(--fuchsia); }
+.codigo-bloque__copy:focus-visible {
+  outline: 2px solid var(--fuchsia);
+  outline-offset: 2px;
+}
 
 .codigo-bloque__copy {
   background: transparent;
@@ -949,58 +895,13 @@ a.tarjeta:hover .tarjeta__titulo {
   line-height: 1.6;
 }
 
-/* Separador con línea de degradado animada ------------------------------- */
-.separador {
-  height: 1px;
-  background: var(--signal-grad);
-  background-size: 200% 100%;
-  background-position: var(--grad-pos) 0;
-  animation: separador-flow 20s linear infinite;
-  border: none;
-  margin: var(--espacio-xl) 0;
-}
-
-@keyframes separador-flow {
-  to { --grad-pos: 0%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .separador {
-    animation: none;
-    background-position: 0% 0;
-  }
-}
-
-/* Separador estático para uso en texto */
-.separador--static {
-  animation: none;
-  background-position: 0% 0;
-  opacity: 0.3;
-}
-
-/* Tarjeta sin sombra exagerada (override para evitar nesting) */
-.tarjeta-simple {
-  background: var(--papel-alto);
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-l);
-  padding: var(--espacio-m);
-  transition: border-color 200ms var(--curva), box-shadow 200ms var(--curva);
-}
-
-.tarjeta-simple:hover {
-  border-color: var(--linea-fuerte);
-  box-shadow: var(--sombra-1);
-}
-
 /* ==========================================================================
    TIPOGRAFÍA Y TEXTO VIVO
    ========================================================================== */
 
 /* Metadatos y etiquetas en JetBrains Mono, small caps, tracking */
 .meta, .eyebrow, .chip, .etiqueta, .tarjeta__meta, .lista-herramientas__conteo,
-.guia__indice h2, .guia__etiquetas li, .admin-shell__marca, .admin-shell__eyebrow,
-.admin-metrica__etiqueta, .admin-modulo__numero, .admin-tabla th,
-.portada--hero__eyebrow, .portada__cifra-etiqueta, .equipo__clave {
+.guia__indice h2, .guia__etiquetas li, .admin-tabla th, .equipo__clave {
   font-family: var(--fuente-mono);
   font-size: var(--texto-xs);
   letter-spacing: 0.12em;
