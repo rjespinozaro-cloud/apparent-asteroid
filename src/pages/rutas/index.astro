@@ -39,8 +39,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
     <ul class="chips-rapidos" aria-label="Filtrar por tipo">
       <li><a class="chip-filtro" href={`${base}rutas/`} aria-current={!tipo ? 'true' : undefined}>Todas</a></li>
-      <li><a class="chip-filtro" href={`${base}rutas/?tipo=red`} aria-current={tipo === 'red' ? 'true' : undefined}>RED</a></li>
-      <li><a class="chip-filtro" href={`${base}rutas/?tipo=blue`} aria-current={tipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
+      <li><a class="chip-filtro" data-equipo="red" href={`${base}rutas/?tipo=red`} aria-current={tipo === 'red' ? 'true' : undefined}>RED</a></li>
+      <li><a class="chip-filtro" data-equipo="blue" href={`${base}rutas/?tipo=blue`} aria-current={tipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
       <li><a class="chip-filtro" href={`${base}rutas/?tipo=purple`} aria-current={tipo === 'purple' ? 'true' : undefined}>Purple</a></li>
     </ul>
 

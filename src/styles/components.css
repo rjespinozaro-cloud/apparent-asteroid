@@ -174,7 +174,7 @@
 .boton--secundario {
   background: transparent;
   color: var(--text);
-  border: 1px solid var(--linea-fuerte);
+  border: 1.5px solid var(--linea-fuerte);
 }
 
 .boton--secundario::before {
@@ -603,43 +603,33 @@ a.tarjeta:hover .tarjeta__titulo {
 .boton--premium {
   position: relative;
   isolation: isolate;
-  background: var(--ink-950);
-  color: var(--text) !important;
-  border: 1px solid transparent;
-  border-radius: var(--radio-m);
-  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #8B5CF6, #E879F9);
+  color: #0B0714;
   font-weight: 600;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  transition: transform 160ms var(--curva), box-shadow 200ms var(--curva), background 200ms var(--curva);
+  box-shadow: 0 8px 24px -8px rgb(139 92 246 / 0.6);
+  transition: transform 150ms var(--curva), box-shadow 250ms var(--curva);
   min-height: 44px;
 }
 
 .boton--premium::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  padding: 1px;
-  background: var(--borde-animado);
-  border-radius: inherit;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: rotate-border 6s linear infinite;
+  content: none;
 }
 
 .boton--premium:hover {
-  background: var(--ink-900);
-  box-shadow: 0 0 25px -5px var(--glow-fuchsia-strong);
   transform: translateY(-1px);
+  box-shadow: 0 12px 32px -8px rgb(232 121 249 / 0.7);
 }
 
 .boton--premium:active {
-  transform: translateY(0) scale(0.97);
-  transition-duration: 40ms;
+  transform: scale(0.97);
 }
 
 .boton--premium:disabled {
@@ -652,7 +642,7 @@ a.tarjeta:hover .tarjeta__titulo {
 .boton--ghost {
   background: transparent;
   color: var(--text);
-  border: 1px solid var(--linea-fuerte);
+  border: 1.5px solid var(--linea-fuerte);
   border-radius: var(--radio-m);
   padding: 0.75rem 1.5rem;
   display: inline-flex;

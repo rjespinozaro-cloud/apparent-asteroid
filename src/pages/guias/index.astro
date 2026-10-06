@@ -114,8 +114,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </p>
 
     <ul class="chips-rapidos" aria-label="Filtros rápidos">
-      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
+      <li><a class="chip-filtro" data-equipo="red" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED</a></li>
+      <li><a class="chip-filtro" data-equipo="blue" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
       <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-current={acceso === 'gratis' ? 'true' : undefined}>Gratis</a></li>
       <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-current={acceso === 'pago' ? 'true' : undefined}>Premium</a></li>
     </ul>
