@@ -28,9 +28,10 @@ if (seccion instanceof HTMLElement) {
     fetch(`${base}guias/${ultima.slug}/`, { method: 'HEAD' }).then((respuesta) => {
       if (!respuesta.ok) return;
       const enlace = seccion.querySelector('[data-continua-enlace]');
-      if (enlace instanceof HTMLAnchorElement) {
+      const titulo = seccion.querySelector('[data-continua-titulo]');
+      if (enlace instanceof HTMLAnchorElement && titulo) {
         enlace.href = `${base}guias/${ultima.slug}/`;
-        enlace.textContent = `${ultima.titulo} →`;
+        titulo.textContent = ultima.titulo;
         seccion.hidden = false;
       }
     }).catch(() => {});

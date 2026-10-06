@@ -167,6 +167,27 @@
   max-width: 36rem;
 }
 
+/* Franja "Continúa donde lo dejaste": una fila compacta bajo el hero. */
+.continua {
+  padding-block: var(--espacio-s) 0;
+}
+
+.continua__enlace {
+  gap: var(--espacio-2xs);
+  max-width: 100%;
+}
+
+.continua__etiqueta {
+  color: var(--tinta-suave);
+  flex: none;
+}
+
+.continua__titulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .portada--hero h1 {
   margin: 0;
   font-size: clamp(2.75rem, 9vw, 6rem);

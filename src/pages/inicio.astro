@@ -63,6 +63,14 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </div>
   </section>
 
+  <section class="continua" aria-label="Continúa donde lo dejaste" data-continua data-base={base} hidden>
+    <a class="boton--ghost continua__enlace" data-continua-enlace href={`${base}guias/`}>
+      <span class="continua__etiqueta">Continúa:</span>
+      <span class="continua__titulo" data-continua-titulo>Catálogo</span>
+      <span aria-hidden="true">→</span>
+    </a>
+  </section>
+
   {rutasConTipologia.length > 0 && (
     <section class="seccion reveal" aria-labelledby="rutas-titulo">
       <div class="seccion__cabecera">
@@ -174,15 +182,6 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </ul>
     </section>
   )}
-
-  <section class="seccion" aria-labelledby="continua-titulo" data-continua data-base={base} hidden>
-    <div class="seccion__cabecera">
-      <div>
-        <h2 class="seccion__titulo" id="continua-titulo">Continúa donde lo dejaste</h2>
-      </div>
-    </div>
-    <p><a class="boton--ghost" data-continua-enlace href={`${base}guias/`}>Ver catálogo</a></p>
-  </section>
 
   <AsistenteFlotante />
 </Base>
