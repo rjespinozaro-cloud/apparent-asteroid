@@ -2,13 +2,13 @@
 import Base from '../layouts/Base.astro';
 import AsistenteFlotante from '../components/AsistenteFlotante.astro';
 import TarjetaGuia from '../components/TarjetaGuia.astro';
+import TarjetaRuta from '../components/TarjetaRuta.astro';
 import {
   getDatabase,
   listarGuiasDestacadas,
   listarHerramientasDestacadas,
-  listarRutas,
+  listarRutasConTipologia,
   listarUltimasGuias,
-  obtenerRutaPorSlug,
 } from '../lib/db.js';
 import { plural } from '../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
@@ -16,19 +16,12 @@ import { env } from 'cloudflare:workers';
 export const prerender = false;
 
 const database = getDatabase(env);
-const [ultimas, herramientasDestacadas, rutasDestacadas, guiasDestacadas] = await Promise.all([
+const [ultimas, herramientasDestacadas, rutasConTipologia, guiasDestacadas] = await Promise.all([
   listarUltimasGuias(database, 6),
   listarHerramientasDestacadas(database),
-  listarRutas(database, { publicadas: true, destacadas: true }),
+  listarRutasConTipologia(database, { destacadas: true }),
   listarGuiasDestacadas(database, 4),
 ]);
-// Primer paso y número de pasos por ruta (pocas rutas destacadas: N+1 asumible).
-const rutasConDetalle = await Promise.all(
-  rutasDestacadas.map(async (ruta) => {
-    const detalle = await obtenerRutaPorSlug(database, ruta.slug);
-    return { ruta, pasos: detalle?.pasos ?? [] };
-  }),
-);
 
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
@@ -70,29 +63,17 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </div>
   </section>
 
-  {rutasConDetalle.length > 0 && (
+  {rutasConTipologia.length > 0 && (
     <section class="seccion reveal" aria-labelledby="rutas-titulo">
       <div class="seccion__cabecera">
         <div>
           <h2 class="seccion__titulo" id="rutas-titulo">Rutas de aprendizaje</h2>
         </div>
-              </div>
+      </div>
       <ul class="rejilla-tarjetas">
-        {rutasConDetalle.map(({ ruta, pasos }) => (
+        {rutasConTipologia.map(({ ruta, tipologia }) => (
           <li>
-            <article class="ruta-card" data-spotlight>
-              <p class="tarjeta__kicker">Ruta · {plural(pasos.length, 'paso', 'pasos')}</p>
-              <h3 class="tarjeta__titulo">
-                <a href={`${base}rutas/${ruta.slug}/`} class="stretched-link">{ruta.titulo}</a>
-              </h3>
-              <p class="tarjeta__resumen">{ruta.descripcion}</p>
-              <p class="tarjeta__meta-linea">
-                {pasos.length > 0
-                  ? `Empieza con: ${pasos[0].guia?.titulo ?? pasos[0].nota}`
-                  : 'En preparación'}
-              </p>
-              <span class="tarjeta__accion" aria-hidden="true">Ver ruta →</span>
-            </article>
+            <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
           </li>
         ))}
       </ul>

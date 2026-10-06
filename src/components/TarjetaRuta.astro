@@ -1,0 +1,42 @@
+---
+import { plural } from '../lib/utils/texto.js';
+import { nombreHerramienta, nombreNivel } from '../lib/vocabulario.js';
+
+interface Tipologia {
+  tipo: string | null;
+  nivel: string | null;
+  herramientas: string[];
+  duracion_min: number | null;
+  pasos: number;
+}
+
+interface Props {
+  ruta: { slug: string; titulo: string; descripcion: string };
+  tipologia: Tipologia;
+  primerPaso?: string | null;
+}
+
+const { ruta, tipologia, primerPaso = null } = Astro.props;
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const meta = [
+  tipologia.nivel ? nombreNivel(tipologia.nivel) : null,
+  tipologia.herramientas.length > 0 ? tipologia.herramientas.map(nombreHerramienta).join(' + ') : null,
+  typeof tipologia.duracion_min === 'number' ? `${tipologia.duracion_min} min` : null,
+  plural(tipologia.pasos, 'paso', 'pasos'),
+].filter(Boolean);
+---
+
+<article class="ruta-card" data-spotlight>
+  <p class="tarjeta__meta-linea">
+    {tipologia.tipo && (
+      <span class:list={['etiqueta', `etiqueta--${tipologia.tipo}`]}>{tipologia.tipo.toUpperCase()}</span>
+    )}
+  </p>
+  <h3 class="tarjeta__titulo">
+    <a href={`${base}rutas/${ruta.slug}/`} class="stretched-link" data-ruta-titulo={ruta.titulo.toLowerCase()}>{ruta.titulo}</a>
+  </h3>
+  <p class="tarjeta__resumen">{ruta.descripcion}</p>
+  <p class="tarjeta__meta-linea">{meta.join(' · ')}</p>
+  {primerPaso && <p class="tarjeta__meta-linea">Empieza con: {primerPaso}</p>}
+  <span class="tarjeta__accion" aria-hidden="true">Ver ruta →</span>
+</article>

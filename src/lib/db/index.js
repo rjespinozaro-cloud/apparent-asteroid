@@ -35,7 +35,9 @@ export {
   listarGuiasDestacadas,
   listarHerramientasDestacadas,
   listarRutas,
+  listarRutasConTipologia,
   obtenerRutaPorSlug,
+  obtenerTipologiaRuta,
 } from './rutas.js';
 
 export {

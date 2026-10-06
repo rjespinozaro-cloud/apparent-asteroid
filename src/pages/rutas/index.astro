@@ -1,21 +1,19 @@
 ---
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
-import { getDatabase, listarRutas, obtenerRutaPorSlug } from '../../lib/db.js';
+import TarjetaRuta from '../../components/TarjetaRuta.astro';
+import { getDatabase, listarRutasConTipologia } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
+import { opcion } from '../../lib/validar.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
 const database = getDatabase(env);
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
-const rutas = await listarRutas(database, { publicadas: true });
-// Primer paso y número de pasos por ruta (pocas rutas: N+1 asumible).
-const detalles = [];
-for (const ruta of rutas) {
-  const detalle = await obtenerRutaPorSlug(database, ruta.slug);
-  if (detalle) detalles.push(detalle);
-}
+const tipo = opcion(Astro.url.searchParams.get('tipo'), ['red', 'blue', 'purple']);
+const fichas = await listarRutasConTipologia(database);
+const rutas = tipo ? fichas.filter((ficha) => ficha.tipologia.tipo === tipo) : fichas;
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
@@ -43,30 +41,25 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </p>
     </div>
 
-    {detalles.length > 0 ? (
+    <ul class="chips-rapidos" aria-label="Filtrar por tipo">
+      <li><a class="chip-filtro" href={`${base}rutas/`} aria-current={!tipo ? 'true' : undefined}>Todas</a></li>
+      <li><a class="chip-filtro" href={`${base}rutas/?tipo=red`} aria-current={tipo === 'red' ? 'true' : undefined}>RED</a></li>
+      <li><a class="chip-filtro" href={`${base}rutas/?tipo=blue`} aria-current={tipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
+      <li><a class="chip-filtro" href={`${base}rutas/?tipo=purple`} aria-current={tipo === 'purple' ? 'true' : undefined}>Purple</a></li>
+    </ul>
+
+    {rutas.length > 0 ? (
       <ul class="rejilla-tarjetas">
-        {detalles.map(({ ruta, pasos }) => (
+        {rutas.map(({ ruta, tipologia }) => (
           <li>
-            <article class="ruta-card" data-spotlight>
-              <p class="tarjeta__kicker">Ruta · {plural(pasos.length, 'paso', 'pasos')}</p>
-              <h2 class="tarjeta__titulo">
-                <a href={`${base}rutas/${ruta.slug}/`} class="stretched-link" data-ruta-titulo={ruta.titulo.toLowerCase()}>{ruta.titulo}</a>
-              </h2>
-              <p class="tarjeta__resumen">{ruta.descripcion}</p>
-              <p class="tarjeta__meta-linea">
-                {pasos.length > 0
-                  ? `Empieza con: ${pasos[0].guia?.titulo ?? pasos[0].nota}`
-                  : 'En preparación'}
-              </p>
-              <span class="tarjeta__accion" aria-hidden="true">Ver ruta →</span>
-            </article>
+            <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
           </li>
         ))}
       </ul>
     ) : (
       <div class="vacio">
-        <p>Todavía no hay rutas publicadas. Explora el catálogo mientras tanto.</p>
-        <p><a class="boton" href={`${base}guias/`}>Ver todas las guías</a></p>
+        <p>No hay rutas de este tipo todavía.</p>
+        <p><a class="boton" href={`${base}rutas/`}>Ver todas las rutas</a></p>
       </div>
     )}
   </section>

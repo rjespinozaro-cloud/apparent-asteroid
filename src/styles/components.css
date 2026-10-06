@@ -123,6 +123,13 @@
   color: var(--text-muted);
 }
 
+.etiqueta--purple {
+  background: linear-gradient(90deg, #FF4D6D, #8B5CF6 50%, #4D7CFF);
+  border-color: transparent;
+  color: #0B0714;
+  font-weight: 600;
+}
+
 /* Botones legacy (mantenidos para compatibilidad, redirigen a premium) */
 
 .boton {
