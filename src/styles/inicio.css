@@ -284,7 +284,26 @@
 }
 
 /* Solo las dos luces son infinitas: el resto queda estático. */
+.portada--hero__descriptor {
+  color: var(--tinta-suave);
+  text-align: center;
+}
+
+.portada--hero__scroll {
+  margin-top: var(--espacio-l);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espacio-2xs);
+  color: var(--tinta-tenue);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+}
+
 .portada--hero__scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, rgb(168 139 250 / 0.8) 0%, transparent 100%);
   animation: none;
 }
 
