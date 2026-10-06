@@ -29,7 +29,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </ol>
   </nav>
 
-  <section class="seccion" aria-labelledby="rutas-titulo">
+  <section class="seccion seccion--rutas" aria-labelledby="rutas-titulo">
     <div>
       <p class="eyebrow">Rutas de aprendizaje</p>
       <h1 id="rutas-titulo">Aprende en orden</h1>
@@ -49,13 +49,25 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </ul>
 
     {rutas.length > 0 ? (
-      <ul class="rejilla-tarjetas">
-        {rutas.map(({ ruta, tipologia }) => (
-          <li>
-            <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
-          </li>
-        ))}
-      </ul>
+      <div class:list={['rutas-conjunto', rutas.length === 1 && 'rutas-conjunto--una']}>
+        <ul class="rejilla-tarjetas">
+          {rutas.map(({ ruta, tipologia }) => (
+            <li>
+              <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
+            </li>
+          ))}
+        </ul>
+        {rutas.length === 1 && (
+          <aside class="rutas-ayuda" aria-label="Cómo funcionan las rutas">
+            <h2>Cómo funcionan las rutas</h2>
+            <p>
+              Las rutas ordenan guías publicadas en pasos numerados. Cada paso
+              enlaza una guía real; si aún no está publicada verás
+              «Próximamente». Avanza en orden: del laboratorio a la defensa.
+            </p>
+          </aside>
+        )}
+      </div>
     ) : (
       <div class="vacio">
         <p>No hay rutas de este tipo todavía.</p>

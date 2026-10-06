@@ -70,6 +70,11 @@
   color: var(--tinta);
 }
 
+/* El enlace-icono no lleva la marca › de los enlaces de texto. */
+.menu__enlaces .menu__buscar::before {
+  content: none;
+}
+
 /* Botón hamburguesa: solo móvil. */
 .menu__alternar {
   align-items: center;

@@ -62,5 +62,36 @@
 @media (prefers-contrast:more){
   .ruta-card::before{animation:none;opacity:1;background:#A78BFA}
   .catalogo-stats strong{background:none;color:#fff}
-  .chip-filtro[aria-pressed="true"]{background:#C4B5FD;color:#000}
+  .chip-filtro[aria-current="true"]{background:#C4B5FD;color:#000}
+}
+
+/* Con una sola ruta: tarjeta ancha + panel lateral de ayuda. */
+.rutas-conjunto--una {
+  display: grid;
+  gap: var(--espacio-m);
+}
+
+.rutas-ayuda {
+  background: var(--papel-alto);
+  border: var(--borde);
+  border-radius: var(--radio-l);
+  padding: var(--espacio-m);
+  align-self: start;
+}
+
+.rutas-ayuda h2 {
+  font-size: var(--texto-md);
+  margin-bottom: var(--espacio-2xs);
+}
+
+.rutas-ayuda p {
+  color: var(--tinta-suave);
+  margin: 0;
+  max-width: none;
+}
+
+@media (min-width: 60rem) {
+  .rutas-conjunto--una {
+    grid-template-columns: 2fr 1fr;
+  }
 }
