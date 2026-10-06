@@ -21,6 +21,10 @@
 .chip-filtro[data-equipo="red"]:is(:hover,[aria-current="true"]){border-color:#FF4D6D;background:rgba(255,77,109,.16);color:#FFB3C1}
 .chip-filtro[data-equipo="blue"]:is(:hover,[aria-current="true"]){border-color:#4D7CFF;background:rgba(77,124,255,.16);color:#B7C9FF}
 
+/* Bloque de destacadas dentro del catálogo: apila sin contenedor propio
+   para compartir el borde izquierdo con migas, título y chips. */
+.catalogo-destacadas{display:flex;flex-direction:column;gap:var(--espacio-m)}
+
 /* Detalle plegable de filtros secundarios. */
 .filtros-detalle{margin:0 0 var(--espacio-s)}
 .filtros-detalle>summary{display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:0 1rem;list-style:none;cursor:pointer;

@@ -67,7 +67,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Guías' }]} />
 
   <section class="seccion" aria-labelledby="guias-titulo">
-    <div class="contenedor">
+    <div>
       <p class="eyebrow">Catálogo</p>
       <h1 id="guias-titulo">{titulo}</h1>
       <p class="entradilla">
@@ -95,7 +95,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </div>
 
     {!hayFiltros && recientes.length > 0 && (
-      <section class="seccion" aria-labelledby="destacadas-titulo">
+      <section class="catalogo-destacadas" aria-labelledby="destacadas-titulo">
         <div class="seccion__cabecera">
           <h2 class="seccion__titulo" id="destacadas-titulo">Destacadas</h2>
         </div>
