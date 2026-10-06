@@ -93,15 +93,41 @@
   pointer-events: none;
 }
 
-.portada--hero__foto {
-  position: absolute;
-  inset: 0;
+/* Constelación arriba, texto debajo: banner con fundido inferior y
+   desvanecido al hacer scroll (visible si no hay soporte). */
+.portada--hero__fondo {
+  display: block;
+  width: min(100%, 72rem);
+  margin-inline: auto;
+  height: clamp(200px, 36svh, 400px);
+  position: relative;
+  -webkit-mask-image: linear-gradient(#000 55%, transparent 100%);
+  mask-image: linear-gradient(#000 55%, transparent 100%);
 }
 
-.portada--hero__foto img {
+.portada--hero__fondo img {
+  width: 100%;
   height: 100%;
   object-fit: cover;
-  width: 100%;
+  border-radius: var(--radio-l);
+}
+
+@supports (animation-timeline: scroll()) {
+  .portada--hero__fondo {
+    animation: hero-salida linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 90vh;
+  }
+
+  @keyframes hero-salida {
+    to { opacity: 0; transform: translateY(8vh) scale(1.04); }
+  }
+}
+
+@media (max-height: 700px) {
+  .portada--hero__fondo {
+    height: clamp(140px, 24svh, 240px);
+  }
 }
 
 .portada--hero__glow {
@@ -410,6 +436,51 @@
 
 @media (prefers-reduced-motion: reduce) {
   .portada--hero__glow {
+    animation: none;
+  }
+}
+
+/* Aparición de secciones con la vista (visibles por defecto sin soporte). */
+@supports (animation-timeline: view()) {
+  .seccion {
+    animation: sec-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+
+  @keyframes sec-in {
+    from { opacity: 0; transform: translateY(32px); }
+  }
+}
+
+/* Tinte propio por sección, sin imágenes. */
+.seccion {
+  position: relative;
+  isolation: isolate;
+}
+
+.seccion--equipos::before {
+  content: "";
+  position: absolute;
+  inset: -10% -5%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 0% 50%, rgb(255 77 109 / 0.14), transparent 70%),
+    radial-gradient(40% 50% at 100% 50%, rgb(77 124 255 / 0.14), transparent 70%);
+}
+
+.seccion--rutas::before {
+  content: "";
+  position: absolute;
+  inset: -10% -5%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(50% 60% at 50% 0%, rgb(139 92 246 / 0.16), transparent 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seccion {
     animation: none;
   }
 }

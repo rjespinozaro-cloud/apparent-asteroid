@@ -31,22 +31,24 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 <Base clase="page-enter">
   <section class="portada portada--hero" aria-labelledby="inicio-titulo">
     <div class="portada--hero__bg" aria-hidden="true">
-      <picture class="portada--hero__foto">
-        <img
-          src={`${base}hero/fondo-inicio.png`}
-          alt=""
-          width="1024"
-          height="572"
-          fetchpriority="high"
-          decoding="async"
-        />
-      </picture>
       <div class="portada--hero__glow portada--hero__glow--red"></div>
       <div class="portada--hero__glow portada--hero__glow--blue"></div>
       <div class="portada--hero__grid"></div>
       <div class="portada--hero__scrim"></div>
     </div>
     <div class="portada--hero__contenido">
+      <picture class="portada--hero__fondo" aria-hidden="true">
+        <img
+          src={`${base}hero/hero-fondo-1024.webp`}
+          srcset={`${base}hero/hero-fondo-1024.webp 1024w, ${base}hero/hero-fondo-1920.webp 1920w`}
+          sizes="(max-width: 700px) 100vw, 72rem"
+          width="1920"
+          height="1080"
+          alt=""
+          fetchpriority="high"
+          decoding="async"
+        />
+      </picture>
       <h1 id="inicio-titulo">JOANIX GUIDES</h1>
       <p class="portada--hero__descriptor">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</p>
       <div class="portada__acciones portada--hero__acciones">
@@ -73,7 +75,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </div>
   </section>
 
-  <section class="continua" aria-label="Continúa donde lo dejaste" data-continua data-base={base} hidden>
+  <section class="continua contenedor" aria-label="Continúa donde lo dejaste" data-continua data-base={base} hidden>
     <a class="boton--ghost continua__enlace" data-continua-enlace href={`${base}guias/`}>
       <span class="continua__etiqueta">Continúa:</span>
       <span class="continua__titulo" data-continua-titulo>Catálogo</span>
@@ -82,7 +84,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   </section>
 
   {rutasConTipologia.length > 0 && (
-    <section class="seccion reveal" aria-labelledby="rutas-titulo">
+    <section class="seccion seccion--rutas reveal" aria-labelledby="rutas-titulo">
       <div class="seccion__cabecera">
         <div>
           <h2 class="seccion__titulo" id="rutas-titulo">Rutas de aprendizaje</h2>
@@ -113,7 +115,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </section>
   )}
 
-  <section class="seccion reveal" aria-labelledby="equipos-titulo">
+  <section class="seccion seccion--equipos reveal" aria-labelledby="equipos-titulo">
     <div class="seccion__cabecera">
       <div>
         <h2 class="seccion__titulo" id="equipos-titulo">El mismo escenario, dos lecturas</h2>
