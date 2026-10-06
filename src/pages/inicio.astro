@@ -88,13 +88,25 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           <h2 class="seccion__titulo" id="rutas-titulo">Rutas de aprendizaje</h2>
         </div>
       </div>
-      <ul class="rejilla-tarjetas">
-        {rutasConTipologia.map(({ ruta, tipologia }) => (
-          <li>
-            <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
-          </li>
-        ))}
-      </ul>
+      <div class:list={['rutas-conjunto', rutasConTipologia.length === 1 && 'rutas-conjunto--una']}>
+        <ul class="rejilla-tarjetas">
+          {rutasConTipologia.map(({ ruta, tipologia }) => (
+            <li>
+              <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
+            </li>
+          ))}
+        </ul>
+        {rutasConTipologia.length === 1 && (
+          <aside class="rutas-ayuda" aria-label="Cómo funcionan las rutas">
+            <h2>Cómo funcionan las rutas</h2>
+            <p>
+              Las rutas ordenan guías publicadas en pasos numerados. Cada paso
+              enlaza una guía real; si aún no está publicada verás
+              «Próximamente». Avanza en orden: del laboratorio a la defensa.
+            </p>
+          </aside>
+        )}
+      </div>
     </section>
   )}
 

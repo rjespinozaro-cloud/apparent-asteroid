@@ -75,9 +75,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </p>
       <ul class="catalogo-stats" aria-label={hayFiltros ? 'Resultados del filtro' : 'Totales del catálogo'}>
         <li><strong>{conteo.total}</strong><span>{conteo.total === 1 ? 'guía' : 'guías'}</span></li>
-        <li><strong>{conteo.red}</strong><span>RED</span></li>
-        <li><strong>{conteo.blue}</strong><span>BLUE</span></li>
-        <li><strong>{premium}</strong><span>premium</span></li>
+        {(!equipo || equipo === 'red') && conteo.red > 0 && <li><strong>{conteo.red}</strong><span>RED</span></li>}
+        {(!equipo || equipo === 'blue') && conteo.blue > 0 && <li><strong>{conteo.blue}</strong><span>BLUE</span></li>}
+        {premium > 0 && <li><strong>{premium}</strong><span>premium</span></li>}
       </ul>
       <form class="buscador" method="get" action={`${base}buscar/`} role="search">
         <label class="visualmente-oculto" for="buscar-catalogo">Buscar en el catálogo</label>
