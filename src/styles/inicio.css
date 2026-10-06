@@ -46,11 +46,6 @@
   min-width: 0;
 }
 
-.menu__enlaces a {
-  font-size: 0.9375rem;
-  padding: 0.55rem 0.8rem;
-}
-
 /* 2. Cabecera de sección --------------------------------------------------- */
 
 .seccion__cabecera {

@@ -44,12 +44,12 @@ function activo(href: string) {
   <ul class="menu__enlaces" id="menu-lista">
     {enlaces.map((enlace) => (
       <li>
-        <a class="link--premium" href={enlace.href} aria-current={activo(enlace.href) ? 'page' : undefined}>{enlace.texto}</a>
+        <a href={enlace.href} aria-current={activo(enlace.href) ? 'page' : undefined}>{enlace.texto}</a>
       </li>
     ))}
     <li>
       <a
-        class="link--premium menu__buscar"
+        class="menu__buscar"
         href={`${base}buscar/`}
         aria-label="Buscar guías"
         aria-current={activo(`${base}buscar/`) ? 'page' : undefined}
