@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import Migas from '../../components/Migas.astro';
 import TarjetaRuta from '../../components/TarjetaRuta.astro';
 import { getDatabase, listarRutasConTipologia } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
@@ -22,12 +23,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   title="Rutas de aprendizaje | JOANIX GUIDES"
   description="Rutas de aprendizaje de ciberseguridad en JOANIX GUIDES: secuencias ordenadas de guías RED y BLUE, del laboratorio a la defensa."
 >
-  <nav class="contenedor" aria-label="Migas de pan">
-    <ol class="migas">
-      <li><a href={`${base}inicio/`}>Inicio</a></li>
-      <li aria-current="page">Rutas</li>
-    </ol>
-  </nav>
+  <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
 
   <section class="seccion seccion--rutas" aria-labelledby="rutas-titulo">
     <div>

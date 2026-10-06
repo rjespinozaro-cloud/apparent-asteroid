@@ -1,0 +1,30 @@
+---
+interface MigasItem {
+  /** Texto visible del tramo. */
+  texto: string;
+  /** Destino del enlace; ausente = página actual. */
+  href?: string;
+}
+
+interface Props {
+  items: MigasItem[];
+  /** Clase del <nav>; por defecto `contenedor`. Vacía cuando ya hay un contenedor padre. */
+  clase?: string;
+}
+
+const { items, clase = 'contenedor' } = Astro.props;
+---
+
+<nav class:list={[clase]} aria-label="Migas de pan">
+  <ol class="migas">
+    {items.map((item) =>
+      item.href ? (
+        <li>
+          <a href={item.href}>{item.texto}</a>
+        </li>
+      ) : (
+        <li aria-current="page">{item.texto}</li>
+      ),
+    )}
+  </ol>
+</nav>

@@ -1,6 +1,7 @@
 ---
 import Base from './Base.astro';
 import Candado from '../components/Candado.astro';
+import Migas from '../components/Migas.astro';
 import '../styles/guia.css';
 
 interface Props {
@@ -55,14 +56,15 @@ const {
 
   <article class:list={['guia', `guia--${equipo}`, 'contenedor']}>
     <header class="guia__cabecera">
-      <nav aria-label="Migas de pan">
-        <ol class="migas">
-          <li><a href={`${base}inicio/`}>Inicio</a></li>
-          <li><a href={`${base}guias/`}>Guías</a></li>
-          <li><a href={`${base}herramientas/${herramientaSlug}/`}>{herramienta}</a></li>
-          <li aria-current="page">{titulo}</li>
-        </ol>
-      </nav>
+      <Migas
+        clase=""
+        items={[
+          { texto: 'Inicio', href: `${base}inicio/` },
+          { texto: 'Guías', href: `${base}guias/` },
+          { texto: herramienta, href: `${base}herramientas/${herramientaSlug}/` },
+          { texto: titulo },
+        ]}
+      />
 
       <p class="guia__equipo-linea">
         <strong>{equipo === 'blue' ? 'BLUE · Defensa' : 'RED · Ofensiva'}</strong>

@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import AssistantMascot from '../../components/AssistantMascot.astro';
+import Migas from '../../components/Migas.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { getDatabase, listarGuiasDeHerramienta, existeHerramientaPublicada, listarHerramientasPublicadas } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
@@ -44,17 +45,13 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       title={`Guías de ${titulo} | JOANIX GUIDES`}
       description={`Guías de ${titulo} para equipos RED y BLUE: ${plural(guias.length, 'guía', 'guías')} sobre ${titulo}.`}
     >
-      <nav class="contenedor" aria-label="Migas de pan">
-        <ol class="migas">
-          <li>
-            <a href={`${base}inicio/`}>Inicio</a>
-          </li>
-          <li>
-            <a href={`${base}herramientas/`}>Herramientas</a>
-          </li>
-          <li aria-current="page">{titulo}</li>
-        </ol>
-      </nav>
+      <Migas
+        items={[
+          { texto: 'Inicio', href: `${base}inicio/` },
+          { texto: 'Herramientas', href: `${base}herramientas/` },
+          { texto: titulo },
+        ]}
+      />
 
       <section class="seccion" aria-labelledby="herramienta-titulo">
         <div>

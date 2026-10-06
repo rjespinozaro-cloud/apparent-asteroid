@@ -31,6 +31,14 @@
   font-size: 0.9375rem;
 }
 
+.migas li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+}
+
 .migas a {
   display: inline-flex;
   align-items: center;
@@ -52,9 +60,9 @@
 .migas li + li::before {
   content: "";
   display: inline-block;
+  flex: none;
   width: 0.4rem;
   height: 0.4rem;
-  margin-right: 0.4rem;
   border-top: 2px solid #6B7099;
   border-right: 2px solid #6B7099;
   transform: rotate(45deg);

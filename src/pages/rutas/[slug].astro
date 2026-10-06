@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import AssistantMascot from '../../components/AssistantMascot.astro';
+import Migas from '../../components/Migas.astro';
 import { getDatabase, listarRutas, obtenerRutaPorSlug, obtenerTipologiaRuta } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
 import { nombreEquipo, nombreHerramienta, nombreNivel } from '../../lib/vocabulario.js';
@@ -36,13 +37,13 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     title={`${detalle.ruta.titulo} | JOANIX GUIDES`}
     description={detalle.ruta.descripcion || `Ruta de aprendizaje: ${detalle.ruta.titulo}.`}
   >
-    <nav class="contenedor" aria-label="Migas de pan">
-      <ol class="migas">
-        <li><a href={`${base}inicio/`}>Inicio</a></li>
-        <li><a href={`${base}rutas/`}>Rutas</a></li>
-        <li aria-current="page">{detalle.ruta.titulo}</li>
-      </ol>
-    </nav>
+    <Migas
+      items={[
+        { texto: 'Inicio', href: `${base}inicio/` },
+        { texto: 'Rutas', href: `${base}rutas/` },
+        { texto: detalle.ruta.titulo },
+      ]}
+    />
 
     <section class="seccion seccion--rutas" aria-labelledby="ruta-titulo">
       <div>
