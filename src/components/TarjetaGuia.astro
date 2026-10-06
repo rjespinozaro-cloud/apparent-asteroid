@@ -26,11 +26,20 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const equipo = claseEquipo(guia.equipo);
 const resumen = descripcion ?? guia.resumen ?? null;
 const destino = `${base}guias/${guia.slug}/`;
+const esPremium = guia.acceso === 'pago';
+
+/** Puntos de nivel: refuerzo visual del texto (los lectores de pantalla usan el nombre). */
+const puntosNivel = guia.nivel === 'basico' ? '●○○' : guia.nivel === 'intermedio' ? '●●○' : guia.nivel === 'avanzado' ? '●●●' : null;
 ---
 
 <article class:list={['tarjeta-premium', `tarjeta--${equipo}`, 'reveal']} data-spotlight>
   <p class:list={['tarjeta__kicker', `tarjeta__kicker--${equipo}`]}>
-    {nombreEquipo(guia.equipo)} · {guia.acceso === 'pago' ? 'Premium' : 'Gratis'}
+    {nombreEquipo(guia.equipo)} · {esPremium && (
+      <svg class="tarjeta__candado" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <rect x="4" y="10" width="16" height="11" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </svg>
+    )} {guia.acceso === 'pago' ? 'Premium' : 'Gratis'}
   </p>
 
   <h3 class="tarjeta__titulo">
@@ -40,10 +49,7 @@ const destino = `${base}guias/${guia.slug}/`;
   {resumen && <p class="tarjeta__resumen">{descripcionDesdeMarkdown(resumen)}</p>}
 
   <p class="tarjeta__meta-linea">
-    {nombreHerramienta(guia.herramienta)}{mostrarNivel && ` · ${nombreNivel(guia.nivel)}`}{guia.lectura_min ? ` · ${guia.lectura_min} min` : ''}
-  </p>
-  <p class="tarjeta__meta-linea tarjeta__meta-linea--suave">
-    {guia.acceso === 'pago' ? 'Vista previa disponible · PDF completo' : 'Lectura completa gratuita'}
+    {nombreHerramienta(guia.herramienta)}{mostrarNivel && (<> · {nombreNivel(guia.nivel)}{puntosNivel && (<> <span aria-hidden="true">{puntosNivel}</span></>)}</>)}{guia.lectura_min ? ` · ${guia.lectura_min} min` : ''}
   </p>
 
   <span class="tarjeta__accion" aria-hidden="true">Ver guía →</span>

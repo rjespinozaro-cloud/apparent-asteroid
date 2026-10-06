@@ -300,6 +300,16 @@ a.tarjeta:hover .tarjeta__titulo {
   padding: 0;
 }
 
+/* Misma altura por fila: cada celda estira su tarjeta. */
+.rejilla-tarjetas > li {
+  display: flex;
+  min-width: 0;
+}
+
+.rejilla-tarjetas > li > * {
+  flex: 1;
+}
+
 /* Secciones y encabezados de página -------------------------------------- */
 
 .seccion {
@@ -719,6 +729,7 @@ a.tarjeta:hover .tarjeta__titulo {
 
 /* Tarjeta Premium ------------------------------------------------------- */
 .tarjeta-premium {
+  --team: linear-gradient(90deg, #8B5CF6, #E879F9);
   background: var(--papel-alto);
   border: 1px solid var(--linea);
   border-radius: var(--radio-l);
@@ -730,6 +741,24 @@ a.tarjeta:hover .tarjeta__titulo {
   text-decoration: none;
   transition: transform 200ms var(--curva), border-color 200ms var(--curva), box-shadow 200ms var(--curva);
   isolation: isolate;
+}
+
+.tarjeta--red {
+  --team: linear-gradient(90deg, #FF4D6D, #FF8FA3);
+}
+
+.tarjeta--blue {
+  --team: linear-gradient(90deg, #4D7CFF, #8FADFF);
+}
+
+/* Franja superior con el color del equipo. */
+.tarjeta-premium::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--team);
+  pointer-events: none;
 }
 
 .tarjeta-premium::before {
@@ -748,6 +777,33 @@ a.tarjeta:hover .tarjeta__titulo {
   border-color: var(--violet-500);
   transform: translateY(-4px);
   box-shadow: var(--sombra-2);
+}
+
+/* Spotlight solo con puntero fino; en táctil no hay hover real. */
+@media (pointer: coarse) {
+  .tarjeta-premium::before {
+    display: none;
+  }
+}
+
+.tarjeta-premium .tarjeta__titulo {
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+/* Resumen recortado a dos líneas para tarjetas uniformes. */
+.tarjeta-premium .tarjeta__resumen {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.tarjeta__candado {
+  width: 0.85em;
+  height: 0.85em;
+  flex: none;
 }
 
 /* Estados Globales ------------------------------------------------------ */
