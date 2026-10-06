@@ -132,6 +132,38 @@
   gap: var(--espacio-3xs);
 }
 
+/* Herramienta única: tarjeta con sus guías RED y BLUE. */
+.herramienta-detalle {
+  background: var(--papel-alto);
+  border: var(--borde);
+  border-radius: var(--radio-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-s);
+  max-width: 42rem;
+  padding: var(--espacio-l);
+}
+
+.herramienta-detalle h2 {
+  margin: 0;
+  text-align: left;
+}
+
+.herramienta-detalle__guias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2xs);
+  list-style: none;
+  margin: var(--espacio-2xs) 0 0;
+  padding: 0;
+}
+
+.herramienta-detalle__guias a {
+  display: inline-block;
+  min-height: 44px;
+  padding-block: 0.5rem;
+}
+
 /* Filtros ---------------------------------------------------------------- */
 
 .filtros {

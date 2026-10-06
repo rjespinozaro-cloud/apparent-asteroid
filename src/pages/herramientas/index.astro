@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
-import { getDatabase, listarHerramientasPublicadas } from '../../lib/db.js';
+import { getDatabase, listarGuiasDeHerramienta, listarHerramientasPublicadas } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
 import { nombreHerramienta } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
@@ -12,6 +12,11 @@ const database = getDatabase(env);
 const herramientas = await listarHerramientasPublicadas(database);
 const totalGuias = herramientas.reduce((suma, item) => suma + item.total, 0);
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+// Con una sola herramienta se muestran sus guías RED y BLUE directamente.
+const unica = herramientas.length === 1 ? herramientas[0] : null;
+const guiasUnica = unica ? await listarGuiasDeHerramienta(database, unica.herramienta) : [];
+const rojasUnica = guiasUnica.filter((guia) => guia.equipo === 'red');
+const azulesUnica = guiasUnica.filter((guia) => guia.equipo === 'blue');
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
@@ -39,7 +44,34 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </div>
 
     {
-      herramientas.length > 0 ? (
+      unica ? (
+        <article class="herramienta-detalle" aria-labelledby="herramienta-unica">
+          <h2 id="herramienta-unica">{nombreHerramienta(unica.herramienta)}</h2>
+          <p class="guia__meta-catalogo">
+            {plural(unica.total, 'guía', 'guías')} · {plural(unica.red, 'ofensiva', 'ofensivas')} (RED) · {plural(unica.blue, 'defensiva', 'defensivas')} (BLUE)
+          </p>
+          {rojasUnica.length > 0 && (
+            <div>
+              <p class="eyebrow">RED · Ofensiva</p>
+              <ul class="herramienta-detalle__guias">
+                {rojasUnica.map((guia) => (
+                  <li><a href={`${base}guias/${guia.slug}/`}>{guia.titulo}</a></li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {azulesUnica.length > 0 && (
+            <div>
+              <p class="eyebrow">BLUE · Defensa</p>
+              <ul class="herramienta-detalle__guias">
+                {azulesUnica.map((guia) => (
+                  <li><a href={`${base}guias/${guia.slug}/`}>{guia.titulo}</a></li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </article>
+      ) : herramientas.length > 0 ? (
         <ul class="lista-herramientas lista-herramientas--detalle">
           {herramientas.map((item) => (
             <li class="lista-herramientas__item">

@@ -281,6 +281,11 @@
   width: auto;
 }
 
+/* Hero: el secundario necesita borde con contraste AA sobre el fondo. */
+.portada--hero__contenido .boton--ghost {
+  border-color: var(--tinta-suave);
+}
+
 .equipo--red {
   border-color: rgba(255, 77, 109, 0.35);
   background: linear-gradient(165deg, rgba(255, 77, 109, 0.14), transparent 55%), var(--papel-alto);
