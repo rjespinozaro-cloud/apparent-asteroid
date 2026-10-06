@@ -89,7 +89,8 @@
   pointer-events: none;
 }
 
-/* Fondo del hero a sangre: mismo fondo.png ambiental, sin recortes. */
+/* Fondo del hero a sangre: fondo-hd ambiental, sin recortes.
+   La máscara funde el tercio inferior con la capa ambiental fija. */
 .portada--hero__fondo {
   position: absolute;
   inset: 0;
@@ -97,8 +98,8 @@
   height: 100%;
   max-width: none;
   border-radius: 0;
-  -webkit-mask-image: linear-gradient(#000 60%, transparent 100%);
-  mask-image: linear-gradient(#000 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(#000 70%, transparent 100%);
+  mask-image: linear-gradient(#000 70%, transparent 100%);
 }
 
 .portada--hero__fondo img {

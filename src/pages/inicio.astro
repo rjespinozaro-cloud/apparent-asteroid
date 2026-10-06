@@ -32,8 +32,18 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   <section class="portada portada--hero" aria-labelledby="inicio-titulo">
     <div class="portada--hero__bg" aria-hidden="true">
       <picture class="portada--hero__fondo" aria-hidden="true">
+        <source
+          srcset={`${base}hero/fondo-hd-vertical.webp`}
+          type="image/webp"
+          media="(max-aspect-ratio: 1/1)"
+        />
+        <source
+          srcset={`${base}hero/fondo-hd-768.webp 768w, ${base}hero/fondo-hd-1024.webp 1024w`}
+          type="image/webp"
+          sizes="100vw"
+        />
         <img
-          src={`${base}hero/fondo.png`}
+          src={`${base}hero/fondo-hd-1024.webp`}
           width="1024"
           height="572"
           alt=""
