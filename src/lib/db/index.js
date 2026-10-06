@@ -11,6 +11,7 @@ export { getDatabase } from './conexion.js';
 export {
   actualizarGuia,
   buscarGuias,
+  cambiarDestacadaGuia,
   cambiarPublicacionGuia,
   contarGuias,
   contarGuiasPublicadas,

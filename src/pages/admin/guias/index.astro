@@ -16,6 +16,7 @@ const filtros = {
 };
 
 const database = getDatabase(env);
+const sesion = Astro.locals.admin;
 const herramientas = await listarHerramientasAdmin(database);
 const porPagina = 20;
 const { filas, total } = await listarGuiasAdmin(database, {
@@ -102,10 +103,10 @@ const enlacePagina = (pagina: number) => {
     </form>
 
     {filas.length > 0 ? (
-      <div class="admin-table-wrap">
+      <div class="admin-table-wrap" data-destacadas data-csrf={sesion?.csrf ?? ''}>
         <table class="admin-table">
           <thead>
-            <tr><th>Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado</th><th>Acceso</th><th>Fecha</th></tr>
+            <tr><th>Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado</th><th>Acceso</th><th>Destacada</th><th>Fecha</th></tr>
           </thead>
           <tbody>
             {filas.map((fila: (typeof filas)[number]) => (
@@ -123,6 +124,18 @@ const enlacePagina = (pagina: number) => {
                   {fila.acceso === 'gratis'
                     ? <span class="admin-badge admin-badge--green">Gratis</span>
                     : <span class="admin-badge admin-badge--gray">Pago</span>}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="admin-boton admin-boton--plano"
+                    data-destacada={fila.id}
+                    data-activa={fila.destacada ? '1' : '0'}
+                    aria-pressed={fila.destacada ? 'true' : 'false'}
+                    aria-label={fila.destacada ? `Quitar destacada a ${fila.titulo}` : `Marcar ${fila.titulo} como destacada`}
+                  >
+                    {fila.destacada ? '★' : '☆'}
+                  </button>
                 </td>
                 <td><time>{fila.fecha}</time></td>
               </tr>
@@ -147,3 +160,7 @@ const enlacePagina = (pagina: number) => {
     )}
   </div>
 </AdminBase>
+
+<script>
+  import '../../../scripts/destacadas.js';
+</script>

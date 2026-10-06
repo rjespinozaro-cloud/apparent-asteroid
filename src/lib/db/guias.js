@@ -624,6 +624,13 @@ export async function cambiarPublicacionGuia(database, id, publicada) {
   ).bind(publicada ? 1 : 0, id).run();
 }
 
+/** Activa o retira la destacada de una guía (curaduría del catálogo). */
+export async function cambiarDestacadaGuia(database, id, destacada) {
+  return database.prepare(
+    'UPDATE guias SET destacada = ?, actualizado_en = CURRENT_TIMESTAMP WHERE id = ?',
+  ).bind(destacada ? 1 : 0, id).run();
+}
+
 export async function eliminarGuia(database, id) {
   return database.prepare('DELETE FROM guias WHERE id = ?').bind(id).run();
 }
