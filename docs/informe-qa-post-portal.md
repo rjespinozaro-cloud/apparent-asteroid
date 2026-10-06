@@ -24,7 +24,7 @@ Rama: `qa/post-portal` · Baseline tomado el 2026-10-05 sobre `a5fab42` (main).
 | Ruta | Fichero | Notas |
 |---|---|---|
 | `/` | `src/pages/index.astro` | Portal (INTOCABLE) |
-| `/inicio/` | `src/pages/inicio.astro` | Portal (INTOCABLE) |
+| `/inicio/` | `src/pages/inicio.astro` | Catálogo (evolucionable desde Fase 3; antes "Portal (INTOCABLE)") |
 | `/guias/` | `src/pages/guias/index.astro` | Catálogo + filtros + paginación |
 | `/guias/<slug>/` | `src/pages/guias/[...slug].astro` | Catch-all (slugs con `/`: `blue/...`) |
 | `/herramientas/` | `src/pages/herramientas/index.astro` | Explorador |
@@ -37,7 +37,8 @@ Rama: `qa/post-portal` · Baseline tomado el 2026-10-05 sobre `a5fab42` (main).
 
 ### 0.2 Archivos del portal (intocables) y compartidos
 
-- **Intocables:** `src/pages/index.astro`, `src/pages/inicio.astro`, `src/styles/inicio.css`, `src/scripts/motion.js`, `src/scripts/spotlight.js`, `public/hero/*`, `public/logo*`, `public/favicon*`, `public/apple-touch-icon.png`, `public/og-image*`, `assets-src/`.
+- **Intocables:** `src/pages/index.astro`, `src/styles/inicio.css` (solo ajustes de catálogo desde Fase 3), `src/scripts/motion.js`, `src/scripts/spotlight.js`, `public/hero/*`, `public/logo*`, `public/favicon*`, `public/apple-touch-icon.png`, `public/og-image*`, `assets-src/`.
+- **Nota 2026-10-06:** `src/pages/inicio.astro` deja de ser portal congelado y pasa a ser el catálogo evolucionable (Fase 3). `src/styles/inicio.css` admite ajustes de catálogo; el hero y la marca inicial no se rediseñan.
 - **Compartidos (editables con capturas antes/después):** `src/layouts/Base.astro`, `src/components/Menu.astro`, `src/styles/{tokens,base,layout,components,motion}.css`.
 
 ### 0.1 Inventario de salidas del cuerpo (P0.1)

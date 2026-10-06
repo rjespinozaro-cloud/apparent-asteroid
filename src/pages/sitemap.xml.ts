@@ -1,4 +1,4 @@
-import { getDatabase, listarGuiasPublicadas, listarHerramientasPublicadas } from '../lib/db.js';
+import { getDatabase, listarGuiasPublicadas, listarHerramientasPublicadas, listarRutas } from '../lib/db.js';
 import { env } from 'cloudflare:workers';
 
 import type { APIContext } from 'astro';
@@ -9,6 +9,7 @@ const PAGINAS_ESTATICAS = [
   { ruta: '/', prioridad: '0.8', frecuencia: 'weekly' },
   { ruta: '/inicio/', prioridad: '1.0', frecuencia: 'weekly' },
   { ruta: '/guias/', prioridad: '0.9', frecuencia: 'weekly' },
+  { ruta: '/rutas/', prioridad: '0.8', frecuencia: 'weekly' },
   { ruta: '/herramientas/', prioridad: '0.8', frecuencia: 'weekly' },
   { ruta: '/aviso-legal/', prioridad: '0.3', frecuencia: 'yearly' },
 ];
@@ -41,13 +42,20 @@ export async function GET({ site, url: requestUrl }: APIContext) {
   const hoy = new Date().toISOString().slice(0, 10);
 
   // Solo contenido publicado: el sitemap nunca debe filtrar borradores.
-  const [guias, herramientas] = await Promise.all([
+  const [guias, herramientas, rutas] = await Promise.all([
     listarGuiasPublicadas(database, { porPagina: 48 }),
     listarHerramientasPublicadas(database),
+    listarRutas(database, { publicadas: true }),
   ]);
 
   const entradas = [
     ...PAGINAS_ESTATICAS.map((pagina) => ({ ...pagina, loc: rutaCompleta(pagina.ruta, origen), ultima: hoy })),
+    ...rutas.map((ruta) => ({
+      loc: rutaCompleta(`/rutas/${encodeURIComponent(ruta.slug)}/`, origen),
+      ultima: hoy,
+      prioridad: '0.7',
+      frecuencia: 'weekly',
+    })),
     ...herramientas.map((item) => ({
       loc: rutaCompleta(`/herramientas/${encodeURIComponent(item.herramienta)}/`, origen),
       ultima: hoy,

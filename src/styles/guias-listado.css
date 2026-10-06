@@ -232,6 +232,7 @@
 .buscador input {
   flex: 1;
   min-height: var(--alto-control);
+  min-width: 0;
 }
 
 /* Estados vacíos y páginas de error -------------------------------------- */

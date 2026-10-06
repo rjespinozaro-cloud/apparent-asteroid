@@ -161,6 +161,12 @@
   max-width: 44rem;
 }
 
+/* Buscador del hero: ocupa el ancho del contenido sin romper el centrado. */
+.portada--hero__contenido .buscador {
+  width: 100%;
+  max-width: 36rem;
+}
+
 .portada--hero h1 {
   margin: 0;
   font-size: clamp(2.75rem, 9vw, 6rem);

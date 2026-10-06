@@ -83,6 +83,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
       indice={indice}
       jsonLd={jsonLd}
     >
+      <span data-continua-guardar data-slug={guia.slug} data-titulo={guia.titulo} hidden></span>
       <div class="markdown" set:html={html} />
 
       <nav class="guia__vecinas" aria-label="Navegación entre guías">
@@ -142,3 +143,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
 }
 
 <AsistenteFlotante />
+
+<script>
+  import '../../scripts/continua.js';
+</script>

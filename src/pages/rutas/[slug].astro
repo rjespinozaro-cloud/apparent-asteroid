@@ -1,0 +1,101 @@
+---
+import Base from '../../layouts/Base.astro';
+import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import AssistantMascot from '../../components/AssistantMascot.astro';
+import { getDatabase, listarRutas, obtenerRutaPorSlug } from '../../lib/db.js';
+import { plural } from '../../lib/utils/texto.js';
+import { nombreEquipo, nombreHerramienta, nombreNivel } from '../../lib/vocabulario.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+/**
+ * Solo se usa en el build estático de Pages (la integración de config fuerza
+ * `prerender = true` fuera de /admin y /api). En Cloudflare se ignora.
+ */
+export async function getStaticPaths() {
+  const database = getDatabase(env);
+  const rutas = await listarRutas(database, { publicadas: true });
+  return rutas.map((ruta) => ({ params: { slug: ruta.slug } }));
+}
+
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const parametroSlug = Astro.params.slug ?? '';
+const slug = Array.isArray(parametroSlug) ? parametroSlug.join('/') : parametroSlug;
+const database = getDatabase(env);
+const detalle = slug ? await obtenerRutaPorSlug(database, slug, { publicadas: true }) : null;
+
+if (!detalle) Astro.response.status = 404;
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+---
+
+{detalle ? (
+  <Base
+    title={`${detalle.ruta.titulo} | JOANIX GUIDES`}
+    description={detalle.ruta.descripcion || `Ruta de aprendizaje: ${detalle.ruta.titulo}.`}
+  >
+    <nav class="contenedor" aria-label="Migas de pan">
+      <ol class="migas">
+        <li><a href={`${base}inicio/`}>Inicio</a></li>
+        <li><a href={`${base}rutas/`}>Rutas</a></li>
+        <li aria-current="page">{detalle.ruta.titulo}</li>
+      </ol>
+    </nav>
+
+    <section class="seccion" aria-labelledby="ruta-titulo">
+      <div>
+        <p class="eyebrow">Ruta de aprendizaje</p>
+        <h1 id="ruta-titulo">{detalle.ruta.titulo}</h1>
+        <p class="entradilla">{detalle.ruta.descripcion}</p>
+        <p class="guia__meta-catalogo">
+          {plural(detalle.pasos.length, 'paso', 'pasos')} · {nombreNivel(detalle.ruta.nivel)}
+        </p>
+      </div>
+
+      <ol class="ruta-pasos">
+        {detalle.pasos.map((paso) => (
+          <li class:list={[{ proximamente: !paso.guia }]}>
+            {paso.guia ? (
+              <>
+                <div>
+                  <p class="eyebrow">Paso {paso.orden} · {nombreEquipo(paso.guia.equipo)}</p>
+                  <h2 class="tarjeta__titulo">
+                    <a href={`${base}guias/${paso.guia.slug}/`}>{paso.guia.titulo}</a>
+                  </h2>
+                  <p class="tarjeta__meta-linea">
+                    {nombreHerramienta(paso.guia.herramienta)} · {nombreNivel(paso.guia.nivel)}{paso.guia.lectura_min ? ` · ${paso.guia.lectura_min} min` : ''} · {paso.guia.acceso === 'pago' ? 'PDF' : 'Gratis'}
+                  </p>
+                  {paso.nota && <p>{paso.nota}</p>}
+                </div>
+              </>
+            ) : (
+              <div>
+                <p class="eyebrow">Paso {paso.orden} · Próximamente</p>
+                <p>{paso.nota || 'Guía en preparación.'}</p>
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <AsistenteFlotante />
+  </Base>
+) : (
+  <Base title="Ruta no encontrada | JOANIX GUIDES" noindex>
+    <article class="pagina-error contenedor">
+      <AssistantMascot estado="sad" tamano="lg" decorativa />
+      <p class="eyebrow">Error 404</p>
+      <h1>No hemos encontrado esa ruta</h1>
+      <p>
+        Puede que la dirección sea incorrecta o que la ruta ya no esté publicada. Empieza por el
+        catálogo de rutas o busca por texto.
+      </p>
+      <p class="pagina-error__acciones">
+        <a class="boton" href={`${base}rutas/`}>Ver rutas</a>
+        <a class="boton boton--secundario" href={`${base}buscar/`}>Buscar por texto</a>
+      </p>
+    </article>
+  </Base>
+)}

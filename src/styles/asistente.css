@@ -227,6 +227,22 @@
   width: 100%;
 }
 
+/* Sugerencia de ruta dentro de los resultados. */
+.ai-ruta {
+  background: var(--papel-contraste);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  color: var(--tinta-suave);
+  margin: 0 0 var(--espacio-s);
+  max-width: none;
+  padding: var(--espacio-xs) var(--espacio-s);
+}
+
+.ai-ruta a {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
 @media (max-width: 47.99rem) {
   .ai-panel {
     left: var(--espacio-s);

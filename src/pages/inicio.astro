@@ -1,22 +1,35 @@
 ---
 import Base from '../layouts/Base.astro';
 import AsistenteFlotante from '../components/AsistenteFlotante.astro';
-import Nota from '../components/Nota.astro';
 import TarjetaGuia from '../components/TarjetaGuia.astro';
-import { getDatabase, listarHerramientasPublicadas, listarUltimasGuias } from '../lib/db.js';
+import {
+  getDatabase,
+  listarGuiasDestacadas,
+  listarHerramientasDestacadas,
+  listarRutas,
+  listarUltimasGuias,
+  obtenerRutaPorSlug,
+} from '../lib/db.js';
 import { plural } from '../lib/utils/texto.js';
-import { nombreHerramienta } from '../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
 const database = getDatabase(env);
-const [ultimas, herramientas] = await Promise.all([
+const [ultimas, herramientasDestacadas, rutasDestacadas, guiasDestacadas] = await Promise.all([
   listarUltimasGuias(database, 6),
-  listarHerramientasPublicadas(database),
+  listarHerramientasDestacadas(database),
+  listarRutas(database, { publicadas: true, destacadas: true }),
+  listarGuiasDestacadas(database, 4),
 ]);
+// Primer paso y número de pasos por ruta (pocas rutas destacadas: N+1 asumible).
+const rutasConDetalle = await Promise.all(
+  rutasDestacadas.map(async (ruta) => {
+    const detalle = await obtenerRutaPorSlug(database, ruta.slug);
+    return { ruta, pasos: detalle?.pasos ?? [] };
+  }),
+);
 
-const destacadas = herramientas.slice(0, 6);
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
@@ -37,12 +50,71 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <a class="boton--premium" href={`${base}guias/`}>Explorar guías</a>
         <a class="boton--ghost" href={`${base}herramientas/`}>Explorar herramientas</a>
       </div>
+      <form class="buscador" method="get" action={`${base}buscar/`} role="search">
+        <label class="visualmente-oculto" for="buscar-inicio">Buscar guías</label>
+        <input
+          id="buscar-inicio"
+          name="q"
+          type="search"
+          maxlength="80"
+          autocomplete="off"
+          enterkeyhint="search"
+          placeholder="Buscar guías por texto…"
+        />
+        <button type="submit" class="boton--premium">Buscar</button>
+      </form>
       <div class="portada--hero__scroll" aria-hidden="true">
         <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
         <span class="portada--hero__scroll-line"></span>
       </div>
     </div>
   </section>
+
+  {rutasConDetalle.length > 0 && (
+    <section class="seccion reveal" aria-labelledby="rutas-titulo">
+      <div class="seccion__cabecera">
+        <div>
+          <h2 class="seccion__titulo" id="rutas-titulo">Rutas de aprendizaje</h2>
+        </div>
+        <a class="link--premium" href={`${base}rutas/`}>Ver todas</a>
+      </div>
+      <ul class="rejilla-tarjetas">
+        {rutasConDetalle.map(({ ruta, pasos }) => (
+          <li>
+            <article class="tarjeta-premium">
+              <p class="tarjeta__kicker">Ruta · {plural(pasos.length, 'paso', 'pasos')}</p>
+              <h3 class="tarjeta__titulo">
+                <a href={`${base}rutas/${ruta.slug}/`} class="stretched-link">{ruta.titulo}</a>
+              </h3>
+              <p class="tarjeta__resumen">{ruta.descripcion}</p>
+              <p class="tarjeta__meta-linea">
+                {pasos.length > 0
+                  ? `Empieza con: ${pasos[0].guia?.titulo ?? pasos[0].nota}`
+                  : 'En preparación'}
+              </p>
+              <span class="tarjeta__accion" aria-hidden="true">Ver ruta →</span>
+            </article>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {guiasDestacadas.length > 0 && (
+    <section class="seccion reveal" aria-labelledby="destacadas-titulo">
+      <div class="seccion__cabecera">
+        <div>
+          <h2 class="seccion__titulo" id="destacadas-titulo">Guías destacadas</h2>
+        </div>
+        <a class="link--premium" href={`${base}guias/`}>Ver catálogo completo</a>
+      </div>
+      <ul class="rejilla-tarjetas reveal--stagger">
+        {guiasDestacadas.map((guia) => (
+          <li><TarjetaGuia guia={guia} /></li>
+        ))}
+      </ul>
+    </section>
+  )}
 
   <section class="seccion reveal" aria-labelledby="equipos-titulo">
     <div class="seccion__cabecera">
@@ -74,20 +146,20 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </div>
   </section>
 
-  {destacadas.length > 0 && (
+  {herramientasDestacadas.length > 0 && (
     <section class="seccion reveal" aria-labelledby="herramientas-titulo">
       <div class="seccion__cabecera">
         <div>
-          <h2 class="seccion__titulo" id="herramientas-titulo">Herramientas documentadas</h2>
+          <h2 class="seccion__titulo" id="herramientas-titulo">Herramientas para practicar</h2>
         </div>
         <a class="link--premium" href={`${base}herramientas/`}>Ver todas</a>
       </div>
-      {herramientas.length < 3 ? (
+      {herramientasDestacadas.length < 3 ? (
         <div class="rejilla-tarjetas">
-          {destacadas.map((item) => (
+          {herramientasDestacadas.map((item) => (
             <article class="tarjeta tarjeta--destacada">
               <h3 class="tarjeta__titulo">
-                <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+                <a href={`${base}herramientas/${item.herramienta}/`}>{item.nombre}</a>
               </h3>
               <p class="tarjeta__meta">
                 <span>{plural(item.total, 'guía', 'guías')}</span>
@@ -99,9 +171,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         </div>
       ) : (
         <ul class="lista-herramientas">
-          {destacadas.map((item) => (
+          {herramientasDestacadas.map((item) => (
             <li class="lista-herramientas__item">
-              <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+              <a href={`${base}herramientas/${item.herramienta}/`}>{item.nombre}</a>
               <span class="lista-herramientas__conteo">{plural(item.total, 'guía', 'guías')}</span>
             </li>
           ))}
@@ -126,25 +198,18 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </section>
   )}
 
-  <section class="seccion reveal" aria-labelledby="metodo-titulo">
-    <div>
-      <h2 class="seccion__titulo" id="metodo-titulo">Cómo se escribe cada guía</h2>
+  <section class="seccion" aria-labelledby="continua-titulo" data-continua data-base={base} hidden>
+    <div class="seccion__cabecera">
+      <div>
+        <h2 class="seccion__titulo" id="continua-titulo">Continúa donde lo dejaste</h2>
+      </div>
     </div>
-    <div class="rejilla-notas">
-      <Nota titulo="Entorno" variante="neutra">
-        Cada guía declara el laboratorio mínimo, los datos de entrada y el resultado esperado antes de
-        mostrar el primer comando.
-      </Nota>
-      <Nota titulo="Interpretación" variante="neutra">
-        No basta con ejecutar: cada salida se interpreta y se conecta con la señal que debería ver el
-        lado defensivo.
-      </Nota>
-      <Nota titulo="Legalidad" variante="neutra">
-        Todo el material es educativo y va dirigido a redes propias o a sistemas con autorización
-        escrita.
-      </Nota>
-    </div>
+    <p><a class="boton--ghost" data-continua-enlace href={`${base}guias/`}>Ver catálogo</a></p>
   </section>
 
   <AsistenteFlotante />
 </Base>
+
+<script>
+  import '../scripts/continua.js';
+</script>

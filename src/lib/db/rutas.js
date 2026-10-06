@@ -9,9 +9,14 @@ const COLUMNAS_RUTA = 'id, slug, titulo, descripcion, nivel, orden, destacada, p
 
 /** @typedef {{ id: number, slug: string, titulo: string, descripcion: string, nivel: string, orden: number, destacada: number, publicada: number, creada_en: string }} RutaFila */
 
+/** @typedef {{ slug: string, titulo: string, herramienta: string, equipo: string, nivel: string, acceso: string, fecha: string, lectura_min: number|null }} PasoGuia */
+
+/** @typedef {{ orden: number, nota: string, guia: PasoGuia|null }} PasoRuta */
+
 /**
  * Lista rutas (por defecto, solo publicadas), ordenadas para el catálogo.
  * @param {D1Database} database
+ * @returns {Promise<RutaFila[]>}
  */
 export async function listarRutas(database, { publicadas = true, destacadas = false, limite = 20 } = {}) {
   const condiciones = [];
@@ -23,7 +28,7 @@ export async function listarRutas(database, { publicadas = true, destacadas = fa
      ORDER BY orden ASC, id ASC
      LIMIT ?`,
   ).bind(total).all();
-  return resultado.results;
+  return /** @type {RutaFila[]} */ (resultado.results);
 }
 
 /**
@@ -31,7 +36,7 @@ export async function listarRutas(database, { publicadas = true, destacadas = fa
  * publicada; si no, `guia` es `null` y la página lo muestra como
  * "Próximamente" sin enlazar (nunca se filtra el cuerpo).
  * @param {D1Database} database
- * @returns {Promise<{ruta: RutaFila, pasos: Array<{orden: number, nota: string, guia: object|null}>}|null>}
+ * @returns {Promise<{ruta: RutaFila, pasos: PasoRuta[]}|null>}
  */
 export async function obtenerRutaPorSlug(database, slug, { publicadas = false } = {}) {
   const ruta = await database.prepare(
@@ -50,7 +55,7 @@ export async function obtenerRutaPorSlug(database, slug, { publicadas = false } 
   ).bind(ruta.id).all();
   return {
     ruta,
-    pasos: pasos.results.map((paso) => ({
+    pasos: /** @type {PasoRuta[]} */ (pasos.results.map((paso) => ({
       orden: paso.orden,
       nota: paso.nota,
       guia: paso.g_slug
@@ -65,13 +70,14 @@ export async function obtenerRutaPorSlug(database, slug, { publicadas = false } 
             lectura_min: paso.g_lectura_min,
           }
         : null,
-    })),
+    }))),
   };
 }
 
 /**
  * Guías destacadas publicadas, para el catálogo.
  * @param {D1Database} database
+ * @returns {Promise<import('./guias.js').GuiaResumen[]>}
  */
 export async function listarGuiasDestacadas(database, limite = 3) {
   const total = Math.min(Math.max(Number(limite) || 3, 1), 12);
@@ -81,7 +87,7 @@ export async function listarGuiasDestacadas(database, limite = 3) {
      ORDER BY fecha DESC, id DESC
      LIMIT ?`,
   ).bind(total).all();
-  return resultado.results;
+  return /** @type {import('./guias.js').GuiaResumen[]} */ (resultado.results);
 }
 
 /**

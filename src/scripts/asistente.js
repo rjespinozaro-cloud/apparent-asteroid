@@ -118,6 +118,36 @@ if (typeof document !== 'undefined') {
       return new DOMParser().parseFromString(await respuesta.text(), 'text/html');
     };
 
+    /** Sugiere una ruta si la búsqueda coincide con su título (datos reales). */
+    const sugerirRuta = async (termino, controlador) => {
+      if (termino.length < 3) return;
+      try {
+        const respuesta = await fetch(`${base}rutas/`, {
+          headers: { Accept: 'text/html' },
+          signal: controlador.signal,
+        });
+        if (!respuesta.ok) return;
+        const documento = new DOMParser().parseFromString(await respuesta.text(), 'text/html');
+        const aguja = termino.toLowerCase();
+        const enlace = [...documento.querySelectorAll('[data-ruta-titulo]')].find((a) =>
+          (a.getAttribute('data-ruta-titulo') ?? '').includes(aguja),
+        );
+        if (!(enlace instanceof HTMLAnchorElement) || !resultados) return;
+        const destino = enlace.getAttribute('href');
+        if (!destino) return;
+        const bloque = document.createElement('p');
+        bloque.className = 'ai-ruta';
+        bloque.append('Esta ruta te puede guiar: ');
+        const copia = document.createElement('a');
+        copia.href = destino;
+        copia.textContent = enlace.textContent;
+        bloque.append(copia);
+        resultados.prepend(bloque);
+      } catch {
+        /* sin rutas no hay sugerencia: la búsqueda sigue valiendo */
+      }
+    };
+
     const buscar = async (termino) => {
       if (enCurso) return;
       enCurso = true;
@@ -130,6 +160,7 @@ if (typeof document !== 'undefined') {
         fijarEstado('thinking', 'Estoy analizando las opciones disponibles…');
         const conteo = documento.querySelector('.paginacion__estado')?.textContent?.trim() ?? '';
         const hay = pintarTarjetas(documento, urlBuscar(base, termino), 'Ver todos los resultados');
+        await sugerirRuta(termino, controlador);
         fijarEstado(
           hay ? 'happy' : 'sad',
           hay

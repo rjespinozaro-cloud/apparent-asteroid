@@ -1,0 +1,75 @@
+---
+import Base from '../../layouts/Base.astro';
+import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import { getDatabase, listarRutas, obtenerRutaPorSlug } from '../../lib/db.js';
+import { plural } from '../../lib/utils/texto.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+const database = getDatabase(env);
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const rutas = await listarRutas(database, { publicadas: true });
+// Primer paso y número de pasos por ruta (pocas rutas: N+1 asumible).
+const detalles = [];
+for (const ruta of rutas) {
+  const detalle = await obtenerRutaPorSlug(database, ruta.slug);
+  if (detalle) detalles.push(detalle);
+}
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+---
+
+<Base
+  title="Rutas de aprendizaje | JOANIX GUIDES"
+  description="Rutas de aprendizaje de ciberseguridad en JOANIX GUIDES: secuencias ordenadas de guías RED y BLUE, del laboratorio a la defensa."
+>
+  <nav class="contenedor" aria-label="Migas de pan">
+    <ol class="migas">
+      <li><a href={`${base}inicio/`}>Inicio</a></li>
+      <li aria-current="page">Rutas</li>
+    </ol>
+  </nav>
+
+  <section class="seccion" aria-labelledby="rutas-titulo">
+    <div>
+      <p class="eyebrow">Rutas de aprendizaje</p>
+      <h1 id="rutas-titulo">Aprende en orden</h1>
+      <p class="entradilla">
+        Secuencias ordenadas de guías: cada paso enlaza una guía real; si aún no está publicada, se marca como Próximamente.
+      </p>
+      <p class="guia__meta-catalogo">
+        {plural(rutas.length, 'ruta publicada', 'rutas publicadas')}
+      </p>
+    </div>
+
+    {detalles.length > 0 ? (
+      <ul class="rejilla-tarjetas">
+        {detalles.map(({ ruta, pasos }) => (
+          <li>
+            <article class="tarjeta-premium">
+              <p class="tarjeta__kicker">Ruta · {plural(pasos.length, 'paso', 'pasos')}</p>
+              <h2 class="tarjeta__titulo">
+                <a href={`${base}rutas/${ruta.slug}/`} class="stretched-link" data-ruta-titulo={ruta.titulo.toLowerCase()}>{ruta.titulo}</a>
+              </h2>
+              <p class="tarjeta__resumen">{ruta.descripcion}</p>
+              <p class="tarjeta__meta-linea">
+                {pasos.length > 0
+                  ? `Empieza con: ${pasos[0].guia?.titulo ?? pasos[0].nota}`
+                  : 'En preparación'}
+              </p>
+              <span class="tarjeta__accion" aria-hidden="true">Ver ruta →</span>
+            </article>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="vacio">
+        <p>Todavía no hay rutas publicadas. Explora el catálogo mientras tanto.</p>
+        <p><a class="boton" href={`${base}guias/`}>Ver todas las guías</a></p>
+      </div>
+    )}
+  </section>
+
+  <AsistenteFlotante />
+</Base>
