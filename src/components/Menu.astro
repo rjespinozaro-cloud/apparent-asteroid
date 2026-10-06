@@ -12,9 +12,8 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 const enlaces = [
   { href: `${base}guias/`, texto: 'Guías' },
+  { href: `${base}rutas/`, texto: 'Rutas' },
   { href: `${base}herramientas/`, texto: 'Herramientas' },
-  { href: `${base}buscar/`, texto: 'Buscar' },
-  { href: `${base}aviso-legal/`, texto: 'Aviso legal' },
 ];
 
 /**
@@ -27,45 +26,103 @@ function activo(href: string) {
 }
 ---
 
-<nav class="menu" aria-label="Navegación principal">
-  <ul class="menu__enlaces">
+<nav class="menu" aria-label="Navegación principal" data-menu>
+  <button
+    type="button"
+    class="menu__alternar"
+    aria-expanded="false"
+    aria-controls="menu-lista"
+    aria-label="Abrir menú"
+    data-menu-alternar
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <line x1="4" y1="7" x2="20" y2="7" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="17" x2="20" y2="17" />
+    </svg>
+  </button>
+  <ul class="menu__enlaces" id="menu-lista">
     {enlaces.map((enlace) => (
       <li>
         <a class="link--premium" href={enlace.href} aria-current={activo(enlace.href) ? 'page' : undefined}>{enlace.texto}</a>
       </li>
     ))}
+    <li>
+      <a
+        class="link--premium menu__buscar"
+        href={`${base}buscar/`}
+        aria-label="Buscar guías"
+        aria-current={activo(`${base}buscar/`) ? 'page' : undefined}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="16.5" y1="16.5" x2="21" y2="21" />
+        </svg>
+      </a>
+    </li>
     <li aria-hidden="true"><span class="menu__indicator"></span></li>
   </ul>
 </nav>
 
 <script>
   // Sliding menu indicator
-  const menu = document.querySelector('.menu__enlaces');
+  const menu = document.querySelector('[data-menu] .menu__enlaces');
   const indicator = menu?.querySelector('.menu__indicator');
-  
+
   function positionIndicator() {
-    if (!menu || !(indicator instanceof HTMLElement)) return;
-    
+    if (!(menu instanceof HTMLElement) || !(indicator instanceof HTMLElement)) return;
+    if (menu.offsetParent === null) return;
+
     const activeLink = menu.querySelector('a[aria-current="page"]');
     if (!activeLink) {
       indicator.style.transform = 'translateX(0) scaleX(0)';
       return;
     }
-    
+
     const rect = activeLink.getBoundingClientRect();
     const menuRect = menu.getBoundingClientRect();
     const x = rect.left - menuRect.left;
-    
+
     indicator.style.setProperty('--indicator-x', `${x}px`);
     indicator.style.setProperty('--indicator-scale', '1');
   }
-  
+
   // Initial position
   positionIndicator();
-  
+
   // Reposition on resize
   window.addEventListener('resize', positionIndicator);
-  
+
   // Reposition on navigation (for SPA-like behavior)
   document.addEventListener('astro:page-load', positionIndicator);
+
+  // Menú móvil: abrir/cerrar con foco y Escape
+  const raiz = document.querySelector('[data-menu]');
+  const alternar = raiz?.querySelector('[data-menu-alternar]');
+  const lista = raiz?.querySelector('.menu__enlaces');
+
+  const abierto = () => raiz instanceof HTMLElement && raiz.classList.contains('menu--abierto');
+
+  function fijarAbierto(valor: boolean) {
+    if (!(raiz instanceof HTMLElement) || !(alternar instanceof HTMLButtonElement)) return;
+    raiz.classList.toggle('menu--abierto', valor);
+    alternar.setAttribute('aria-expanded', String(valor));
+    alternar.setAttribute('aria-label', valor ? 'Cerrar menú' : 'Abrir menú');
+    if (valor) {
+      const primero = lista?.querySelector('a');
+      if (primero instanceof HTMLAnchorElement) primero.focus();
+      positionIndicator();
+    }
+  }
+
+  alternar?.addEventListener('click', () => fijarAbierto(!abierto()));
+  lista?.addEventListener('click', (evento) => {
+    if (evento.target instanceof HTMLAnchorElement) fijarAbierto(false);
+  });
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key === 'Escape' && abierto()) {
+      fijarAbierto(false);
+      if (alternar instanceof HTMLButtonElement) alternar.focus();
+    }
+  });
 </script>

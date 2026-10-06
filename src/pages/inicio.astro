@@ -76,8 +76,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <div>
           <h2 class="seccion__titulo" id="rutas-titulo">Rutas de aprendizaje</h2>
         </div>
-        <a class="link--premium" href={`${base}rutas/`}>Ver todas</a>
-      </div>
+              </div>
       <ul class="rejilla-tarjetas">
         {rutasConDetalle.map(({ ruta, pasos }) => (
           <li>
@@ -106,8 +105,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <div>
           <h2 class="seccion__titulo" id="destacadas-titulo">Guías destacadas</h2>
         </div>
-        <a class="link--premium" href={`${base}guias/`}>Ver catálogo completo</a>
-      </div>
+              </div>
       <ul class="rejilla-tarjetas reveal--stagger">
         {guiasDestacadas.map((guia) => (
           <li><TarjetaGuia guia={guia} /></li>
@@ -152,8 +150,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <div>
           <h2 class="seccion__titulo" id="herramientas-titulo">Herramientas para practicar</h2>
         </div>
-        <a class="link--premium" href={`${base}herramientas/`}>Ver todas</a>
-      </div>
+              </div>
       {herramientasDestacadas.length < 3 ? (
         <div class="rejilla-tarjetas">
           {herramientasDestacadas.map((item) => (
@@ -188,8 +185,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <div>
           <h2 class="seccion__titulo" id="ultimas-titulo">Últimas guías</h2>
         </div>
-        <a class="link--premium" href={`${base}guias/`}>Ver catálogo completo</a>
-      </div>
+              </div>
       <ul class="rejilla-tarjetas reveal--stagger">
         {ultimas.map((guia) => (
           <li><TarjetaGuia guia={guia} /></li>

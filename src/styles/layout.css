@@ -70,6 +70,24 @@
   color: var(--tinta);
 }
 
+/* Botón hamburguesa: solo móvil. */
+.menu__alternar {
+  align-items: center;
+  background: transparent;
+  border: var(--borde);
+  border-radius: var(--radio-m);
+  color: var(--tinta);
+  display: none;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem;
+}
+
+.menu {
+  position: relative;
+}
+
 /* Sliding menu indicator */
 .menu__indicator {
   position: absolute;
@@ -173,6 +191,11 @@
   .cabecera__interna {
     flex-wrap: wrap;
     padding-block: var(--espacio-2xs);
+    position: relative;
+  }
+
+  .menu {
+    position: static;
   }
 
   .menu__enlaces {
@@ -182,6 +205,37 @@
 
   .menu__enlaces a {
     padding: 0.35rem 0.5rem;
+  }
+
+  .menu__alternar {
+    display: inline-flex;
+  }
+
+  .menu__enlaces {
+    background: var(--papel-alto);
+    border: var(--borde);
+    border-radius: var(--radio-l);
+    display: none;
+    flex-direction: column;
+    gap: var(--espacio-2xs);
+    inset-inline: var(--espacio-s);
+    padding: var(--espacio-s);
+    position: absolute;
+    top: calc(100% - var(--espacio-2xs));
+    z-index: 30;
+  }
+
+  .menu--abierto .menu__enlaces {
+    display: flex;
+  }
+
+  .menu__enlaces a {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .menu__indicator {
+    display: none;
   }
 
   .site-main {
