@@ -110,13 +110,13 @@
 
 .site-main {
   flex: 1 0 auto;
-  padding-block: var(--espacio-xl) var(--espacio-2xl);
+  padding-block: var(--espacio-l) var(--espacio-2xl);
 }
 
 .site-main__interior {
   display: flex;
   flex-direction: column;
-  gap: var(--espacio-xl);
+  gap: var(--espacio-l);
 }
 
 .pie {
