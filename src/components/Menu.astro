@@ -60,42 +60,10 @@ function activo(href: string) {
         </svg>
       </a>
     </li>
-    <li aria-hidden="true"><span class="menu__indicator"></span></li>
   </ul>
 </nav>
 
 <script>
-  // Sliding menu indicator
-  const menu = document.querySelector('[data-menu] .menu__enlaces');
-  const indicator = menu?.querySelector('.menu__indicator');
-
-  function positionIndicator() {
-    if (!(menu instanceof HTMLElement) || !(indicator instanceof HTMLElement)) return;
-    if (menu.offsetParent === null) return;
-
-    const activeLink = menu.querySelector('a[aria-current="page"]');
-    if (!activeLink) {
-      indicator.style.transform = 'translateX(0) scaleX(0)';
-      return;
-    }
-
-    const rect = activeLink.getBoundingClientRect();
-    const menuRect = menu.getBoundingClientRect();
-    const x = rect.left - menuRect.left;
-
-    indicator.style.setProperty('--indicator-x', `${x}px`);
-    indicator.style.setProperty('--indicator-scale', '1');
-  }
-
-  // Initial position
-  positionIndicator();
-
-  // Reposition on resize
-  window.addEventListener('resize', positionIndicator);
-
-  // Reposition on navigation (for SPA-like behavior)
-  document.addEventListener('astro:page-load', positionIndicator);
-
   // Menú móvil: abrir/cerrar con foco y Escape
   const raiz = document.querySelector('[data-menu]');
   const alternar = raiz?.querySelector('[data-menu-alternar]');
@@ -111,7 +79,6 @@ function activo(href: string) {
     if (valor) {
       const primero = lista?.querySelector('a');
       if (primero instanceof HTMLAnchorElement) primero.focus();
-      positionIndicator();
     }
   }
 
