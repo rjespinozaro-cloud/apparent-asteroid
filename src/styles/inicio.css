@@ -26,7 +26,7 @@
 }
 
 .seccion {
-  padding-block: var(--espacio-seccion);
+  padding-block: clamp(2.5rem,6vw,4.5rem);
 }
 
 /* La portada arranca pegada a la cabecera: sin esta regla, el padding

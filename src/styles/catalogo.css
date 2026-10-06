@@ -13,10 +13,17 @@
 .catalogo-stats span{font-size:.875rem;color:var(--text-muted,#9AA0C3)}
 
 .chip-filtro{display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:0 1rem;border:1px solid var(--line,#232842);
-  border-radius:999px;background:transparent;color:inherit;cursor:pointer;transition:border-color .2s,background-color .2s,transform .15s}
+  border-radius:999px;background:transparent;color:inherit;cursor:pointer;font-family:var(--fuente-mono,ui-monospace,monospace);
+  font-size:.8125rem;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;transition:border-color .2s,background-color .2s,transform .15s}
 .chip-filtro:hover{border-color:#A78BFA;background:rgba(139,92,246,.12)}
 .chip-filtro:active{transform:scale(.97)}
-.chip-filtro[aria-pressed="true"]{border-color:transparent;background:linear-gradient(135deg,#8B5CF6,#E879F9);color:#0B0714;font-weight:600}
+.chip-filtro[aria-current="true"]{border-color:transparent;background:linear-gradient(135deg,#8B5CF6,#E879F9);color:#0B0714;font-weight:600}
+
+/* Detalle plegable de filtros secundarios. */
+.filtros-detalle{margin:0 0 var(--espacio-s)}
+.filtros-detalle summary{cursor:pointer;color:var(--tinta-suave);font-family:var(--fuente-mono,ui-monospace,monospace);
+  font-size:.8125rem;letter-spacing:.12em;text-transform:uppercase;min-height:2.75rem;display:inline-flex;align-items:center}
+.filtros-detalle .chips-rapidos{margin-top:var(--espacio-2xs)}
 
 .ruta-card{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:1rem;padding:1.5rem;border-radius:18px;overflow:hidden;
   background:radial-gradient(120% 90% at 0% 0%,rgba(139,92,246,.2),transparent 60%),var(--ink-850,#0D0F1A);transition:transform .2s cubic-bezier(.22,1,.36,1)}

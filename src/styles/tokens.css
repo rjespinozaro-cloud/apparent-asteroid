@@ -82,7 +82,7 @@
   --fuente-texto: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --fuente-titulo: 'Bricolage Grotesque', var(--fuente-texto);
   --fuente-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', monospace;
-  --texto-xs: 0.75rem;
+  --texto-xs: 0.8125rem;
   --texto-sm: 0.8125rem;
   --texto-base: 1rem;
   --texto-md: clamp(1.0625rem, 0.4vw + 1rem, 1.125rem);

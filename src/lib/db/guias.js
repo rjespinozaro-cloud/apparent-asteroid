@@ -536,14 +536,32 @@ export async function obtenerEstadisticasAdmin(database, { admin = false } = {})
 }
 
 /** Conteos públicos por equipo, nivel y acceso. Base de la portada y del listado. */
-export async function contarGuiasPublicadas(database) {
+export async function contarGuiasPublicadas(database, filtros = {}) {
+  const condiciones = ['publicada = 1'];
+  const valores = [];
+  if (filtros.equipo === 'blue' || filtros.equipo === 'red') {
+    condiciones.push('equipo = ?');
+    valores.push(filtros.equipo);
+  }
+  if (filtros.herramienta) {
+    condiciones.push('herramienta = ?');
+    valores.push(filtros.herramienta);
+  }
+  if (filtros.nivel === 'basico' || filtros.nivel === 'intermedio' || filtros.nivel === 'avanzado') {
+    condiciones.push('nivel = ?');
+    valores.push(filtros.nivel);
+  }
+  if (filtros.acceso === 'gratis' || filtros.acceso === 'pago') {
+    condiciones.push('acceso = ?');
+    valores.push(filtros.acceso);
+  }
   const fila = await database.prepare(
     `SELECT COUNT(*) AS total,
             COALESCE(SUM(CASE WHEN equipo = 'blue' THEN 1 ELSE 0 END), 0) AS blue,
             COALESCE(SUM(CASE WHEN equipo = 'red' THEN 1 ELSE 0 END), 0) AS red,
             COALESCE(SUM(CASE WHEN acceso = 'gratis' THEN 1 ELSE 0 END), 0) AS gratis
-     FROM guias WHERE publicada = 1`,
-  ).first();
+     FROM guias WHERE ${condiciones.join(' AND ')}`,
+  ).bind(...valores).first();
   return {
     total: Number(fila?.total ?? 0),
     blue: Number(fila?.blue ?? 0),

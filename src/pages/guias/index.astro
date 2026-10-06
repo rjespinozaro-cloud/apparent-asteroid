@@ -3,7 +3,7 @@ import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import AssistantMascot from '../../components/AssistantMascot.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
-import { contarGuiasPublicadas, getDatabase, listarGuiasPublicadas, listarHerramientasPublicadas, listarUltimasGuias } from '../../lib/db.js';
+import { contarGuiasPublicadas, getDatabase, listarGuiasDestacadas, listarGuiasPublicadas, listarHerramientasPublicadas } from '../../lib/db.js';
 import { opcion } from '../../lib/validar.js';
 import { plural } from '../../lib/utils/texto.js';
 import { nombreEquipo, nombreHerramienta, nombreNivel } from '../../lib/vocabulario.js';
@@ -25,9 +25,8 @@ const POR_PAGINA = 12;
 const [resultado, herramientas, conteo, recientes] = await Promise.all([
   listarGuiasPublicadas(database, { equipo, nivel, herramienta, acceso, pagina, porPagina: POR_PAGINA }),
   listarHerramientasPublicadas(database),
-  contarGuiasPublicadas(database),
-  // Respaldo temporal hasta la Fase 2: sin columna `destacada`, van las 3 más recientes.
-  listarUltimasGuias(database, 3),
+  contarGuiasPublicadas(database, { equipo, nivel, herramienta, acceso }),
+  listarGuiasDestacadas(database, 3),
 ]);
 
 const { guias, total, pagina: paginaActual, paginas } = resultado;
@@ -72,17 +71,17 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   </nav>
 
   <section class="seccion" aria-labelledby="guias-titulo">
-    <div>
+    <div class="contenedor">
       <p class="eyebrow">Catálogo</p>
       <h1 id="guias-titulo">{titulo}</h1>
       <p class="entradilla">
         Conocimiento práctico de ciberseguridad para ofensiva y defensa.
       </p>
-      <ul class="catalogo-stats" aria-label="Totales del catálogo">
-        <li><strong>{conteo.total}</strong><span>{plural(conteo.total, 'guía', 'guías')}</span></li>
+      <ul class="catalogo-stats" aria-label={hayFiltros ? 'Resultados del filtro' : 'Totales del catálogo'}>
+        <li><strong>{conteo.total}</strong><span>{conteo.total === 1 ? 'guía' : 'guías'}</span></li>
         <li><strong>{conteo.red}</strong><span>RED</span></li>
         <li><strong>{conteo.blue}</strong><span>BLUE</span></li>
-        <li><strong>{premium}</strong><span>{plural(premium, 'premium', 'premium')}</span></li>
+        <li><strong>{premium}</strong><span>premium</span></li>
       </ul>
       <form class="buscador" method="get" action={`${base}buscar/`} role="search">
         <label class="visualmente-oculto" for="buscar-catalogo">Buscar en el catálogo</label>
@@ -99,7 +98,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </form>
     </div>
 
-    {recientes.length > 0 && (
+    {!hayFiltros && recientes.length > 0 && (
       <section class="seccion" aria-labelledby="destacadas-titulo">
         <div class="seccion__cabecera">
           <h2 class="seccion__titulo" id="destacadas-titulo">Destacadas</h2>
@@ -112,39 +111,6 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </section>
     )}
 
-    {hayFiltros && (
-      <ul class="filtros__activos" aria-label="Filtros activos">
-        {equipo && (
-          <li>
-            <a class="chip" href={enlaceCon({ equipo: '' })} aria-label={`Quitar filtro de equipo ${nombreEquipo(equipo)}`}>
-              {nombreEquipo(equipo)} <span aria-hidden="true">×</span>
-            </a>
-          </li>
-        )}
-        {nivel && (
-          <li>
-            <a class="chip" href={enlaceCon({ nivel: '' })} aria-label={`Quitar filtro de nivel ${nombreNivel(nivel)}`}>
-              {nombreNivel(nivel)} <span aria-hidden="true">×</span>
-            </a>
-          </li>
-        )}
-        {herramienta && (
-          <li>
-            <a class="chip" href={enlaceCon({ herramienta: '' })} aria-label={`Quitar filtro de herramienta ${nombreHerramienta(herramienta)}`}>
-              {nombreHerramienta(herramienta)} <span aria-hidden="true">×</span>
-            </a>
-          </li>
-        )}
-        {acceso && (
-          <li>
-            <a class="chip" href={enlaceCon({ acceso: '' })} aria-label={`Quitar filtro de acceso ${acceso === 'pago' ? 'premium' : 'gratis'}`}>
-              {acceso === 'pago' ? 'Premium' : 'Gratis'} <span aria-hidden="true">×</span>
-            </a>
-          </li>
-        )}
-      </ul>
-    )}
-
     <p class="paginacion__estado" role="status">
       {total > 0
         ? plural(total, 'guía encontrada', 'guías encontradas')
@@ -152,63 +118,41 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </p>
 
     <ul class="chips-rapidos" aria-label="Filtros rápidos">
-      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-pressed={equipo === 'red' ? 'true' : 'false'}>RED</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-pressed={equipo === 'blue' ? 'true' : 'false'}>BLUE</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-pressed={acceso === 'gratis' ? 'true' : 'false'}>Gratis</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-pressed={acceso === 'pago' ? 'true' : 'false'}>Premium</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'basico' ? '' : 'basico', pagina: 1 })} aria-pressed={nivel === 'basico' ? 'true' : 'false'}>Básico</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'intermedio' ? '' : 'intermedio', pagina: 1 })} aria-pressed={nivel === 'intermedio' ? 'true' : 'false'}>Intermedio</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'avanzado' ? '' : 'avanzado', pagina: 1 })} aria-pressed={nivel === 'avanzado' ? 'true' : 'false'}>Avanzado</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-current={acceso === 'gratis' ? 'true' : undefined}>Gratis</a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-current={acceso === 'pago' ? 'true' : undefined}>Premium</a></li>
     </ul>
 
-    <form class="filtros" method="get" action={`${base}guias/`} aria-labelledby="filtros-titulo">
-      <h2 class="visualmente-oculto" id="filtros-titulo">Filtrar guías</h2>
-
-      <div class="filtros__campo">
-        <label for="filtro-equipo">Equipo</label>
-        <select id="filtro-equipo" name="equipo">
-          <option value="">Todos</option>
-          <option value="blue" selected={equipo === 'blue'}>BLUE · Defensa</option>
-          <option value="red" selected={equipo === 'red'}>RED · Ofensiva</option>
-        </select>
-      </div>
-
-      <div class="filtros__campo">
-        <label for="filtro-nivel">Nivel</label>
-        <select id="filtro-nivel" name="nivel">
-          <option value="">Todos</option>
-          <option value="basico" selected={nivel === 'basico'}>Básico</option>
-          <option value="intermedio" selected={nivel === 'intermedio'}>Intermedio</option>
-          <option value="avanzado" selected={nivel === 'avanzado'}>Avanzado</option>
-        </select>
-      </div>
-
-      <div class="filtros__campo">
-        <label for="filtro-herramienta">Herramienta</label>
-        <select id="filtro-herramienta" name="herramienta">
-          <option value="">Todas</option>
-          {herramientas.map((item) => (
-            <option value={item.herramienta} selected={item.herramienta === herramienta}>
-              {nombreHerramienta(item.herramienta)} ({item.total})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div class="filtros__campo">
-        <label for="filtro-acceso">Acceso</label>
-        <select id="filtro-acceso" name="acceso">
-          <option value="">Todos</option>
-          <option value="gratis" selected={acceso === 'gratis'}>Gratis</option>
-          <option value="pago" selected={acceso === 'pago'}>Premium</option>
-        </select>
-      </div>
-
-      <div class="filtros__acciones">
-        <button type="submit">Aplicar filtros</button>
-        {hayFiltros && <a class="filtros__limpiar" href={`${base}guias/`}>Limpiar</a>}
-      </div>
-    </form>
+    <details class="filtros-detalle" open={Boolean(nivel || herramienta)}>
+      <summary>Más filtros</summary>
+      <ul class="chips-rapidos" aria-label="Filtrar por nivel">
+        <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'basico' ? '' : 'basico', pagina: 1 })} aria-current={nivel === 'basico' ? 'true' : undefined}>Básico</a></li>
+        <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'intermedio' ? '' : 'intermedio', pagina: 1 })} aria-current={nivel === 'intermedio' ? 'true' : undefined}>Intermedio</a></li>
+        <li><a class="chip-filtro" href={enlaceCon({ nivel: nivel === 'avanzado' ? '' : 'avanzado', pagina: 1 })} aria-current={nivel === 'avanzado' ? 'true' : undefined}>Avanzado</a></li>
+      </ul>
+      <form class="filtros" method="get" action={`${base}guias/`} aria-labelledby="filtros-titulo">
+        <h2 class="visualmente-oculto" id="filtros-titulo">Filtrar por herramienta</h2>
+        {equipo && <input type="hidden" name="equipo" value={equipo} />}
+        {nivel && <input type="hidden" name="nivel" value={nivel} />}
+        {acceso && <input type="hidden" name="acceso" value={acceso} />}
+        <div class="filtros__campo">
+          <label for="filtro-herramienta">Herramienta</label>
+          <select id="filtro-herramienta" name="herramienta">
+            <option value="">Todas</option>
+            {herramientas.map((item) => (
+              <option value={item.herramienta} selected={item.herramienta === herramienta}>
+                {nombreHerramienta(item.herramienta)} ({item.total})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div class="filtros__acciones">
+          <button type="submit" class="boton boton--secundario">Aplicar</button>
+          {hayFiltros && <a class="filtros__limpiar" href={`${base}guias/`}>Limpiar</a>}
+        </div>
+      </form>
+    </details>
 
     {guias.length > 0 ? (
       <>
