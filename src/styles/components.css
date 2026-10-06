@@ -852,11 +852,6 @@ a.tarjeta:hover .tarjeta__titulo {
   text-transform: uppercase;
 }
 
-.codigo-bloque__copy:focus-visible {
-  outline: 2px solid var(--fuchsia);
-  outline-offset: 2px;
-}
-
 .codigo-bloque__copy {
   background: transparent;
   border: 1px solid var(--linea-fuerte);
