@@ -278,22 +278,50 @@
   margin: 0;
 }
 
-/* 5. Eyebrow "CYBERSECURITY KNOWLEDGE LAB": mínimo 14px (0.875rem), peso 500, contraste AA (#E8ECFF sobre fondo oscuro). */
+/* 1. Jerarquía tipográfica senior y equilibrada para el hero */
 .portada--hero__eyebrow {
   margin: 0;
   font-family: var(--fuente-mono);
-  font-size: 0.875rem;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: #E8ECFF;
+  color: #F1F4FF;
+  /* 2. Motion para el eyebrow: entrada suave con fade + translateY (600ms, ease-out) */
+  animation: hero-fade-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.portada--hero__contenido > p:not(.portada--hero__eyebrow) {
+.portada--hero__descriptor {
   margin: 0;
-  max-width: 36ch;
-  font-size: clamp(1.05rem, 2.2vw, 1.3rem);
-  color: #DCE1F5;
+  max-width: 40ch;
+  font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+  line-height: 1.45;
+  font-weight: 500;
+  color: #EDF2F7;
+  text-align: center;
+  /* 2. Motion para el descriptor: entrada ligeramente posterior (700ms, delay 120ms) */
+  animation: hero-fade-up 700ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 3. Accesibilidad: prefers-reduced-motion para desactivar animaciones */
+@media (prefers-reduced-motion: reduce) {
+  .portada--hero__eyebrow,
+  .portada--hero__descriptor {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 .portada--hero__acciones {
