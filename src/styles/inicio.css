@@ -112,10 +112,8 @@
   border-radius: 0;
   object-fit: cover;
   object-position: center top;
-  /* B: realce de la imagen principal sin regenerarla. */
-  filter: contrast(1.08) brightness(1.15);
-  /* B: entrada de las letras en el primer paint (emil-design-eng:
-     ease-out fuerte, solo opacity, sin retrasar el LCP). */
+  /* 3. Eliminados todos los filtros CSS (contrast, brightness, saturate, blur)
+     y la capa duplicada con mix-blend-mode. Se conserva la entrada (emil-design-eng). */
   animation: hero-entrada 800ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
@@ -124,42 +122,25 @@
   to { opacity: 1; }
 }
 
-/* B: capa de resplandor que duplica el fondo solo en la banda de la
-   constelación (arriba ~50%). Solo anima opacity (6s alternate). */
-.portada--hero__constelacion {
+/* 4. Superpón la constelación centrada en la parte superior (~45% altura del hero),
+   width: min(92vw, 1100px), height: auto, sin recorte lateral en 375 y 430px. */
+.portada--hero__constelacion-wrap {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  border-radius: 0;
+  top: 6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92vw, 1100px);
+  z-index: 2;
   pointer-events: none;
-  mix-blend-mode: screen;
-  opacity: 0.65;
-  filter: blur(6px) brightness(1.6) saturate(1.2);
-  -webkit-mask-image: linear-gradient(#000 0%, #000 42%, transparent 58%);
-  mask-image: linear-gradient(#000 0%, #000 42%, transparent 58%);
-  animation: hero-constelacion-pulso 6s ease-in-out infinite alternate;
-  will-change: opacity;
+  display: flex;
+  justify-content: center;
 }
 
-.portada--hero__constelacion img {
+.portada--hero__constelacion-svg {
   width: 100%;
-  height: 100%;
-  max-width: none;
-  border-radius: 0;
-  object-fit: cover;
-  object-position: center top;
-}
-
-@keyframes hero-constelacion-pulso {
-  from { opacity: 0.55; }
-  to { opacity: 0.95; }
-}
-
-/* Pausa fuera de pantalla vía JS (.is-pausado) o timeline cuando exista. */
-.portada--hero__constelacion.is-pausado {
-  animation-play-state: paused;
+  height: auto;
+  max-width: 1100px;
+  display: block;
 }
 
 @supports (animation-timeline: scroll()) {
@@ -307,12 +288,12 @@
   margin: 0;
 }
 
-/* A: eyebrow visible en lugar del h1 repetido (Impeccable: jerarquía). */
+/* 5. Eyebrow "CYBERSECURITY KNOWLEDGE LAB": mínimo 14px (0.875rem), peso 500, contraste AA (#E8ECFF sobre fondo oscuro). */
 .portada--hero__eyebrow {
   margin: 0;
   font-family: var(--fuente-mono);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #E8ECFF;

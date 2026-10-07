@@ -35,42 +35,32 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <source
           srcset={`${base}hero/fondo-hd-vertical.webp`}
           type="image/webp"
-          media="(max-aspect-ratio: 1/1) and (min-width: 31rem)"
+          media="(max-aspect-ratio: 1/1)"
         />
         <source
-          srcset={`${base}hero/fondo-hd-768.webp 768w, ${base}hero/fondo-hd-1024.webp 1024w`}
+          srcset={`${base}hero/fondo-hd-1280.webp 1280w, ${base}hero/fondo-hd-1920.webp 1920w, ${base}hero/fondo-hd-2560.webp 2560w`}
           type="image/webp"
           sizes="100vw"
         />
         <img
-          src={`${base}hero/fondo-hd-1024.webp`}
-          width="1024"
-          height="572"
+          src={`${base}hero/fondo-hd-1920.webp`}
+          width="1920"
+          height="1072"
           alt=""
           fetchpriority="high"
           decoding="async"
         />
       </picture>
-      <picture class="portada--hero__constelacion" aria-hidden="true">
-        <source
-          srcset={`${base}hero/fondo-hd-vertical.webp`}
-          type="image/webp"
-          media="(max-aspect-ratio: 1/1) and (min-width: 31rem)"
-        />
-        <source
-          srcset={`${base}hero/fondo-hd-768.webp 768w, ${base}hero/fondo-hd-1024.webp 1024w`}
-          type="image/webp"
-          sizes="100vw"
-        />
+      <div class="portada--hero__constelacion-wrap" aria-hidden="true">
         <img
-          src={`${base}hero/fondo-hd-1024.webp`}
-          width="1024"
-          height="572"
+          src={`${base}hero/constelacion-joanix.svg`}
           alt=""
+          aria-hidden="true"
+          class="portada--hero__constelacion-svg"
           loading="eager"
           decoding="async"
         />
-      </picture>
+      </div>
       <div class="portada--hero__glow portada--hero__glow--red"></div>
       <div class="portada--hero__glow portada--hero__glow--blue"></div>
       <div class="portada--hero__grid"></div>
