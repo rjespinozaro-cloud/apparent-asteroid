@@ -77,8 +77,11 @@
   text-align: center;
   max-width: none;
   margin: 0;
-  min-height: 100vh;
-  min-height: 100svh;
+  /* A: zona de constelación libre. En pantallas bajas el hero crece
+     más que el viewport para que el texto quede debajo (Impeccable:
+     jerarquía sin solapes). */
+  min-height: max(100vh, 46rem);
+  min-height: max(100svh, 46rem);
   padding: clamp(4rem, 12vh, 8rem) var(--pad-x);
 }
 
@@ -109,6 +112,54 @@
   border-radius: 0;
   object-fit: cover;
   object-position: center top;
+  /* B: realce de la imagen principal sin regenerarla. */
+  filter: contrast(1.08) brightness(1.15);
+  /* B: entrada de las letras en el primer paint (emil-design-eng:
+     ease-out fuerte, solo opacity, sin retrasar el LCP). */
+  animation: hero-entrada 800ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes hero-entrada {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* B: capa de resplandor que duplica el fondo solo en la banda de la
+   constelación (arriba ~50%). Solo anima opacity (6s alternate). */
+.portada--hero__constelacion {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border-radius: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.65;
+  filter: blur(6px) brightness(1.6) saturate(1.2);
+  -webkit-mask-image: linear-gradient(#000 0%, #000 42%, transparent 58%);
+  mask-image: linear-gradient(#000 0%, #000 42%, transparent 58%);
+  animation: hero-constelacion-pulso 6s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+
+.portada--hero__constelacion img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center top;
+}
+
+@keyframes hero-constelacion-pulso {
+  from { opacity: 0.55; }
+  to { opacity: 0.95; }
+}
+
+/* Pausa fuera de pantalla vía JS (.is-pausado) o timeline cuando exista. */
+.portada--hero__constelacion.is-pausado {
+  animation-play-state: paused;
 }
 
 @supports (animation-timeline: scroll()) {
@@ -123,25 +174,7 @@
   }
 }
 
-/* Texto alineado al fondo del hero; en viewports bajos se compacta. */
-.portada--hero__contenido {
-  align-self: end;
-  padding-bottom: clamp(2rem, 6vh, 4rem);
-}
-
-@media (max-height: 680px) {
-  .portada--hero__contenido {
-    gap: 0.75rem;
-  }
-
-  .portada--hero h1 {
-    font-size: clamp(2rem, 7vh, 3rem);
-  }
-
-  .portada--hero__contenido > p:not(.portada--hero__eyebrow) {
-    font-size: 1rem;
-  }
-}
+/* (Reglas del contenido en la sección A, después del scrim.) */
 
 .portada--hero__glow {
   position: absolute;
@@ -160,7 +193,10 @@
   background-repeat: no-repeat;
   background-size: 95% 115%;
   background-position: 5% 48%;
-  animation: hero-red 22s ease-in-out infinite alternate;
+  /* Presupuesto de movimiento (emil-design-eng): solo la constelación
+     pulsa en infinito (1/2). Estas luces quedan estáticas para no
+     superar 2 infinitas simultáneas en el hero. */
+  animation: none;
 }
 
 .portada--hero__glow--blue {
@@ -168,20 +204,11 @@
   background-repeat: no-repeat;
   background-size: 95% 115%;
   background-position: 95% 52%;
-  animation: hero-blue 26s ease-in-out infinite alternate;
+  animation: none;
 }
 
-@keyframes hero-red {
-  to {
-    transform: translate(26%, -6%) scale(1.15);
-  }
-}
-
-@keyframes hero-blue {
-  to {
-    transform: translate(-26%, 6%) scale(1.1);
-  }
-}
+/* hero-red / hero-blue retirados: presupuesto ≤2 infinitas, solo pulsa la
+   constelación. Se conservan las luces estáticas. */
 
 .portada--hero__grid {
   position: absolute;
@@ -209,8 +236,42 @@
   z-index: 1;
   display: grid;
   justify-items: center;
+  align-self: end;
   gap: 1.25rem;
   max-width: 44rem;
+  /* A: el borde superior queda por debajo de la constelación (~50% hero).
+     Medido con getBoundingClientRect; +margen visual para que el eyebrow
+     no roce la base de las letras (la imagen las extiende bajo el 50%). */
+  padding-top: clamp(30rem, 64vh, 38rem);
+  padding-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+/* En viewports bajos se compacta el gap pero el hero crece
+   (min-height 46rem) para no solapar la constelación. */
+@media (max-height: 680px) {
+  .portada--hero__contenido {
+    gap: 0.75rem;
+    padding-top: clamp(29rem, 66vh, 34rem);
+  }
+
+  .portada--hero__contenido > p:not(.portada--hero__eyebrow) {
+    font-size: 1rem;
+  }
+}
+
+/* A: scrim elíptico detrás del texto para AA sobre las líneas. */
+.portada--hero__contenido::before {
+  content: "";
+  position: absolute;
+  inset: -8% -12%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 65% 55% at 50% 50%,
+    rgb(5 6 12 / 0.88) 0%,
+    rgb(5 6 12 / 0.55) 45%,
+    transparent 70%
+  );
 }
 
 /* Buscador del hero: ocupa el ancho del contenido sin romper el centrado. */
@@ -240,17 +301,21 @@
   white-space: nowrap;
 }
 
-.portada--hero h1 {
+/* A: el h1 queda en el DOM para SEO/lectores pero oculto visualmente:
+   la constelación ya dice JOANIX (.visualmente-oculto en base.css). */
+.portada--hero h1.visualmente-oculto {
   margin: 0;
-  font-size: clamp(2.75rem, 9vw, 6rem);
-  line-height: 0.95;
-  letter-spacing: -0.04em;
-  /* Blanco frío con matiz azul/violeta: el punto más oscuro (#B9C6FF)
-     contrasta 12:1 sobre el fondo con scrim (AA de sobra). */
-  background: linear-gradient(180deg, #FFFFFF 0%, #DCE4FF 55%, #B9C6FF 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+}
+
+/* A: eyebrow visible en lugar del h1 repetido (Impeccable: jerarquía). */
+.portada--hero__eyebrow {
+  margin: 0;
+  font-family: var(--fuente-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #E8ECFF;
 }
 
 .portada--hero__contenido > p:not(.portada--hero__eyebrow) {
@@ -471,8 +536,47 @@
 
 @media (max-width: 47.99rem) {
   .portada--hero {
-    min-height: calc(100vh - 7rem);
-    min-height: calc(100svh - 7rem);
+    /* A: también en móvil el hero puede superar el viewport. */
+    min-height: max(calc(100vh - 7rem), 46rem);
+    min-height: max(calc(100svh - 7rem), 46rem);
+  }
+
+  .portada--hero__contenido {
+    padding-top: clamp(24rem, 62vh, 30rem);
+  }
+}
+
+/* C: 375/430 px. La palabra JOANIX debe verse completa.
+   El <picture> ya conmuta a fondo-hd-vertical.webp con
+   media="(max-aspect-ratio: 1/1)". La vertical existe (768x1024, 34 KB)
+   pero con cover sigue recortando laterales (medido: en 375 solo se ven
+   A/N parciales; en 430 igual; en 768 J/X al borde).
+   Fallback aplicado: object-fit:contain en esta banda para garantizar
+   la palabra completa sin regenerar la imagen.
+   Pendiente: regenerar crop estrecho public/hero/fondo-hd-vertical-375.webp
+   (y srcset 375w/430w) para volver a cover a sangre. Ver informe. */
+@media (max-width: 30rem) {
+  .portada--hero__fondo,
+  .portada--hero__constelacion {
+    background: #05060c;
+  }
+
+  .portada--hero__fondo img,
+  .portada--hero__constelacion img {
+    object-fit: contain;
+    object-position: center top;
+    background: #05060c;
+  }
+
+  .portada--hero__contenido {
+    /* 375px: el viewport interior headless es más bajo que 667px;
+       mínimo 29rem para garantizar eyebrow bajo el 50% medido. */
+    padding-top: clamp(29rem, 72vh, 32rem);
+  }
+
+  .portada--hero__eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
   }
 }
 
@@ -483,6 +587,15 @@
 
   .portada--hero__fondo {
     animation: none;
+  }
+
+  .portada--hero__fondo img {
+    animation: none;
+  }
+
+  .portada--hero__constelacion {
+    animation: none;
+    opacity: 0.65;
   }
 }
 

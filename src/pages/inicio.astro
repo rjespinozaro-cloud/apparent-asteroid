@@ -35,7 +35,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <source
           srcset={`${base}hero/fondo-hd-vertical.webp`}
           type="image/webp"
-          media="(max-aspect-ratio: 1/1)"
+          media="(max-aspect-ratio: 1/1) and (min-width: 31rem)"
         />
         <source
           srcset={`${base}hero/fondo-hd-768.webp 768w, ${base}hero/fondo-hd-1024.webp 1024w`}
@@ -51,13 +51,34 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           decoding="async"
         />
       </picture>
+      <picture class="portada--hero__constelacion" aria-hidden="true">
+        <source
+          srcset={`${base}hero/fondo-hd-vertical.webp`}
+          type="image/webp"
+          media="(max-aspect-ratio: 1/1) and (min-width: 31rem)"
+        />
+        <source
+          srcset={`${base}hero/fondo-hd-768.webp 768w, ${base}hero/fondo-hd-1024.webp 1024w`}
+          type="image/webp"
+          sizes="100vw"
+        />
+        <img
+          src={`${base}hero/fondo-hd-1024.webp`}
+          width="1024"
+          height="572"
+          alt=""
+          loading="eager"
+          decoding="async"
+        />
+      </picture>
       <div class="portada--hero__glow portada--hero__glow--red"></div>
       <div class="portada--hero__glow portada--hero__glow--blue"></div>
       <div class="portada--hero__grid"></div>
       <div class="portada--hero__scrim"></div>
     </div>
     <div class="portada--hero__contenido">
-      <h1 id="inicio-titulo">JOANIX GUIDES</h1>
+      <h1 id="inicio-titulo" class="visualmente-oculto">JOANIX GUIDES</h1>
+      <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
       <p class="portada--hero__descriptor">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</p>
       <div class="portada__acciones portada--hero__acciones">
         <a class="boton--premium" href={`${base}guias/`}>Explorar guías</a>
@@ -221,4 +242,5 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 <script>
   import '../scripts/continua.js';
   import '../scripts/ruta-anim.js';
+  import '../scripts/hero-constelacion.js';
 </script>
