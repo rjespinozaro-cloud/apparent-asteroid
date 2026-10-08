@@ -500,7 +500,9 @@
     radial-gradient(40% 50% at 100% 50%, rgb(77 124 255 / 0.14), transparent 70%);
 }
 
-.seccion--rutas::before {
+/* El catálogo de rutas aporta su propia atmósfera (catalogo.css); esta regla
+   solo aplica a la sección de rutas de la portada y al detalle de ruta. */
+.seccion--rutas:not(.catalogo-pagina)::before {
   content: "";
   position: absolute;
   inset: -10% -5%;

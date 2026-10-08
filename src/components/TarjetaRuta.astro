@@ -20,6 +20,7 @@ const { ruta, tipologia, primerPaso = null } = Astro.props;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const estaPublicada = Number(ruta.publicada ?? 1) === 1;
 const tipo = tipologia.tipo ?? 'neutro';
+const tono = tipo === 'red' || tipo === 'blue' ? `tarjeta--${tipo}` : null;
 const nodos = Array.from({ length: Math.max(Number(tipologia.pasos) || 0, 0) }, (_, indice) => indice + 1);
 const meta = [
   tipologia.nivel ? nombreNivel(tipologia.nivel) : null,
@@ -29,7 +30,7 @@ const meta = [
 ].filter(Boolean);
 ---
 
-<article class:list={['ruta-card', !estaPublicada && 'ruta-card--preparacion']}>
+<article class:list={['tarjeta-premium', 'ruta-card', tono, !estaPublicada && 'ruta-card--preparacion']} data-spotlight>
   <div class="ruta-card__encabezado">
     <span class:list={['etiqueta', `etiqueta--${tipo}`]}>{tipologia.tipo?.toUpperCase() ?? 'RUTA'}</span>
     {!estaPublicada && <span class="ruta-card__estado">En preparación</span>}

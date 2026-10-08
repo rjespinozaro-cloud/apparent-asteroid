@@ -3,16 +3,6 @@
  * Imported after components so catalog-specific patterns can refine them.
  */
 
-@property --ruta-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes giro-ruta {
-  to { --ruta-angle: 360deg; }
-}
-
 /* Shared catalog header --------------------------------------------------- */
 
 .catalogo-cabecera {
@@ -71,8 +61,7 @@
   -webkit-background-clip: text;
 }
 
-.catalogo-stat span,
-.catalogo-stats span {
+.catalogo-stat span {
   color: var(--text-muted, var(--tinta-suave));
   font-size: 0.875rem;
 }
@@ -99,26 +88,6 @@
 
 .catalogo-stat--premium {
   border-color: color-mix(in srgb, var(--fuchsia) 38%, var(--linea));
-}
-
-.catalogo-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.catalogo-stats strong {
-  background: linear-gradient(90deg, var(--red), var(--fuchsia) 55%, var(--blue));
-  background-clip: text;
-  color: transparent;
-  display: block;
-  font-size: clamp(2rem, 4vw, 3rem);
-  letter-spacing: -0.03em;
-  line-height: 1;
-  -webkit-background-clip: text;
 }
 
 /* Filters ----------------------------------------------------------------- */
@@ -190,11 +159,13 @@
   position: relative;
 }
 
+/* Atmósfera del catálogo: solo violeta/fucsia de marca. El rojo y el azul
+   quedan reservados a los equipos (RED/BLUE), nunca como color de página. */
 .catalogo-pagina--catalogo::before {
   background:
-    radial-gradient(55rem 28rem at 0% 0%, color-mix(in srgb, var(--red) 16%, transparent), transparent 68%),
-    radial-gradient(55rem 28rem at 100% 0%, color-mix(in srgb, var(--blue) 16%, transparent), transparent 68%),
-    linear-gradient(180deg, color-mix(in srgb, var(--violet-500) 12%, transparent), transparent 42%);
+    radial-gradient(58rem 30rem at 50% -6%, color-mix(in srgb, var(--violet-500) 22%, transparent), transparent 70%),
+    radial-gradient(42rem 24rem at 88% 10%, color-mix(in srgb, var(--fuchsia) 12%, transparent), transparent 72%),
+    linear-gradient(180deg, color-mix(in srgb, var(--violet-500) 10%, transparent), transparent 42%);
   content: "";
   inset: -2rem -8vw;
   mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 90%, transparent);
@@ -249,68 +220,20 @@
   margin-top: var(--espacio-2xs);
 }
 
-/* Route cards ------------------------------------------------------------- */
+/* Route cards: mismo contenedor que las tarjetas de guías y herramientas
+   (.tarjeta-premium). Aquí solo van los detalles internos de la ruta. */
 
 .ruta-card {
-  background: var(--papel-alto);
-  border: 1px solid color-mix(in srgb, var(--violet-500) 26%, var(--linea));
-  border-radius: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.15rem;
-  isolation: isolate;
   min-height: 100%;
-  overflow: hidden;
-  padding: 1.35rem;
-  position: relative;
-  transition: transform 180ms var(--curva), box-shadow 180ms var(--curva), border-color 180ms var(--curva);
-}
-
-.ruta-card::before {
-  background: linear-gradient(135deg, var(--red), var(--violet-500), var(--blue));
-  border-radius: inherit;
-  content: "";
-  inset: 0;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  opacity: 0.55;
-  padding: 1.5px;
-  pointer-events: none;
-  position: absolute;
-  transition: opacity 180ms var(--curva);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  z-index: -1;
-}
-
-@supports (background: conic-gradient(from 0deg, red, blue)) {
-  .ruta-card::before {
-    animation: giro-ruta 9s linear infinite;
-    background: conic-gradient(from var(--ruta-angle), var(--red), var(--violet-500), var(--blue), var(--fuchsia), var(--red));
-  }
-}
-
-.ruta-card:hover {
-  border-color: color-mix(in srgb, var(--violet-300) 65%, var(--linea));
-  box-shadow: var(--sombra-2);
-  transform: translateY(-3px);
-}
-
-.ruta-card:hover::before {
-  opacity: 1;
 }
 
 .ruta-card--preparacion {
-  background: color-mix(in srgb, var(--papel-alto) 88%, var(--linea));
-  border-color: color-mix(in srgb, var(--linea-fuerte) 70%, var(--linea));
+  opacity: 0.82;
 }
 
 .ruta-card--preparacion:hover {
   box-shadow: none;
   transform: none;
-}
-
-.ruta-card--preparacion::before {
-  opacity: 0.3;
 }
 
 .ruta-card--preparacion .tarjeta__titulo,
@@ -445,44 +368,9 @@
   text-transform: uppercase;
 }
 
-/* Only the first two route borders loop forever. The rest keep the fallback. */
-.ruta-card::before {
-  animation-play-state: paused;
-}
-
-.ruta-card.en-pantalla::before {
-  animation-play-state: running;
-}
-
-.rutas-conjunto--catalogo .rejilla-tarjetas > li:nth-child(n + 3) .ruta-card::before {
-  animation: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .ruta-card::before {
-    animation: none;
-  }
-
   .ruta-card:hover {
     transform: none;
-  }
-}
-
-@media (pointer: fine) {
-  .ruta-card::after {
-    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), color-mix(in srgb, var(--fuchsia) 22%, transparent), transparent 55%);
-    border-radius: inherit;
-    content: "";
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    transition: opacity 180ms var(--curva);
-    z-index: -1;
-  }
-
-  .ruta-card:hover::after {
-    opacity: 1;
   }
 }
 
@@ -642,15 +530,11 @@
 /* Contrast and responsive fallbacks ------------------------------------- */
 
 @media (prefers-contrast: more) {
-  .ruta-card::before {
-    animation: none;
-    background: var(--violet-300);
-    opacity: 1;
-  }
-
-  .catalogo-stats strong {
+  .catalogo-stat strong {
     background: none;
     color: var(--text);
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
   }
 
   .chip-filtro[aria-current="true"] {
@@ -684,9 +568,5 @@
 @media (max-width: 47.99rem) {
   .catalogo-cabecera__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ruta-card {
-    padding: 1.15rem;
   }
 }

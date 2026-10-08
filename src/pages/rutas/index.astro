@@ -35,7 +35,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 >
   <Migas clase="contenedor catalogo-migas" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
 
-  <section class="seccion catalogo-pagina catalogo-pagina--catalogo seccion--rutas" aria-labelledby="rutas-titulo">
+  <section class="seccion catalogo-pagina catalogo-pagina--catalogo" aria-labelledby="rutas-titulo">
     <CabeceraCatalogo
       title="Aprende en orden"
       titleId="rutas-titulo"
@@ -110,7 +110,3 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
   <AsistenteFlotante />
 </Base>
-
-<script>
-  import '../../scripts/ruta-anim.js';
-</script>

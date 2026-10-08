@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import CabeceraCatalogo from '../../components/CabeceraCatalogo.astro';
 import Migas from '../../components/Migas.astro';
 import { getDatabase, listarGuiasDeHerramienta, listarHerramientasPublicadas } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
@@ -21,33 +22,38 @@ const guiasUnica = unica ? await listarGuiasDeHerramienta(database, unica.herram
 const rojasUnica = guiasUnica.filter((guia) => guia.equipo === 'red');
 const azulesUnica = guiasUnica.filter((guia) => guia.equipo === 'blue');
 
+const descripcion = herramientas.length > 0
+  ? `${plural(herramientas.length, 'herramienta', 'herramientas')} con ${plural(totalGuias, 'guía', 'guías')} asociadas.`
+  : 'Todavía no hay herramientas publicadas.';
+
+const estadisticas = herramientas.length > 0
+  ? [
+      { value: herramientas.length, label: plural(herramientas.length, 'herramienta', 'herramientas'), tone: 'violet' as const },
+      { value: totalGuias, label: plural(totalGuias, 'guía', 'guías'), tone: 'premium' as const },
+      { value: totalRed, label: 'RED', tone: 'red' as const },
+      { value: totalBlue, label: 'BLUE', tone: 'blue' as const },
+    ].filter((stat) => stat.value > 0)
+  : [];
+
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
 
 <Base
   title="Herramientas | JOANIX GUIDES"
   description={`Explora las ${herramientas.length} herramientas documentadas en JOANIX GUIDES y encuentra las guías RED y BLUE de cada una.`}
+  clase="catalogo-shell"
 >
-  <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Herramientas' }]} />
+  <Migas clase="contenedor catalogo-migas" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Herramientas' }]} />
 
-  <section class="seccion catalogo-pagina catalogo-pagina--herramientas" aria-labelledby="herramientas-titulo">
-    <div>
-      <p class="eyebrow">Catálogo</p>
-      <h1 id="herramientas-titulo">Herramientas</h1>
-      <p class="entradilla">
-        {herramientas.length > 0
-          ? `${plural(herramientas.length, 'herramienta', 'herramientas')} con ${plural(totalGuias, 'guía', 'guías')} asociadas.`
-          : 'Todavía no hay herramientas publicadas.'}
-      </p>
-      {herramientas.length > 0 && (
-        <ul class="catalogo-stats" aria-label="Totales del catálogo de herramientas">
-          <li><strong>{herramientas.length}</strong><span>{herramientas.length === 1 ? 'herramienta' : 'herramientas'}</span></li>
-          <li><strong>{totalGuias}</strong><span>{totalGuias === 1 ? 'guía' : 'guías'}</span></li>
-          {totalRed > 0 && <li><strong>{totalRed}</strong><span>RED</span></li>}
-          {totalBlue > 0 && <li><strong>{totalBlue}</strong><span>BLUE</span></li>}
-        </ul>
-      )}
-    </div>
+  <section class="seccion catalogo-pagina catalogo-pagina--catalogo" aria-labelledby="herramientas-titulo">
+    <CabeceraCatalogo
+      title="Herramientas"
+      titleId="herramientas-titulo"
+      description={descripcion}
+      searchId="buscar-herramientas"
+      stats={estadisticas}
+      statsLabel="Resumen de herramientas"
+    />
 
     <p class="paginacion__estado" role="status">
       {herramientas.length > 0
@@ -85,7 +91,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           )}
         </article>
       ) : herramientas.length > 0 ? (
-        <ul class="rejilla-tarjetas lista-herramientas--tarjetas">
+        <ul class="rejilla-tarjetas lista-herramientas--tarjetas reveal--stagger">
           {herramientas.map((item) => (
             <li>
               <article class="tarjeta-premium tarjeta--herramienta" data-spotlight>
