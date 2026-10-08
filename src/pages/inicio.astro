@@ -51,41 +51,53 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           decoding="async"
         />
       </picture>
-      <div class="portada--hero__constelacion-wrap" aria-hidden="true">
-        <picture>
-          <source media="(max-width:700px)" srcset={`${base}hero/constelacion-joanix-movil.svg`} />
-          <img src={`${base}hero/constelacion-joanix.svg`} alt="" aria-hidden="true" width="1195" height="300" decoding="async" />
-        </picture>
-      </div>
       <div class="portada--hero__glow portada--hero__glow--red"></div>
       <div class="portada--hero__glow portada--hero__glow--blue"></div>
       <div class="portada--hero__grid"></div>
       <div class="portada--hero__scrim"></div>
     </div>
     <div class="portada--hero__contenido">
-      <h1 id="inicio-titulo" class="visualmente-oculto">JOANIX GUIDES</h1>
-      <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
-      <p class="portada--hero__descriptor">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</p>
-      <div class="portada__acciones portada--hero__acciones">
-        <a class="boton--premium" href={`${base}guias/`}>Explorar guías</a>
-        <a class="boton--ghost" href={`${base}herramientas/`}>Explorar herramientas</a>
+      <div class="portada--hero__constelacion" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 700px)" srcset={`${base}hero/constelacion-joanix-movil.svg`} />
+          <img src={`${base}hero/constelacion-joanix.svg`} alt="" width="1280" height="209" decoding="async" />
+        </picture>
       </div>
-      <form class="buscador" method="get" action={`${base}buscar/`} role="search">
-        <label class="visualmente-oculto" for="buscar-inicio">Buscar guías</label>
-        <input
-          id="buscar-inicio"
-          name="q"
-          type="search"
-          maxlength="80"
-          autocomplete="off"
-          enterkeyhint="search"
-          placeholder="Buscar guías por texto…"
-        />
-        <button type="submit" class="boton--premium">Buscar</button>
-      </form>
-      <div class="portada--hero__scroll" aria-hidden="true">
-        <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
-        <span class="portada--hero__scroll-line"></span>
+      <div class="portada--hero__texto">
+        <h1 id="inicio-titulo" class="visualmente-oculto">JOANIX GUIDES</h1>
+        <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
+        <h2 class="portada--hero__titular">
+          <span class="portada--hero__titular-ventana">
+            <span class="portada--hero__titular-pista">
+              <span>Aprende seguridad ofensiva</span>
+              <span aria-hidden="true">Defiende como equipo azul</span>
+              <span aria-hidden="true">Purple team: ataque y defensa</span>
+              <span aria-hidden="true">Aprende seguridad ofensiva</span>
+            </span>
+          </span>
+        </h2>
+        <p class="portada--hero__subtitulo">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</p>
+        <div class="portada__acciones portada--hero__acciones">
+          <a class="boton--premium" href={`${base}guias/`}>Explorar guías</a>
+          <a class="boton--ghost" href={`${base}herramientas/`}>Explorar herramientas</a>
+        </div>
+        <form class="buscador" method="get" action={`${base}buscar/`} role="search">
+          <label class="visualmente-oculto" for="buscar-inicio">Buscar guías</label>
+          <input
+            id="buscar-inicio"
+            name="q"
+            type="search"
+            maxlength="80"
+            autocomplete="off"
+            enterkeyhint="search"
+            placeholder="Buscar guías por texto…"
+          />
+          <button type="submit" class="boton--premium">Buscar</button>
+        </form>
+        <div class="portada--hero__scroll" aria-hidden="true">
+          <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
+          <span class="portada--hero__scroll-line"></span>
+        </div>
       </div>
     </div>
   </section>
