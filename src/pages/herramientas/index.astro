@@ -12,6 +12,8 @@ export const prerender = false;
 const database = getDatabase(env);
 const herramientas = await listarHerramientasPublicadas(database);
 const totalGuias = herramientas.reduce((suma, item) => suma + item.total, 0);
+const totalRed = herramientas.reduce((suma, item) => suma + item.red, 0);
+const totalBlue = herramientas.reduce((suma, item) => suma + item.blue, 0);
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 // Con una sola herramienta se muestran sus guías RED y BLUE directamente.
 const unica = herramientas.length === 1 ? herramientas[0] : null;
@@ -28,27 +30,42 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 >
   <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Herramientas' }]} />
 
-  <section class="seccion" aria-labelledby="herramientas-titulo">
+  <section class="seccion catalogo-pagina catalogo-pagina--herramientas" aria-labelledby="herramientas-titulo">
     <div>
-      <p class="eyebrow">Explorador</p>
+      <p class="eyebrow">Catálogo</p>
       <h1 id="herramientas-titulo">Herramientas</h1>
       <p class="entradilla">
         {herramientas.length > 0
           ? `${plural(herramientas.length, 'herramienta', 'herramientas')} con ${plural(totalGuias, 'guía', 'guías')} asociadas.`
           : 'Todavía no hay herramientas publicadas.'}
       </p>
+      {herramientas.length > 0 && (
+        <ul class="catalogo-stats" aria-label="Totales del catálogo de herramientas">
+          <li><strong>{herramientas.length}</strong><span>{herramientas.length === 1 ? 'herramienta' : 'herramientas'}</span></li>
+          <li><strong>{totalGuias}</strong><span>{totalGuias === 1 ? 'guía' : 'guías'}</span></li>
+          {totalRed > 0 && <li><strong>{totalRed}</strong><span>RED</span></li>}
+          {totalBlue > 0 && <li><strong>{totalBlue}</strong><span>BLUE</span></li>}
+        </ul>
+      )}
     </div>
+
+    <p class="paginacion__estado" role="status">
+      {herramientas.length > 0
+        ? plural(herramientas.length, 'herramienta encontrada', 'herramientas encontradas')
+        : 'Sin herramientas publicadas.'}
+    </p>
 
     {
       unica ? (
-        <article class="herramienta-detalle" aria-labelledby="herramienta-unica">
-          <h2 id="herramienta-unica">{nombreHerramienta(unica.herramienta)}</h2>
-          <p class="guia__meta-catalogo">
+        <article class="herramienta-detalle tarjeta-premium" aria-labelledby="herramienta-unica" data-spotlight>
+          <p class="tarjeta__kicker tarjeta__kicker--neutro">Herramienta</p>
+          <h2 class="tarjeta__titulo" id="herramienta-unica">{nombreHerramienta(unica.herramienta)}</h2>
+          <p class="tarjeta__meta-linea">
             {plural(unica.total, 'guía', 'guías')} · {plural(unica.red, 'ofensiva', 'ofensivas')} (RED) · {plural(unica.blue, 'defensiva', 'defensivas')} (BLUE)
           </p>
           {rojasUnica.length > 0 && (
-            <div>
-              <p class="eyebrow">RED · Ofensiva</p>
+            <div class="herramienta-detalle__grupo">
+              <p class="tarjeta__kicker tarjeta__kicker--red">RED · Ofensiva</p>
               <ul class="herramienta-detalle__guias">
                 {rojasUnica.map((guia) => (
                   <li><a href={`${base}guias/${guia.slug}/`}>{guia.titulo}</a></li>
@@ -57,8 +74,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
             </div>
           )}
           {azulesUnica.length > 0 && (
-            <div>
-              <p class="eyebrow">BLUE · Defensa</p>
+            <div class="herramienta-detalle__grupo">
+              <p class="tarjeta__kicker tarjeta__kicker--blue">BLUE · Defensa</p>
               <ul class="herramienta-detalle__guias">
                 {azulesUnica.map((guia) => (
                   <li><a href={`${base}guias/${guia.slug}/`}>{guia.titulo}</a></li>
@@ -68,22 +85,30 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           )}
         </article>
       ) : herramientas.length > 0 ? (
-        <ul class="lista-herramientas lista-herramientas--detalle">
+        <ul class="rejilla-tarjetas lista-herramientas--tarjetas">
           {herramientas.map((item) => (
-            <li class="lista-herramientas__item">
-              <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
-              <span class="lista-herramientas__conteo">
-                {item.blue > 0 && <span class="etiqueta etiqueta--blue">BLUE {item.blue}</span>}
-                {item.red > 0 && <span class="etiqueta etiqueta--red">RED {item.red}</span>}
-                <span class="lista-herramientas__total">{plural(item.total, 'guía', 'guías')}</span>
-              </span>
+            <li>
+              <article class="tarjeta-premium tarjeta--herramienta" data-spotlight>
+                <p class="tarjeta__kicker tarjeta__kicker--neutro">Herramienta</p>
+                <h2 class="tarjeta__titulo">
+                  <a href={`${base}herramientas/${item.herramienta}/`}>{nombreHerramienta(item.herramienta)}</a>
+                </h2>
+                <p class="tarjeta__meta-linea">{plural(item.total, 'guía', 'guías')} asociadas</p>
+                <p class="tarjeta__meta">
+                  {item.blue > 0 && <span class="etiqueta etiqueta--blue">BLUE {item.blue}</span>}
+                  {item.red > 0 && <span class="etiqueta etiqueta--red">RED {item.red}</span>}
+                </p>
+                <span class="tarjeta__accion" aria-hidden="true">Ver guías →</span>
+              </article>
             </li>
           ))}
         </ul>
       ) : (
-        <p>
-          Aún no hay guías publicadas. Vuelve pronto o revisa el <a class="link--premium" href={`${base}guias/`}>catálogo</a>.
-        </p>
+        <div class="vacio">
+          <p>
+            Aún no hay guías publicadas. Vuelve pronto o revisa el <a class="link--premium" href={`${base}guias/`}>catálogo</a>.
+          </p>
+        </div>
       )
     }
   </section>

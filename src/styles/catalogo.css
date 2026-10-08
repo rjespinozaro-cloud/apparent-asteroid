@@ -25,6 +25,14 @@
    para compartir el borde izquierdo con migas, título y chips. */
 .catalogo-destacadas{display:flex;flex-direction:column;gap:var(--espacio-m)}
 
+/* Las dos puertas del catálogo comparten la misma atmósfera visual. La capa
+   local mantiene el fondo visible incluso cuando el contenido crece. */
+.catalogo-pagina{isolation:isolate;position:relative}
+.catalogo-pagina::before{content:"";position:absolute;inset:-2rem -8vw;z-index:-1;pointer-events:none;
+  background:url("../hero/fondo.png") center/cover no-repeat;opacity:.28;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 8%,#000 90%,transparent);
+  mask-image:linear-gradient(to bottom,transparent,#000 8%,#000 90%,transparent)}
+
 /* Detalle plegable de filtros secundarios. */
 .filtros-detalle{margin:0 0 var(--espacio-s)}
 .filtros-detalle>summary{display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:0 1rem;list-style:none;cursor:pointer;
