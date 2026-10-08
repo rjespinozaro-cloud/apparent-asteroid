@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 180" width="100%" height="100%">
+  <defs>
+    <linearGradient id="neon" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF4D6D" />
+      <stop offset="50%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#4D7CFF" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <g fill="none" stroke="url(#neon)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <!-- Letra J -->
+    <path d="M120 40 h70 v85 c0 25 -15 35 -35 35 c-20 0 -32 -10 -35 -20" />
+    <circle cx="120" cy="40" r="4" fill="#FFF" />
+    <circle cx="190" cy="40" r="4" fill="#FFF" />
+    <circle cx="190" cy="125" r="4" fill="#FFF" />
+    <circle cx="155" cy="155" r="4" fill="#FFF" />
+
+    <!-- Letra O -->
+    <path d="M250 85 c0 -30 25 -45 50 -45 c25 0 50 15 50 45 c0 30 -25 45 -50 45 c-25 0 -50 -15 -50 -45 z" />
+    <circle cx="300" cy="40" r="4" fill="#FFF" />
+    <circle cx="350" cy="85" r="4" fill="#FFF" />
+    <circle cx="300" cy="130" r="4" fill="#FFF" />
+    <circle cx="250" cy="85" r="4" fill="#FFF" />
+
+    <!-- Letra A -->
+    <path d="M420 130 L455 45 L490 130 M435 95 h40" />
+    <circle cx="420" cy="130" r="4" fill="#FFF" />
+    <circle cx="455" cy="45" r="4" fill="#FFF" />
+    <circle cx="490" cy="130" r="4" fill="#FFF" />
+    <circle cx="475" cy="95" r="4" fill="#FFF" />
+    <circle cx="435" cy="95" r="4" fill="#FFF" />
+
+    <!-- Letra N -->
+    <path d="M540 130 V45 L610 130 V45" />
+    <circle cx="540" cy="130" r="4" fill="#FFF" />
+    <circle cx="540" cy="45" r="4" fill="#FFF" />
+    <circle cx="610" cy="130" r="4" fill="#FFF" />
+    <circle cx="610" cy="45" r="4" fill="#FFF" />
+
+    <!-- Letra I -->
+    <path d="M660 45 h50 M685 45 v85 M660 130 h50" />
+    <circle cx="660" cy="45" r="4" fill="#FFF" />
+    <circle cx="710" cy="45" r="4" fill="#FFF" />
+    <circle cx="685" cy="85" r="4" fill="#FFF" />
+    <circle cx="660" cy="130" r="4" fill="#FFF" />
+    <circle cx="710" cy="130" r="4" fill="#FFF" />
+
+    <!-- Letra X -->
+    <path d="M760 45 L830 130 M830 45 L760 130" />
+    <circle cx="760" cy="45" r="4" fill="#FFF" />
+    <circle cx="830" cy="130" r="4" fill="#FFF" />
+    <circle cx="830" cy="45" r="4" fill="#FFF" />
+    <circle cx="760" cy="130" r="4" fill="#FFF" />
+    <circle cx="795" cy="87.5" r="5" fill="#FFF" />
+  </g>
+</svg>
