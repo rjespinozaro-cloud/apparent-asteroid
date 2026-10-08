@@ -77,8 +77,9 @@ export async function obtenerRutaPorSlug(database, slug, { publicadas = false } 
 }
 
 /**
- * Tipología derivada de los pasos publicados de una ruta (sin migración:
- * se calcula en la consulta, nunca se almacena).
+ * Tipología derivada de los pasos de una ruta (sin migración: se calcula en la
+ * consulta, nunca se almacena). El número de pasos incluye los que todavía no
+ * tienen una guía publicada; el resto de la tipología solo usa guías públicas.
  * - tipo: RED si todos los pasos son RED, BLUE si todos BLUE, PURPLE si mezcla.
  * - nivel: el mayor de sus pasos. herramientas: lista única.
  * - duracion_min: suma de lectura_min (NULL si ningún paso la trae).
@@ -87,7 +88,7 @@ export async function obtenerRutaPorSlug(database, slug, { publicadas = false } 
  */
 export async function obtenerTipologiaRuta(database, rutaId) {
   const fila = await database.prepare(
-    `SELECT COUNT(g.id) AS pasos,
+    `SELECT COUNT(p.id) AS pasos,
             COALESCE(SUM(CASE WHEN g.equipo = 'red' THEN 1 ELSE 0 END), 0) AS rojas,
             COALESCE(SUM(CASE WHEN g.equipo = 'blue' THEN 1 ELSE 0 END), 0) AS azules,
             MAX(CASE g.nivel WHEN 'basico' THEN 0 WHEN 'intermedio' THEN 1 WHEN 'avanzado' THEN 2 ELSE -1 END) AS nivel_max,
@@ -101,6 +102,7 @@ export async function obtenerTipologiaRuta(database, rutaId) {
   if (pasos === 0) return { tipo: null, nivel: null, herramientas: [], duracion_min: null, pasos: 0, primer_paso: null };
   const rojas = Number(fila?.rojas ?? 0);
   const azules = Number(fila?.azules ?? 0);
+  const pasosPublicados = rojas + azules;
   const niveles = ['basico', 'intermedio', 'avanzado'];
   const nivelMax = Number(fila?.nivel_max ?? -1);
   const primero = await database.prepare(
@@ -112,8 +114,8 @@ export async function obtenerTipologiaRuta(database, rutaId) {
      LIMIT 1`,
   ).bind(rutaId).first();
   return {
-    tipo: rojas > 0 && azules > 0 ? 'purple' : rojas > 0 ? 'red' : 'blue',
-    nivel: niveles[nivelMax] ?? null,
+    tipo: pasosPublicados === 0 ? null : rojas > 0 && azules > 0 ? 'purple' : rojas > 0 ? 'red' : 'blue',
+    nivel: pasosPublicados === 0 ? null : niveles[nivelMax] ?? null,
     herramientas: String(fila?.herramientas ?? '').split(',').map((s) => s.trim()).filter(Boolean),
     duracion_min: fila?.duracion_min === null ? null : Number(fila.duracion_min),
     pasos,
@@ -122,11 +124,11 @@ export async function obtenerTipologiaRuta(database, rutaId) {
 }
 
 /**
- * Rutas publicadas con su tipología lista para tarjetas.
+ * Rutas con su tipología lista para tarjetas.
  * @param {D1Database} database
  */
-export async function listarRutasConTipologia(database, { destacadas = false } = {}) {
-  const rutas = await listarRutas(database, { publicadas: true, destacadas });
+export async function listarRutasConTipologia(database, { destacadas = false, publicadas = true } = {}) {
+  const rutas = await listarRutas(database, { publicadas, destacadas });
   const fichas = [];
   for (const ruta of rutas) {
     fichas.push({ ruta, tipologia: await obtenerTipologiaRuta(database, ruta.id) });

@@ -7,9 +7,9 @@
    ========================================================================== */
 
 .reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 600ms var(--curva), transform 600ms var(--curva);
+  opacity: 1;
+  transform: none;
+  transition: opacity 450ms var(--curva), transform 450ms var(--curva);
 }
 
 .reveal--fast {
@@ -21,9 +21,9 @@
 }
 
 .reveal--stagger > * {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 500ms var(--curva), transform 500ms var(--curva);
+  opacity: 1;
+  transform: none;
+  transition: opacity 450ms var(--curva), transform 450ms var(--curva);
 }
 
 .reveal--stagger > *:nth-child(1) { transition-delay: 50ms; }
@@ -33,43 +33,14 @@
 .reveal--stagger > *:nth-child(5) { transition-delay: 250ms; }
 .reveal--stagger > *:nth-child(6) { transition-delay: 300ms; }
 
-/* Modern view() timeline (Chrome 115+, Edge 115+) */
-@supports (animation-timeline: view()) {
-  .reveal {
-    animation: reveal-auto linear both;
-    animation-timeline: view(0% 10%);
-    transition: none;
-    opacity: 1;
-    transform: none;
-  }
-  
-  .reveal--fast {
-    animation-timeline: view(0% 5%);
-  }
-  
-  .reveal--slow {
-    animation-timeline: view(0% 20%);
-  }
-  
-  @keyframes reveal-auto {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
+/* Initial transitions are progressive enhancement; content remains visible
+   when the browser does not support starting-style or JavaScript. */
+@starting-style {
+  .reveal,
   .reveal--stagger > * {
-    animation: reveal-auto linear both;
-    animation-timeline: view(0% 10%);
-    transition: none;
-    opacity: 1;
-    transform: none;
+    opacity: 0;
+    transform: translateY(24px);
   }
-  
-  .reveal--stagger > *:nth-child(1) { animation-range-start: 0% 5%; }
-  .reveal--stagger > *:nth-child(2) { animation-range-start: 0% 10%; }
-  .reveal--stagger > *:nth-child(3) { animation-range-start: 0% 15%; }
-  .reveal--stagger > *:nth-child(4) { animation-range-start: 0% 20%; }
-  .reveal--stagger > *:nth-child(5) { animation-range-start: 0% 25%; }
-  .reveal--stagger > *:nth-child(6) { animation-range-start: 0% 30%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -84,10 +55,6 @@
 
 /* Pausar animaciones fuera de viewport */
 @media (prefers-reduced-motion: no-preference) {
-  .reveal:not(:is(:hover, :focus, :focus-visible, :active)) {
-    animation-play-state: paused;
-  }
-  
   [data-spotlight]:not(:hover)::before {
     animation-play-state: paused;
   }

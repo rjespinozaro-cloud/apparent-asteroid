@@ -113,9 +113,9 @@
 }
 
 .etiqueta--purple {
-  background: linear-gradient(90deg, #FF4D6D, #8B5CF6 50%, #4D7CFF);
+  background: var(--team-grad);
   border-color: transparent;
-  color: #0B0714;
+  color: var(--tinta-inversa);
   font-weight: 600;
 }
 
@@ -746,7 +746,7 @@ a.tarjeta:hover .tarjeta__titulo {
 
 /* Tarjeta Premium ------------------------------------------------------- */
 .tarjeta-premium {
-  --team: linear-gradient(90deg, #8B5CF6, #E879F9);
+  --team: linear-gradient(90deg, var(--violet-500), var(--fuchsia));
   background: var(--papel-alto);
   border: 1px solid var(--linea);
   border-radius: var(--radio-l);
@@ -762,11 +762,11 @@ a.tarjeta:hover .tarjeta__titulo {
 }
 
 .tarjeta--red {
-  --team: linear-gradient(90deg, #FF4D6D, #FF8FA3);
+  --team: linear-gradient(90deg, var(--red), color-mix(in srgb, var(--red) 55%, white));
 }
 
 .tarjeta--blue {
-  --team: linear-gradient(90deg, #4D7CFF, #8FADFF);
+  --team: linear-gradient(90deg, var(--blue), color-mix(in srgb, var(--blue) 55%, white));
 }
 
 /* Franja superior con el color del equipo. */

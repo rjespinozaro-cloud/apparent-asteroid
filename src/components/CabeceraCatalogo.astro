@@ -1,0 +1,61 @@
+---
+interface Stat {
+  value: number | string;
+  label: string;
+  tone?: 'red' | 'blue' | 'premium' | 'violet';
+}
+
+interface Props {
+  title: string;
+  titleId: string;
+  description: string;
+  searchId: string;
+  searchLabel?: string;
+  searchPlaceholder?: string;
+  stats?: Stat[];
+  statsLabel?: string;
+}
+
+const {
+  title,
+  titleId,
+  description,
+  searchId,
+  searchLabel = 'Buscar en el catálogo',
+  searchPlaceholder = 'Buscar guías por texto…',
+  stats = [],
+  statsLabel = 'Resumen del catálogo',
+} = Astro.props;
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+---
+
+<header class="catalogo-cabecera">
+  <div class="catalogo-cabecera__principal">
+    <h1 id={titleId}>{title}</h1>
+    <p class="entradilla">{description}</p>
+    <form class="buscador catalogo-cabecera__buscador" method="get" action={`${base}buscar/`} role="search">
+      <label class="visualmente-oculto" for={searchId}>{searchLabel}</label>
+      <input
+        id={searchId}
+        name="q"
+        type="search"
+        maxlength="80"
+        autocomplete="off"
+        enterkeyhint="search"
+        placeholder={searchPlaceholder}
+      />
+      <button type="submit" class="boton--premium">Buscar</button>
+    </form>
+  </div>
+
+  {stats.length > 0 && (
+    <div class="catalogo-cabecera__stats" aria-label={statsLabel}>
+      {stats.map((stat) => (
+        <div class:list={['catalogo-stat', stat.tone && `catalogo-stat--${stat.tone}`]}>
+          <strong>{stat.value}</strong>
+          <span>{stat.label}</span>
+        </div>
+      ))}
+    </div>
+  )}
+</header>

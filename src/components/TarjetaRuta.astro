@@ -11,13 +11,16 @@ interface Tipologia {
 }
 
 interface Props {
-  ruta: { slug: string; titulo: string; descripcion: string };
+  ruta: { slug: string; titulo: string; descripcion: string; publicada?: number };
   tipologia: Tipologia;
   primerPaso?: string | null;
 }
 
 const { ruta, tipologia, primerPaso = null } = Astro.props;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const estaPublicada = Number(ruta.publicada ?? 1) === 1;
+const tipo = tipologia.tipo ?? 'neutro';
+const nodos = Array.from({ length: Math.max(Number(tipologia.pasos) || 0, 0) }, (_, indice) => indice + 1);
 const meta = [
   tipologia.nivel ? nombreNivel(tipologia.nivel) : null,
   tipologia.herramientas.length > 0 ? tipologia.herramientas.map(nombreHerramienta).join(' + ') : null,
@@ -26,17 +29,50 @@ const meta = [
 ].filter(Boolean);
 ---
 
-<article class="ruta-card" data-spotlight>
-  <p class="tarjeta__meta-linea">
-    {tipologia.tipo && (
-      <span class:list={['etiqueta', `etiqueta--${tipologia.tipo}`]}>{tipologia.tipo.toUpperCase()}</span>
+<article class:list={['ruta-card', !estaPublicada && 'ruta-card--preparacion']}>
+  <div class="ruta-card__encabezado">
+    <span class:list={['etiqueta', `etiqueta--${tipo}`]}>{tipologia.tipo?.toUpperCase() ?? 'RUTA'}</span>
+    {!estaPublicada && <span class="ruta-card__estado">En preparación</span>}
+  </div>
+
+  {nodos.length > 0 ? (
+    <ol class="ruta-card__timeline" aria-label={`Itinerario de ${nodos.length} pasos`}>
+      {nodos.map((nodo) => (
+        <li>
+          <span class="ruta-card__nodo" aria-hidden="true">{nodo}</span>
+          <span class="visualmente-oculto">Paso {nodo}</span>
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="ruta-card__timeline-vacio">La secuencia se está preparando.</p>
+  )}
+
+  <div class="ruta-card__contenido">
+    <h2 class="tarjeta__titulo">
+      {estaPublicada
+        ? <a href={`${base}rutas/${ruta.slug}/`} data-ruta-titulo={ruta.titulo.toLowerCase()}>{ruta.titulo}</a>
+        : ruta.titulo}
+    </h2>
+    <p class="tarjeta__resumen">{ruta.descripcion}</p>
+    {meta.length > 0 && <p class="ruta-card__meta">{meta.join(' · ')}</p>}
+    {primerPaso && (
+      <p class="ruta-card__inicio">
+        <span>Empieza con</span>
+        {primerPaso}
+      </p>
     )}
-  </p>
-  <h3 class="tarjeta__titulo">
-    <a href={`${base}rutas/${ruta.slug}/`} class="stretched-link" data-ruta-titulo={ruta.titulo.toLowerCase()}>{ruta.titulo}</a>
-  </h3>
-  <p class="tarjeta__resumen">{ruta.descripcion}</p>
-  <p class="tarjeta__meta-linea">{meta.join(' · ')}</p>
-  {primerPaso && <p class="tarjeta__meta-linea">Empieza con: {primerPaso}</p>}
-  <span class="tarjeta__accion" aria-hidden="true">Ver ruta →</span>
+  </div>
+
+  {estaPublicada ? (
+    <a class="ruta-card__cta boton--ghost" href={`${base}rutas/${ruta.slug}/`} aria-label={`Ver ruta ${ruta.titulo}`}>
+      Ver ruta
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M5 12h13" />
+        <path d="m13 6 6 6-6 6" />
+      </svg>
+    </a>
+  ) : (
+    <p class="ruta-card__cta ruta-card__cta--disabled">Disponible próximamente</p>
+  )}
 </article>

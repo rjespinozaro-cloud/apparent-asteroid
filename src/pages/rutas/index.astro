@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import CabeceraCatalogo from '../../components/CabeceraCatalogo.astro';
 import Migas from '../../components/Migas.astro';
 import TarjetaRuta from '../../components/TarjetaRuta.astro';
 import { getDatabase, listarRutasConTipologia } from '../../lib/db.js';
@@ -13,8 +14,16 @@ export const prerender = false;
 const database = getDatabase(env);
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const tipo = opcion(Astro.url.searchParams.get('tipo'), ['red', 'blue', 'purple']);
-const fichas = await listarRutasConTipologia(database);
+const fichas = await listarRutasConTipologia(database, { publicadas: false });
 const rutas = tipo ? fichas.filter((ficha) => ficha.tipologia.tipo === tipo) : fichas;
+const estadisticas = !tipo
+  ? [
+      { value: rutas.length, label: plural(rutas.length, 'ruta', 'rutas'), tone: 'violet' as const },
+      { value: rutas.filter(({ tipologia }) => tipologia.tipo === 'red').length, label: 'RED', tone: 'red' as const },
+      { value: rutas.filter(({ tipologia }) => tipologia.tipo === 'blue').length, label: 'BLUE', tone: 'blue' as const },
+      { value: rutas.filter(({ tipologia }) => tipologia.tipo === 'purple').length, label: 'Purple', tone: 'premium' as const },
+    ].filter((stat, indice) => indice === 0 || stat.value > 0)
+  : [];
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
@@ -22,20 +31,19 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 <Base
   title="Rutas de aprendizaje | JOANIX GUIDES"
   description="Rutas de aprendizaje de ciberseguridad en JOANIX GUIDES: secuencias ordenadas de guías RED y BLUE, del laboratorio a la defensa."
+  clase="catalogo-shell"
 >
-  <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
+  <Migas clase="contenedor catalogo-migas" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
 
-  <section class="seccion seccion--rutas" aria-labelledby="rutas-titulo">
-    <div>
-      <p class="eyebrow">Rutas de aprendizaje</p>
-      <h1 id="rutas-titulo">Aprende en orden</h1>
-      <p class="entradilla">
-        Secuencias ordenadas de guías: cada paso enlaza una guía real; si aún no está publicada, se marca como Próximamente.
-      </p>
-      <p class="guia__meta-catalogo">
-        {plural(rutas.length, 'ruta publicada', 'rutas publicadas')}
-      </p>
-    </div>
+  <section class="seccion catalogo-pagina catalogo-pagina--catalogo seccion--rutas" aria-labelledby="rutas-titulo">
+    <CabeceraCatalogo
+      title="Aprende en orden"
+      titleId="rutas-titulo"
+      description="Secuencias ordenadas de guías: cada paso enlaza una guía real; si aún no está publicada, se marca como Próximamente."
+      searchId="buscar-rutas"
+      stats={estadisticas}
+      statsLabel="Resumen de rutas"
+    />
 
     <ul class="chips-rapidos" aria-label="Filtrar por tipo">
       <li><a class="chip-filtro" href={`${base}rutas/`} aria-current={!tipo ? 'true' : undefined}>Todas</a></li>
@@ -44,25 +52,53 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <li><a class="chip-filtro" href={`${base}rutas/?tipo=purple`} aria-current={tipo === 'purple' ? 'true' : undefined}>Purple</a></li>
     </ul>
 
+    <p class="paginacion__estado" role="status">
+      {plural(rutas.length, 'ruta visible', 'rutas visibles')}
+    </p>
+
     {rutas.length > 0 ? (
-      <div class:list={['rutas-conjunto', rutas.length === 1 && 'rutas-conjunto--una']}>
-        <ul class="rejilla-tarjetas">
+      <div class="rutas-conjunto rutas-conjunto--catalogo">
+        <ul class="rejilla-tarjetas reveal--stagger">
           {rutas.map(({ ruta, tipologia }) => (
             <li>
               <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
             </li>
           ))}
         </ul>
-        {rutas.length === 1 && (
-          <aside class="rutas-ayuda" aria-label="Cómo funcionan las rutas">
-            <h2>Cómo funcionan las rutas</h2>
-            <p>
-              Las rutas ordenan guías publicadas en pasos numerados. Cada paso
-              enlaza una guía real; si aún no está publicada verás
-              «Próximamente». Avanza en orden: del laboratorio a la defensa.
-            </p>
-          </aside>
-        )}
+        <aside class="rutas-ayuda rutas-ayuda--catalogo" aria-label="Cómo funcionan las rutas">
+          <p class="eyebrow">En tres movimientos</p>
+          <h2>Cómo funcionan las rutas</h2>
+          <ol class="rutas-ayuda__pasos">
+            <li>
+              <span class="rutas-ayuda__icono" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m16 16 4 4" />
+                  <path d="M8.5 11h5" />
+                </svg>
+              </span>
+              <span><strong>Elige una ruta</strong><small>Empieza por un objetivo concreto.</small></span>
+            </li>
+            <li>
+              <span class="rutas-ayuda__icono" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 5h14v14H5z" />
+                  <path d="M8.5 9h7M8.5 12h7M8.5 15h4" />
+                </svg>
+              </span>
+              <span><strong>Sigue los pasos</strong><small>Avanza de laboratorio a defensa.</small></span>
+            </li>
+            <li>
+              <span class="rutas-ayuda__icono" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 17.5 9 12l3.5 3.5L20 8" />
+                  <path d="M15 8h5v5" />
+                </svg>
+              </span>
+              <span><strong>Comprueba lo aprendido</strong><small>Vuelve a la guía cuando necesites.</small></span>
+            </li>
+          </ol>
+        </aside>
       </div>
     ) : (
       <div class="vacio">

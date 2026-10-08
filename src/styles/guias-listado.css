@@ -210,6 +210,19 @@
   max-width: none;
 }
 
+/* Catalog pages keep the breadcrumb close to the shared page header. */
+.catalogo-shell {
+  gap: 0;
+}
+
+.catalogo-shell > .catalogo-migas {
+  margin-bottom: var(--espacio-m);
+}
+
+.catalogo-shell > .catalogo-pagina--catalogo {
+  padding-top: 0;
+}
+
 /* Buscador --------------------------------------------------------------- */
 
 .buscador {
@@ -222,6 +235,15 @@
   flex: 1;
   min-height: var(--alto-control);
   min-width: 0;
+}
+
+.buscador input::placeholder {
+  color: var(--tinta-tenue);
+  opacity: 1;
+}
+
+.catalogo-cabecera__buscador .boton--premium {
+  flex: none;
 }
 
 /* Estados vacíos y páginas de error -------------------------------------- */

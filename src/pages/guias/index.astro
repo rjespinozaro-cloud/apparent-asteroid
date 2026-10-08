@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import AssistantMascot from '../../components/AssistantMascot.astro';
+import CabeceraCatalogo from '../../components/CabeceraCatalogo.astro';
 import Migas from '../../components/Migas.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { contarGuiasPublicadas, getDatabase, listarGuiasDestacadas, listarGuiasPublicadas, listarHerramientasPublicadas } from '../../lib/db.js';
@@ -34,6 +35,14 @@ const { guias, total, pagina: paginaActual, paginas } = resultado;
 const hayFiltros = Boolean(equipo || nivel || herramienta || acceso);
 const premium = conteo.total - conteo.gratis;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const estadisticas = !hayFiltros
+  ? [
+      { value: conteo.total, label: plural(conteo.total, 'guía', 'guías'), tone: 'violet' as const },
+      { value: conteo.red, label: 'RED', tone: 'red' as const },
+      { value: conteo.blue, label: 'BLUE', tone: 'blue' as const },
+      { value: premium, label: 'Premium', tone: 'premium' as const },
+    ].filter((stat) => stat.value > 0)
+  : [];
 
 /**
  * Construye la misma ruta cambiando solo los parámetros indicados.
@@ -63,43 +72,26 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 <Base
   title={`${titulo} | JOANIX GUIDES`}
   description={`${plural(total, 'guía publicada', 'guías publicadas')} de ciberseguridad en JOANIX GUIDES. Filtra por equipo, nivel y herramienta.`}
+  clase="catalogo-shell"
 >
-  <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Guías' }]} />
+  <Migas clase="contenedor catalogo-migas" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Guías' }]} />
 
-  <section class="seccion catalogo-pagina" aria-labelledby="guias-titulo">
-    <div>
-      <p class="eyebrow">Catálogo</p>
-      <h1 id="guias-titulo">{titulo}</h1>
-      <p class="entradilla">
-        Conocimiento práctico de ciberseguridad para ofensiva y defensa.
-      </p>
-      <ul class="catalogo-stats" aria-label={hayFiltros ? 'Resultados del filtro' : 'Totales del catálogo'}>
-        <li><strong>{conteo.total}</strong><span>{conteo.total === 1 ? 'guía' : 'guías'}</span></li>
-        {(!equipo || equipo === 'red') && conteo.red > 0 && <li><strong>{conteo.red}</strong><span>RED</span></li>}
-        {(!equipo || equipo === 'blue') && conteo.blue > 0 && <li><strong>{conteo.blue}</strong><span>BLUE</span></li>}
-        {premium > 0 && <li><strong>{premium}</strong><span>premium</span></li>}
-      </ul>
-      <form class="buscador" method="get" action={`${base}buscar/`} role="search">
-        <label class="visualmente-oculto" for="buscar-catalogo">Buscar en el catálogo</label>
-        <input
-          id="buscar-catalogo"
-          name="q"
-          type="search"
-          maxlength="80"
-          autocomplete="off"
-          enterkeyhint="search"
-          placeholder="Buscar guías por texto…"
-        />
-        <button type="submit" class="boton--premium">Buscar</button>
-      </form>
-    </div>
+  <section class="seccion catalogo-pagina catalogo-pagina--catalogo" aria-labelledby="guias-titulo">
+    <CabeceraCatalogo
+      title={titulo}
+      titleId="guias-titulo"
+      description="Conocimiento práctico de ciberseguridad para ofensiva y defensa."
+      searchId="buscar-catalogo"
+      stats={estadisticas}
+      statsLabel="Resumen de guías"
+    />
 
     {!hayFiltros && recientes.length > 0 && (
       <section class="catalogo-destacadas" aria-labelledby="destacadas-titulo">
         <div class="seccion__cabecera">
           <h2 class="seccion__titulo" id="destacadas-titulo">Destacadas</h2>
         </div>
-        <ul class="rejilla-tarjetas">
+        <ul class="rejilla-tarjetas reveal--stagger">
           {recientes.map((guia) => (
             <li><TarjetaGuia guia={guia} /></li>
           ))}
@@ -114,10 +106,10 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </p>
 
     <ul class="chips-rapidos" aria-label="Filtros rápidos">
-      <li><a class="chip-filtro" data-equipo="red" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED</a></li>
-      <li><a class="chip-filtro" data-equipo="blue" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-current={acceso === 'gratis' ? 'true' : undefined}>Gratis</a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-current={acceso === 'pago' ? 'true' : undefined}>Premium</a></li>
+      <li><a class="chip-filtro" data-equipo="red" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED <span class="chip-filtro__count">{conteo.red}</span></a></li>
+      <li><a class="chip-filtro" data-equipo="blue" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE <span class="chip-filtro__count">{conteo.blue}</span></a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-current={acceso === 'gratis' ? 'true' : undefined}>Gratis <span class="chip-filtro__count">{conteo.gratis}</span></a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-current={acceso === 'pago' ? 'true' : undefined}>Premium <span class="chip-filtro__count">{premium}</span></a></li>
     </ul>
 
     <details class="filtros-detalle" open={Boolean(nivel || herramienta)}>
@@ -152,7 +144,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
     {guias.length > 0 ? (
       <>
-        <ul class="rejilla-tarjetas">
+        <ul class="rejilla-tarjetas reveal--stagger">
           {guias.map((guia) => (
             <li><TarjetaGuia guia={guia} /></li>
           ))}
