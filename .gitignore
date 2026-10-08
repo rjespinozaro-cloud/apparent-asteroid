@@ -12,6 +12,9 @@ node_modules/
 # generated types
 .astro/
 
+# informe de auditoría local; no versionar en el repositorio público
+docs/AUDITORIA.md
+
 # environment variables
 .env
 .env.*
