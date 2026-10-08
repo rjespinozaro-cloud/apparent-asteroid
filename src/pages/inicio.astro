@@ -52,14 +52,10 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         />
       </picture>
       <div class="portada--hero__constelacion-wrap" aria-hidden="true">
-        <img
-          src={`${base}hero/constelacion-joanix.svg`}
-          alt=""
-          aria-hidden="true"
-          class="portada--hero__constelacion-svg"
-          loading="eager"
-          decoding="async"
-        />
+        <picture>
+          <source media="(max-width:700px)" srcset={`${base}hero/constelacion-joanix-movil.svg`} />
+          <img src={`${base}hero/constelacion-joanix.svg`} alt="" aria-hidden="true" width="1195" height="300" decoding="async" />
+        </picture>
       </div>
       <div class="portada--hero__glow portada--hero__glow--red"></div>
       <div class="portada--hero__glow portada--hero__glow--blue"></div>

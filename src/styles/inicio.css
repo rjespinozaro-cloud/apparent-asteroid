@@ -105,6 +105,18 @@
   mask-image: linear-gradient(#000 70%, transparent 100%);
 }
 
+@supports (animation-timeline: scroll()) {
+  .portada--hero__fondo {
+    animation: hero-salida linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 90vh;
+  }
+
+  @keyframes hero-salida {
+    to { opacity: 0; transform: translateY(8vh) scale(1.04); }
+  }
+}
+
 .portada--hero__fondo img {
   width: 100%;
   height: 100%;
@@ -122,96 +134,34 @@
   to { opacity: 1; }
 }
 
-/* 4. Superpón la constelación centrada en la parte superior (~45% altura del hero),
-   width: min(92vw, 1100px), height: auto, sin recorte lateral en 375 y 430px. */
+/* 2. Carga con <picture> para constelaciones. Tamaños y centrado exactos. */
 .portada--hero__constelacion-wrap {
   position: absolute;
-  top: 6vh;
+  top: 5vh;
   left: 50%;
   transform: translateX(-50%);
-  width: min(92vw, 1100px);
+  width: min(96vw, 1280px);
   z-index: 2;
   pointer-events: none;
   display: flex;
   justify-content: center;
 }
 
-.portada--hero__constelacion-svg {
+.portada--hero__constelacion-wrap picture,
+.portada--hero__constelacion-wrap img {
   width: 100%;
   height: auto;
-  max-width: 1100px;
   display: block;
+  max-width: 1280px;
 }
 
-@supports (animation-timeline: scroll()) {
-  .portada--hero__fondo {
-    animation: hero-salida linear both;
-    animation-timeline: scroll(root);
-    animation-range: 0 90vh;
-  }
-
-  @keyframes hero-salida {
-    to { opacity: 0; transform: translateY(8vh) scale(1.04); }
+@media (max-width: 700px) {
+  .portada--hero__constelacion-wrap {
+    width: min(92vw, 520px);
   }
 }
 
-/* (Reglas del contenido en la sección A, después del scrim.) */
-
-.portada--hero__glow {
-  position: absolute;
-  inset: -20%;
-  width: auto;
-  height: auto;
-  will-change: transform;
-  /* Anula el blur(120px) heredado: el degradado ya cae a transparente y el
-     blur gigante apagaba las luces (y fundía GPUs móviles). */
-  filter: none;
-  opacity: 0.55;
-}
-
-.portada--hero__glow--red {
-  background: radial-gradient(closest-side, rgba(255, 77, 109, 0.5), transparent 72%);
-  background-repeat: no-repeat;
-  background-size: 95% 115%;
-  background-position: 5% 48%;
-  /* Presupuesto de movimiento (emil-design-eng): solo la constelación
-     pulsa en infinito (1/2). Estas luces quedan estáticas para no
-     superar 2 infinitas simultáneas en el hero. */
-  animation: none;
-}
-
-.portada--hero__glow--blue {
-  background: radial-gradient(closest-side, rgba(77, 124, 255, 0.5), transparent 72%);
-  background-repeat: no-repeat;
-  background-size: 95% 115%;
-  background-position: 95% 52%;
-  animation: none;
-}
-
-/* hero-red / hero-blue retirados: presupuesto ≤2 infinitas, solo pulsa la
-   constelación. Se conservan las luces estáticas. */
-
-.portada--hero__grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.18;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 56px 56px;
-  -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 72%);
-  mask-image: radial-gradient(ellipse at center, #000 25%, transparent 72%);
-}
-
-.portada--hero__scrim {
-  position: absolute;
-  inset: auto 0 0;
-  height: 55%;
-  pointer-events: none;
-  background: linear-gradient(transparent, rgb(5 6 12 / 0.85));
-}
-
+/* 4. Layout: la constelación arriba y el bloque de texto justo debajo con espacio clamp(1.5rem, 4vh, 3rem), sin hueco vacío. */
 .portada--hero__contenido {
   position: relative;
   z-index: 1;
@@ -220,10 +170,7 @@
   align-self: end;
   gap: 1.25rem;
   max-width: 44rem;
-  /* A: el borde superior queda por debajo de la constelación (~50% hero).
-     Medido con getBoundingClientRect; +margen visual para que el eyebrow
-     no roce la base de las letras (la imagen las extiende bajo el 50%). */
-  padding-top: clamp(30rem, 64vh, 38rem);
+  padding-top: clamp(1.5rem, 4vh, 3rem);
   padding-bottom: clamp(2rem, 6vh, 4rem);
 }
 
