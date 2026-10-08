@@ -208,7 +208,8 @@ a.tarjeta:hover {
 }
 
 .tarjeta__titulo {
-  font-size: var(--texto-md);
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  line-height: 1.25;
   margin: 0;
 }
 
@@ -282,7 +283,11 @@ a.tarjeta:hover .tarjeta__titulo {
   flex-wrap: wrap;
   font-family: var(--fuente-mono);
   font-size: var(--texto-xs);
-  gap: var(--espacio-xs);
+  gap: 0.5rem;
+}
+
+.tarjeta__meta:last-child {
+  margin-top: auto;
 }
 
 .tarjeta__resumen {
@@ -293,8 +298,8 @@ a.tarjeta:hover .tarjeta__titulo {
 
 .rejilla-tarjetas {
   display: grid;
-  gap: var(--espacio-m);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
@@ -316,18 +321,30 @@ a.tarjeta:hover .tarjeta__titulo {
   display: flex;
   flex-direction: column;
   gap: var(--espacio-m);
+  isolation: isolate;
+  max-width: var(--ancho-contenido);
+  margin-inline: auto;
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+  padding-inline: clamp(1rem, 4vw, 3rem);
+  position: relative;
+  width: 100%;
 }
 
 .seccion__cabecera {
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--espacio-s);
+  gap: 1rem 2rem;
   justify-content: space-between;
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 .seccion__titulo {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   margin: 0;
+  text-wrap: balance;
 }
 
 .eyebrow {
@@ -735,6 +752,7 @@ a.tarjeta:hover .tarjeta__titulo {
   border-radius: var(--radio-l);
   display: flex;
   flex-direction: column;
+  gap: 1rem;
   overflow: hidden;
   padding: var(--espacio-m);
   position: relative;

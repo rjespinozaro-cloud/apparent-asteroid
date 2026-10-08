@@ -83,55 +83,6 @@
   color: var(--red);
 }
 
-/* Lista de herramientas -------------------------------------------------- */
-
-.lista-herramientas {
-  display: grid;
-  gap: var(--espacio-xs);
-  list-style: none;
-  margin: 0;
-  max-width: none;
-  padding: 0;
-}
-
-.lista-herramientas--detalle {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
-  gap: var(--espacio-2xs);
-}
-
-.lista-herramientas__item {
-  align-items: center;
-  background: var(--papel-alto);
-  border: var(--borde);
-  border-radius: var(--radio-m);
-  display: flex;
-  gap: var(--espacio-2xs);
-  justify-content: space-between;
-  margin: 0;
-  padding: var(--espacio-xs) var(--espacio-s);
-}
-
-.lista-herramientas__item a {
-  font-weight: 600;
-  text-decoration: none;
-  color: var(--tinta);
-  transition: color 160ms var(--curva);
-}
-
-.lista-herramientas__item a:hover {
-  color: var(--fuchsia);
-}
-
-.lista-herramientas__conteo {
-  align-items: center;
-  color: var(--tinta-tenue);
-  display: flex;
-  flex-wrap: wrap;
-  font-family: var(--fuente-mono);
-  font-size: var(--texto-xs);
-  gap: var(--espacio-3xs);
-}
-
 /* Herramienta única: tarjeta con sus guías RED y BLUE. */
 .herramienta-detalle {
   background: var(--papel-alto);

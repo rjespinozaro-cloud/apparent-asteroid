@@ -1,68 +1,19 @@
 /**
- * Contenedor único y portada de /inicio/.
+ * Portada y composición propia de /inicio/.
  *
- * Se carga DESPUÉS de guias-listado.css para ganar por orden (misma
- * especificidad, sin !important): ese archivo trae reglas antiguas de
- * .portada--hero/.equipo que aquí se sustituyen.
+ * Los primitives compartidos viven en components.css y layout.css. Aquí solo
+ * deben quedar reglas del hero y variantes scoped de la portada.
  * Tokens y composición: Impeccable. Movimiento: emil-design-eng.
  */
 
 :root {
-  --ancho-max: 72rem;
   --pad-x: clamp(1rem, 4vw, 3rem);
-  --espacio-seccion: clamp(3.5rem, 9vw, 7rem);
-}
-
-/* 1. Un solo contenedor para cabecera, secciones y pie ------------------- */
-
-.contenedor,
-.cabecera__interna,
-.seccion,
-.pie__interna {
-  width: 100%;
-  max-width: var(--ancho-max);
-  margin-inline: auto;
-  padding-inline: var(--pad-x);
-}
-
-.seccion {
-  padding-block: clamp(2.5rem,6vw,4.5rem);
 }
 
 /* La portada arranca pegada a la cabecera: sin esta regla, el padding
    superior de .site-main dejaba una franja oscura entre ambas. */
 .site-main:has(.portada--hero) {
   padding-block-start: 0;
-}
-
-.site-main__interior {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 100%;
-}
-
-.site-main__interior > * {
-  min-width: 0;
-}
-
-/* 2. Cabecera de sección --------------------------------------------------- */
-
-.seccion__cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1rem 2rem;
-  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
-}
-
-.seccion__titulo {
-  margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
 }
 
 /* 3. Portada a sangre ------------------------------------------------------- */
@@ -330,19 +281,19 @@
   opacity: 1;
 }
 
-.rejilla-equipos .chip--pulse .chip__dot {
+.seccion--equipos .rejilla-equipos .chip--pulse .chip__dot {
   animation: none;
 }
 
 /* 4. Equipos RED / BLUE ------------------------------------------------------ */
 
-.rejilla-equipos {
+.seccion--equipos .rejilla-equipos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   gap: clamp(1rem, 2.5vw, 1.5rem);
 }
 
-.equipo {
+.seccion--equipos .equipo {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -354,7 +305,7 @@
   background: var(--papel-alto);
 }
 
-.equipo p {
+.seccion--equipos .equipo p {
   margin: 0;
   max-width: 46ch;
   font-size: 1rem;
@@ -362,12 +313,12 @@
   color: var(--tinta-suave);
 }
 
-.equipo__titulo {
+.seccion--equipos .equipo__titulo {
   margin: 0;
   font-size: clamp(1.5rem, 3vw, 2rem);
 }
 
-.equipo .boton--ghost {
+.seccion--equipos .equipo .boton--ghost {
   margin-top: auto;
   width: auto;
 }
@@ -377,87 +328,54 @@
   border-color: var(--tinta-suave);
 }
 
-.equipo--red {
+.seccion--equipos .equipo--red {
   border-color: rgba(255, 77, 109, 0.35);
   background: linear-gradient(165deg, rgba(255, 77, 109, 0.14), transparent 55%), var(--papel-alto);
 }
 
-.equipo--blue {
+.seccion--equipos .equipo--blue {
   border-color: rgba(77, 124, 255, 0.35);
   background: linear-gradient(165deg, rgba(77, 124, 255, 0.14), transparent 55%), var(--papel-alto);
 }
 
 /* 5. Herramientas y guías ----------------------------------------------------- */
 
-.lista-herramientas,
-.rejilla-tarjetas {
+.lista-herramientas--inicio {
   display: grid;
   gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
   margin: 0;
+  max-width: none;
   padding: 0;
   list-style: none;
 }
 
-.lista-herramientas {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
-}
-
-.rejilla-tarjetas {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-}
-
-.lista-herramientas__item {
+.lista-herramientas--inicio .lista-herramientas__item {
+  align-items: center;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  justify-content: space-between;
+  margin: 0;
   padding: 1.25rem;
   border: 1px solid var(--linea);
   border-radius: var(--radio-l);
   background: var(--papel-alto);
 }
 
-.lista-herramientas__item a {
+.lista-herramientas--inicio .lista-herramientas__item a {
   font-size: 1.25rem;
   font-weight: 600;
 }
 
-.lista-herramientas__conteo {
+.lista-herramientas--inicio .lista-herramientas__conteo {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
   font-family: var(--fuente-mono);
   font-size: 0.8125rem;
   color: var(--tinta-suave);
-}
-
-.rejilla-tarjetas > li {
-  display: flex;
-}
-
-.tarjeta-premium {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 1rem;
-  padding: 1.5rem;
-}
-
-.tarjeta__titulo {
-  margin: 0;
-  font-size: clamp(1.15rem, 2vw, 1.4rem);
-  line-height: 1.25;
-}
-
-.tarjeta__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-}
-
-.tarjeta__meta:last-child {
-  margin-top: auto;
 }
 
 .tarjeta__resumen {
@@ -474,9 +392,9 @@
   transition-duration: 450ms;
 }
 
-.tarjeta-premium,
-.equipo,
-.lista-herramientas__item {
+.site-main__interior:has(.portada--hero) .tarjeta-premium,
+.site-main__interior:has(.portada--hero) .seccion--equipos .equipo,
+.site-main__interior:has(.portada--hero) .lista-herramientas--inicio .lista-herramientas__item {
   transition-duration: 175ms;
 }
 
@@ -547,7 +465,7 @@
 
 /* Aparición de secciones con la vista (visibles por defecto sin soporte). */
 @supports (animation-timeline: view()) {
-  .seccion {
+  .site-main__interior:has(.portada--hero) .seccion {
     animation: sec-in linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 45%;
@@ -556,12 +474,6 @@
   @keyframes sec-in {
     from { opacity: 0; transform: translateY(32px); }
   }
-}
-
-/* Tinte propio por sección, sin imágenes. */
-.seccion {
-  position: relative;
-  isolation: isolate;
 }
 
 .seccion--equipos::before {
@@ -585,8 +497,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .seccion {
+  .site-main__interior:has(.portada--hero) .seccion {
     animation: none;
   }
 }
-

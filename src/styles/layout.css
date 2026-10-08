@@ -5,7 +5,7 @@
 .contenedor {
   margin-inline: auto;
   max-width: var(--ancho-contenido);
-  padding-inline: var(--espacio-m);
+  padding-inline: clamp(1rem, 4vw, 3rem);
   width: 100%;
 }
 
@@ -122,9 +122,15 @@
 }
 
 .site-main__interior {
+  align-items: stretch;
   display: flex;
   flex-direction: column;
   gap: var(--espacio-l);
+  width: 100%;
+}
+
+.site-main__interior > * {
+  min-width: 0;
 }
 
 .pie {
