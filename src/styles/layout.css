@@ -10,7 +10,7 @@
 }
 
 .cabecera {
-  backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
   background: rgb(7 8 15 / 0.72);
   border-bottom: 0;
   position: sticky;
@@ -138,17 +138,63 @@
 }
 
 .pie {
-  border-top: var(--borde);
+  margin-top: clamp(2rem, 5vw, 3.5rem);
+  background: rgb(7 8 15 / 0.72);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(90deg, var(--red), var(--violet-500), var(--blue)) 1;
   color: var(--tinta-suave);
   font-size: var(--texto-sm);
-  margin-top: auto;
   padding-block: var(--espacio-l);
 }
 
 .pie__interna {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 2rem;
+  padding-block: 2rem;
+}
+
+.pie h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #C4B5FD;
+}
+
+.pie__nav {
   display: flex;
   flex-direction: column;
-  gap: var(--espacio-s);
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.pie__nav a {
+  color: #C9CEEA;
+  font-size: 0.9375rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.pie__nav a:hover {
+  color: #fff;
+}
+
+.pie__aviso {
+  color: #C9CEEA;
+  font-size: var(--texto-xs);
+  margin: var(--espacio-2xs) 0 0;
+  max-width: 32ch;
+}
+
+@media (max-width: 600px) {
+  .pie__interna {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .pie__marca {
@@ -167,7 +213,7 @@
 }
 
 .pie__lema {
-  color: var(--tinta-tenue);
+  color: #C9CEEA;
   font-family: var(--fuente-mono);
   font-size: var(--texto-xs);
   letter-spacing: 0.06em;
@@ -195,9 +241,7 @@
 
 @media (min-width: 48rem) {
   .pie__interna {
-    align-items: baseline;
-    flex-direction: row;
-    justify-content: space-between;
+    align-items: start;
   }
 }
 

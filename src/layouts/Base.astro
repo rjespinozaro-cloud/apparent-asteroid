@@ -108,19 +108,28 @@ const imagenOg = new URL(ogImage, origen).href;
 
     <footer class="pie">
       <div class="pie__interna contenedor">
-        <nav class="pie__nav" aria-label="Equipos">
-          <a href={`${baseAsset}guias/?equipo=red`}>RED</a>
-          <a href={`${baseAsset}guias/?equipo=blue`}>BLUE</a>
-        </nav>
-        <nav class="pie__nav" aria-label="Legal">
-          <a href={`${baseAsset}aviso-legal/`}>Aviso legal</a>
-          <a href={`${baseAsset}aviso-legal/#privacidad`}>Privacidad</a>
-        </nav>
         <div class="pie__marca">
           <p class="pie__nombre">JOANIX GUIDES</p>
           <p class="pie__lema">Cybersecurity Knowledge Lab</p>
+          <p class="pie__aviso">Contenido educativo para laboratorios propios y entornos autorizados.</p>
           <AvisoLegal />
         </div>
+        <nav class="pie__nav" aria-label="Equipos">
+          <h2>Equipos</h2>
+          <a href={`${baseAsset}guias/?equipo=red`}>RED</a>
+          <a href={`${baseAsset}guias/?equipo=blue`}>BLUE</a>
+        </nav>
+        <nav class="pie__nav" aria-label="Explorar">
+          <h2>Explorar</h2>
+          <a href={`${baseAsset}guias/`}>Guías</a>
+          <a href={`${baseAsset}rutas/`}>Rutas</a>
+          <a href={`${baseAsset}herramientas/`}>Herramientas</a>
+        </nav>
+        <nav class="pie__nav" aria-label="Legal">
+          <h2>Legal</h2>
+          <a href={`${baseAsset}aviso-legal/`}>Aviso legal</a>
+          <a href={`${baseAsset}aviso-legal/#privacidad`}>Privacidad</a>
+        </nav>
       </div>
     </footer>
 

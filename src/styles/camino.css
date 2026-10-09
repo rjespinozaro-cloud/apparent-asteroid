@@ -95,7 +95,9 @@ body.pagina-rutas .pie {
   padding: var(--espacio-s) var(--espacio-m);
   border: 1px solid var(--linea);
   border-radius: var(--radio-l);
-  background: var(--papel-alto);
+  background: rgb(7 8 15 / 0.72);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
 }
 
 .camino__progreso-titulo {
@@ -639,7 +641,9 @@ article.nodo--purple:hover {
   margin-block-start: var(--espacio-2xl);
   border: 1px solid var(--linea);
   border-radius: var(--radio-l);
-  background: var(--papel-alto);
+  background: rgb(7 8 15 / 0.72);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
   padding: var(--espacio-s) var(--espacio-m);
 }
 
