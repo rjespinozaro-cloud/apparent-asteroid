@@ -22,6 +22,7 @@ export {
   guiasVecinas,
   listarGuias,
   listarGuiasAdmin,
+  listarGuiasCamino,
   listarGuiasDeHerramienta,
   listarGuiasPublicadas,
   listarHerramientasAdmin,

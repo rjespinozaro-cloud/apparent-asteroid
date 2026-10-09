@@ -631,6 +631,26 @@ export async function cambiarDestacadaGuia(database, id, destacada) {
   ).bind(destacada ? 1 : 0, id).run();
 }
 
+/**
+ * Guías publicadas para el camino de leyendas (/rutas/).
+ *
+ * Solo columnas presentes en todas las bases (local, remota y build de
+ * Pages): evita `destacada` y `lectura_min` (migración 0005, aún no aplicada
+ * en remoto) para que la página nunca rompa por esquema. Incluye `cuerpo_md`
+ * porque la descripción del nodo sale del contenido público (en pago, solo de
+ * la vista previa; el corte lo hace quien renderiza, nunca esta consulta).
+ * @param {D1Database} database
+ * @returns {Promise<Array<{slug: string, titulo: string, herramienta: string, equipo: string, nivel: string, acceso: string, guia_pareja: string|null, fecha: string, cuerpo_md: string}>>}
+ */
+export async function listarGuiasCamino(database) {
+  const resultado = await database.prepare(
+    `SELECT slug, titulo, herramienta, equipo, nivel, acceso, guia_pareja, fecha, cuerpo_md
+     FROM guias WHERE publicada = 1
+     ORDER BY fecha ASC, id ASC`,
+  ).all();
+  return resultado.results;
+}
+
 export async function eliminarGuia(database, id) {
   return database.prepare('DELETE FROM guias WHERE id = ?').bind(id).run();
 }
