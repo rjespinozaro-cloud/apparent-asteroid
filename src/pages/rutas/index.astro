@@ -39,16 +39,18 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   <Migas clase="contenedor catalogo-migas" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
 
   <section class="seccion camino contenedor" aria-labelledby="rutas-titulo">
-    <p class="eyebrow">Rutas de aprendizaje</p>
-    <h1 id="rutas-titulo">El camino de leyendas</h1>
-    <p class="entradilla">
-      El viaje completo, de un vistazo: un tronco común de Fundamentos que se
-      bifurca en dos carriles —ofensiva RED y defensa BLUE—, se toca en los
-      nodos Purple y cierra en la especialización que está por venir. Cada
-      nodo está Disponible o Próximamente; nada más.
-    </p>
+    <div class="rutas-intro">
+      <p class="eyebrow">RUTA DE APRENDIZAJE</p>
+      <h1 id="rutas-titulo">El camino de leyendas</h1>
+      <p class="entradilla">
+        El viaje completo, de un vistazo: un tronco común de Fundamentos que se
+        bifurca en dos carriles —ofensiva RED y defensa BLUE—, se toca en los
+        nodos Purple y cierra en la especialización que está por venir. Cada
+        nodo está Disponible o Próximamente; nada más.
+      </p>
+    </div>
 
-    <nav class="camino__progreso" aria-label="Mapa del camino">
+    <nav class="camino__progreso" id="mapa" aria-label="Mapa del camino">
       <p class="camino__progreso-titulo">Mapa del camino</p>
       <ol class="camino__progreso-lista">
         <li><a class="chip-filtro" href="#nivel-tronco">Fundamentos</a></li>

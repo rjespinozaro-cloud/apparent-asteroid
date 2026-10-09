@@ -546,6 +546,32 @@ html.js .portada--hero__controles {
   background: radial-gradient(50% 60% at 50% 0%, rgb(136 92 246 / 0.12), transparent 70%);
 }
 
+/* Tarjeta destacada del camino de leyendas (conteo real desde D1). */
+.camino-destacada {
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-l);
+  background: var(--papel-alto);
+  padding: var(--espacio-m) var(--espacio-l);
+  margin-block-end: var(--espacio-l);
+  max-inline-size: 44rem;
+}
+
+.camino-destacada h3 {
+  margin: 0 0 var(--espacio-2xs);
+  font-size: var(--texto-lg);
+}
+
+.camino-destacada p {
+  margin: 0 0 var(--espacio-2xs);
+  color: var(--tinta-suave);
+}
+
+.camino-destacada__conteo {
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-sm);
+  color: var(--tinta);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .site-main__interior:has(.portada--hero) .seccion {
     animation: none;

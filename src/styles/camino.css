@@ -57,6 +57,33 @@ body.pagina-rutas .nodo {
   }
 }
 
+/* Placa de cabecera: texto sobre fondo translúcido (el fondo queda intacto). */
+.rutas-intro {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid rgb(167 139 250 / 0.25);
+  border-radius: 16px;
+  /* Opacidad .65: AA 5.51 medido sobre el píxel más claro del fondo. */
+  background: rgb(5 6 12 / 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.rutas-intro .eyebrow {
+  font-size: 14px;
+  color: #C4B5FD;
+}
+
+.rutas-intro h1 {
+  font-weight: 800;
+}
+
+.rutas-intro p {
+  font-size: clamp(1.125rem, 1.6vw, 1.25rem);
+  font-weight: 500;
+  color: #E8EAF6;
+  text-shadow: 0 1px 14px rgb(5 6 12 / 0.85);
+}
+
 /* Progreso narrativo: mapa mental antes del sendero ------------------------ */
 .camino__progreso {
   margin-block: var(--espacio-m) var(--espacio-l);
@@ -164,10 +191,18 @@ html.js .camino-anim.dibujado .camino-riel {
 .camino-riel--neutro { background: var(--camino-riel-neutro); opacity: 0.8; }
 
 /* Conector de bifurcación/unión: tallo + barra + dos bajadas, continuo ---------
-   Geometría proporcional: las bajadas caen en el centro exacto de cada
-   columna (25% menos un cuarto del gap). Solo pseudo-elementos, sin SVG. */
+   Geometría exacta: las bajadas caen en el centro de cada columna
+   (25% menos un cuarto del gap menos media línea de 3px). Nodos circulares
+   en los cruces con capas de fondo. Solo pseudo-elementos, sin SVG. */
 .arbol {
   padding-top: 3.5rem;
+  background:
+    radial-gradient(circle at 50% 28px, rgb(139 92 246 / 0.35) 0 8px, transparent 9px),
+    radial-gradient(circle at 50% 28px, var(--violet-500) 0 4px, transparent 5px),
+    radial-gradient(circle at calc(25% - var(--espacio-xl) / 4) 28px, rgb(255 77 109 / 0.35) 0 8px, transparent 9px),
+    radial-gradient(circle at calc(25% - var(--espacio-xl) / 4) 28px, var(--red) 0 4px, transparent 5px),
+    radial-gradient(circle at calc(75% + var(--espacio-xl) / 4) 28px, rgb(77 124 255 / 0.35) 0 8px, transparent 9px),
+    radial-gradient(circle at calc(75% + var(--espacio-xl) / 4) 28px, var(--blue) 0 4px, transparent 5px);
 }
 
 .arbol::before {
@@ -175,22 +210,24 @@ html.js .camino-anim.dibujado .camino-riel {
   position: absolute;
   top: 0;
   left: 50%;
-  width: 2px;
+  width: 3px;
   height: 1.75rem;
   transform: translateX(-50%);
   background: linear-gradient(var(--violet-300), var(--violet-500));
+  box-shadow: 0 0 14px var(--violet-500);
 }
 
 .arbol::after {
   content: "";
   position: absolute;
   top: 1.75rem;
-  left: calc(25% - var(--espacio-xl) / 4);
-  right: calc(25% - var(--espacio-xl) / 4);
+  left: calc(25% - var(--espacio-xl) / 4 - 1.5px);
+  right: calc(25% - var(--espacio-xl) / 4 - 1.5px);
   height: 1.75rem;
   border: solid transparent;
-  border-width: 2px 2px 0;
+  border-width: 3px 3px 0;
   border-image: linear-gradient(90deg, var(--red), var(--violet-500) 50%, var(--blue)) 1;
+  box-shadow: 0 0 12px rgb(139 92 246 / 0.45);
 }
 
 /* Unión espejada (carriles → cierre): barra con bajadas hacia arriba y tallo */
@@ -198,6 +235,13 @@ html.js .camino-anim.dibujado .camino-riel {
   padding-top: 0;
   padding-bottom: 3.5rem;
   min-block-size: 3.5rem;
+  background:
+    radial-gradient(circle at 50% calc(100% - 2px), rgb(139 92 246 / 0.35) 0 8px, transparent 9px),
+    radial-gradient(circle at 50% calc(100% - 2px), var(--violet-500) 0 4px, transparent 5px),
+    radial-gradient(circle at calc(25% - var(--espacio-xl) / 4) calc(100% - 2px), rgb(255 77 109 / 0.35) 0 8px, transparent 9px),
+    radial-gradient(circle at calc(25% - var(--espacio-xl) / 4) calc(100% - 2px), var(--red) 0 4px, transparent 5px),
+    radial-gradient(circle at calc(75% + var(--espacio-xl) / 4) calc(100% - 2px), rgb(77 124 255 / 0.35) 0 8px, transparent 9px),
+    radial-gradient(circle at calc(75% + var(--espacio-xl) / 4) calc(100% - 2px), var(--blue) 0 4px, transparent 5px);
 }
 
 .arbol--union::before {
@@ -208,7 +252,7 @@ html.js .camino-anim.dibujado .camino-riel {
 .arbol--union::after {
   top: auto;
   bottom: 1.75rem;
-  border-width: 0 2px 2px;
+  border-width: 0 3px 3px;
 }
 
 /* Tronco y cierre: columna centrada ------------------------------------------ */
@@ -272,8 +316,8 @@ html.js .camino-anim.dibujado .camino-riel {
   align-content: start;
 }
 
-.camino-carril--red { padding-inline-start: calc(6% + 1rem); }
-.camino-carril--blue { padding-inline-end: calc(6% + 1rem); }
+.camino-carril--red { padding-inline-start: calc(6% + 1rem); --team: var(--red); }
+.camino-carril--blue { padding-inline-end: calc(6% + 1rem); --team: var(--blue); }
 
 .camino-carril--red .camino-riel--rojo {
   inset-inline-start: 6%;
@@ -283,18 +327,31 @@ html.js .camino-anim.dibujado .camino-riel {
   inset-inline-end: 6%;
 }
 
-.camino-carril__etiqueta {
-  font-family: var(--fuente-mono);
-  font-size: var(--texto-xs);
-  letter-spacing: 0.08em;
-  color: var(--tinta-suave);
+.camino-carril--red .camino-riel--rojo,
+.camino-carril--blue .camino-riel--azul {
+  inline-size: 3px;
+  background: linear-gradient(var(--team), transparent);
+  box-shadow: 0 0 14px var(--team);
+  opacity: 1;
 }
 
-.camino-carril--red .camino-carril__etiqueta {
-  color: var(--red);
-  padding-inline-start: calc(6% + 1rem);
+.camino-carril__etiqueta {
+  display: table;
+  margin-inline: auto;
+  margin-block: 0 var(--espacio-s);
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-family: var(--fuente-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: rgb(5 6 12 / 0.78);
+  border: 1px solid var(--violet-500);
 }
-.camino-carril--blue .camino-carril__etiqueta { color: var(--blue); }
+
+.camino-carril--red .camino-carril__etiqueta { border-color: var(--red); }
+.camino-carril--blue .camino-carril__etiqueta { border-color: var(--blue); }
 
 /* Puente Purple: línea violeta con el nodo encima ------------------------------ */
 .camino-puente {
@@ -371,6 +428,10 @@ a.nodo--disponible:focus-visible {
   outline-offset: 3px;
 }
 
+.nodo--red { border-color: rgb(255 77 109 / 0.55); }
+.nodo--blue { border-color: rgb(77 124 255 / 0.55); }
+.nodo--purple { border-color: rgb(168 85 247 / 0.55); }
+
 .nodo--red:hover, .nodo--red:focus-visible { border-color: var(--red); }
 .nodo--blue:hover, .nodo--blue:focus-visible { border-color: var(--blue); }
 .nodo--purple:hover, .nodo--purple:focus-visible { border-color: var(--purple); }
@@ -393,7 +454,7 @@ a.nodo--disponible:focus-visible {
 .nodo--purple .nodo__marcador { border-color: var(--purple); background: var(--glow-violet); color: var(--purple); }
 
 .nodo--proximamente {
-  border-style: dashed;
+  border: 1px dotted var(--linea-fuerte);
 }
 
 .nodo--proximamente .nodo__marcador {
@@ -610,6 +671,7 @@ article.nodo--purple:hover {
   /* Una columna: solo el tallo vertical, alineado con los rieles */
   .arbol {
     padding-top: 2rem;
+    background: none;
   }
 
   .arbol::before {
@@ -626,6 +688,7 @@ article.nodo--purple:hover {
     padding-top: 0;
     padding-bottom: 2rem;
     min-block-size: 2rem;
+    background: none;
   }
 
   .camino-carriles--nivel {

@@ -5,11 +5,13 @@ import TarjetaGuia from '../components/TarjetaGuia.astro';
 import TarjetaRuta from '../components/TarjetaRuta.astro';
 import {
   getDatabase,
+  listarGuiasCamino,
   listarGuiasDestacadas,
   listarHerramientasDestacadas,
   listarRutasConTipologia,
   listarUltimasGuias,
 } from '../lib/db.js';
+import { construirCamino } from '../data/camino.js';
 import { plural } from '../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
 import bricolage600 from '@fontsource/bricolage-grotesque/files/bricolage-grotesque-latin-600-normal.woff2?url';
@@ -23,14 +25,19 @@ const fuentesHero = [bricolage600, plex400, plex500, plex600, mono400];
 export const prerender = false;
 
 const database = getDatabase(env);
-const [ultimas, herramientasDestacadas, rutasConTipologia, guiasDestacadas] = await Promise.all([
+const [ultimas, herramientasDestacadas, rutasConTipologia, guiasDestacadas, guiasCamino] = await Promise.all([
   listarUltimasGuias(database, 6),
   listarHerramientasDestacadas(database),
   listarRutasConTipologia(database, { destacadas: true }),
   listarGuiasDestacadas(database, 4),
+  listarGuiasCamino(database),
 ]);
 
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
+// Conteo real del camino de leyendas para la tarjeta destacada.
+const camino = construirCamino(guiasCamino, base);
+const caminoProximamente = camino.total - camino.disponibles;
 
 // Datos del carrusel del hero: un único lugar para imágenes, textos y CTAs.
 const slides = [
@@ -238,6 +245,18 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
           <h2 class="seccion__titulo" id="rutas-titulo">Rutas de aprendizaje</h2>
         </div>
       </div>
+      <article class="camino-destacada" aria-labelledby="camino-destacada-titulo">
+        <p class="eyebrow">Camino de leyendas</p>
+        <h3 id="camino-destacada-titulo">El camino de leyendas</h3>
+        <p>
+          El viaje completo en un sendero: Fundamentos, carriles RED y BLUE por
+          niveles y nodos Purple donde se tocan.
+        </p>
+        <p class="camino-destacada__conteo">
+          {camino.disponibles} disponibles · {caminoProximamente} próximamente
+        </p>
+        <a class="boton" href={`${base}rutas/#mapa`}>Recorrer el camino</a>
+      </article>
       <div class:list={['rutas-conjunto', rutasConTipologia.length === 1 && 'rutas-conjunto--una']}>
         <ul class="rejilla-tarjetas">
           {rutasConTipologia.map(({ ruta, tipologia }) => (
