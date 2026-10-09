@@ -11,6 +11,33 @@
   --camino-riel-azul: var(--blue);
   --camino-riel-violeta: var(--purple);
   --camino-riel-neutro: var(--linea-fuerte);
+  position: relative;
+}
+
+/* Fondo ambiental de la página (arte del usuario, scrim oscuro para
+   contraste: las tarjetas son opacas y el texto nunca pisa zonas claras). */
+.camino-fondo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(rgb(5 6 12 / 0.86), rgb(5 6 12 / 0.9)),
+    url("../rutas-fondo-1536.webp") center top / cover no-repeat;
+}
+
+@media (max-width: 59.99rem) {
+  .camino-fondo {
+    background:
+      linear-gradient(rgb(5 6 12 / 0.84), rgb(5 6 12 / 0.88)),
+      url("../rutas-fondo-768.webp") center top / cover no-repeat;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .camino-fondo {
+    display: none;
+  }
 }
 
 /* Progreso narrativo: mapa mental antes del sendero ------------------------ */
