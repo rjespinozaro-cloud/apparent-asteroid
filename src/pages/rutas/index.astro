@@ -1,112 +1,169 @@
 ---
 import Base from '../../layouts/Base.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
-import CabeceraCatalogo from '../../components/CabeceraCatalogo.astro';
 import Migas from '../../components/Migas.astro';
-import TarjetaRuta from '../../components/TarjetaRuta.astro';
-import { getDatabase, listarRutasConTipologia } from '../../lib/db.js';
-import { plural } from '../../lib/utils/texto.js';
-import { opcion } from '../../lib/validar.js';
+import NodoCamino from '../../components/NodoCamino.astro';
+import { getDatabase, listarGuiasCamino } from '../../lib/db.js';
+import { construirCamino } from '../../data/camino.js';
+import { EQUIPOS, nombreNivel } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
 const database = getDatabase(env);
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
-const tipo = opcion(Astro.url.searchParams.get('tipo'), ['red', 'blue', 'purple']);
-const fichas = await listarRutasConTipologia(database, { publicadas: false });
-const rutas = tipo ? fichas.filter((ficha) => ficha.tipologia.tipo === tipo) : fichas;
-const estadisticas = !tipo
-  ? [
-      { value: rutas.length, label: plural(rutas.length, 'ruta', 'rutas'), tone: 'violet' as const },
-      { value: rutas.filter(({ tipologia }) => tipologia.tipo === 'red').length, label: 'RED', tone: 'red' as const },
-      { value: rutas.filter(({ tipologia }) => tipologia.tipo === 'blue').length, label: 'BLUE', tone: 'blue' as const },
-      { value: rutas.filter(({ tipologia }) => tipologia.tipo === 'purple').length, label: 'Purple', tone: 'premium' as const },
-    ].filter((stat, indice) => indice === 0 || stat.value > 0)
-  : [];
+const guias = await listarGuiasCamino(database);
+const { nodos } = construirCamino(guias, base);
+
+const tronco = nodos.filter((nodo) => nodo.tramo === 'tronco');
+const cierre = nodos.filter((nodo) => nodo.tramo === 'cierre');
+const niveles = ['basico', 'intermedio', 'avanzado'].map((nivel) => ({
+  nivel,
+  red: nodos.filter((nodo) => nodo.tramo === 'red' && nodo.nivel === nivel),
+  blue: nodos.filter((nodo) => nodo.tramo === 'blue' && nodo.nivel === nivel),
+  purple: nodos.filter((nodo) => nodo.tramo === 'purple' && nodo.nivel === nivel),
+}));
+
+const rolRed = EQUIPOS.red.rol;
+const rolBlue = EQUIPOS.blue.rol;
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
 
 <Base
-  title="Rutas de aprendizaje | JOANIX GUIDES"
-  description="Rutas de aprendizaje de ciberseguridad en JOANIX GUIDES: secuencias ordenadas de guías RED y BLUE, del laboratorio a la defensa."
+  title="El camino de leyendas | JOANIX GUIDES"
+  description="El viaje completo de JOANIX GUIDES de un vistazo: Fundamentos, carriles RED y BLUE por niveles, nodos Purple donde se tocan y la especialización por venir."
   clase="catalogo-shell"
 >
   <Migas clase="contenedor catalogo-migas" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
 
-  <section class="seccion catalogo-pagina catalogo-pagina--catalogo" aria-labelledby="rutas-titulo">
-    <CabeceraCatalogo
-      title="Aprende en orden"
-      titleId="rutas-titulo"
-      description="Secuencias ordenadas de guías: cada paso enlaza una guía real; si aún no está publicada, se marca como Próximamente."
-      searchId="buscar-rutas"
-      stats={estadisticas}
-      statsLabel="Resumen de rutas"
-    />
-
-    <ul class="chips-rapidos" aria-label="Filtrar por tipo">
-      <li><a class="chip-filtro" href={`${base}rutas/`} aria-current={!tipo ? 'true' : undefined}>Todas</a></li>
-      <li><a class="chip-filtro" data-equipo="red" href={`${base}rutas/?tipo=red`} aria-current={tipo === 'red' ? 'true' : undefined}>RED</a></li>
-      <li><a class="chip-filtro" data-equipo="blue" href={`${base}rutas/?tipo=blue`} aria-current={tipo === 'blue' ? 'true' : undefined}>BLUE</a></li>
-      <li><a class="chip-filtro" href={`${base}rutas/?tipo=purple`} aria-current={tipo === 'purple' ? 'true' : undefined}>Purple</a></li>
-    </ul>
-
-    <p class="paginacion__estado" role="status">
-      {plural(rutas.length, 'ruta visible', 'rutas visibles')}
+  <section class="seccion camino contenedor" aria-labelledby="rutas-titulo">
+    <p class="eyebrow">Rutas de aprendizaje</p>
+    <h1 id="rutas-titulo">El camino de leyendas</h1>
+    <p class="entradilla">
+      El viaje completo, de un vistazo: un tronco común de Fundamentos que se
+      bifurca en dos carriles —ofensiva RED y defensa BLUE—, se toca en los
+      nodos Purple y cierra en la especialización que está por venir. Cada
+      nodo está Disponible o Próximamente; nada más.
     </p>
 
-    {rutas.length > 0 ? (
-      <div class="rutas-conjunto rutas-conjunto--catalogo">
-        <ul class="rejilla-tarjetas reveal--stagger">
-          {rutas.map(({ ruta, tipologia }) => (
-            <li>
-              <TarjetaRuta ruta={ruta} tipologia={tipologia} primerPaso={tipologia.primer_paso} />
-            </li>
-          ))}
-        </ul>
-        <aside class="rutas-ayuda rutas-ayuda--catalogo" aria-label="Cómo funcionan las rutas">
-          <p class="eyebrow">En tres movimientos</p>
-          <h2>Cómo funcionan las rutas</h2>
-          <ol class="rutas-ayuda__pasos">
-            <li>
-              <span class="rutas-ayuda__icono" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="6.5" />
-                  <path d="m16 16 4 4" />
-                  <path d="M8.5 11h5" />
-                </svg>
-              </span>
-              <span><strong>Elige una ruta</strong><small>Empieza por un objetivo concreto.</small></span>
-            </li>
-            <li>
-              <span class="rutas-ayuda__icono" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 5h14v14H5z" />
-                  <path d="M8.5 9h7M8.5 12h7M8.5 15h4" />
-                </svg>
-              </span>
-              <span><strong>Sigue los pasos</strong><small>Avanza de laboratorio a defensa.</small></span>
-            </li>
-            <li>
-              <span class="rutas-ayuda__icono" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 17.5 9 12l3.5 3.5L20 8" />
-                  <path d="M15 8h5v5" />
-                </svg>
-              </span>
-              <span><strong>Comprueba lo aprendido</strong><small>Vuelve a la guía cuando necesites.</small></span>
-            </li>
-          </ol>
-        </aside>
-      </div>
-    ) : (
-      <div class="vacio">
-        <p>No hay rutas de este tipo todavía.</p>
-        <p><a class="boton" href={`${base}rutas/`}>Ver todas las rutas</a></p>
-      </div>
-    )}
+    <nav class="camino__progreso" aria-label="Mapa del camino">
+      <p class="camino__progreso-titulo">Mapa del camino</p>
+      <ol class="camino__progreso-lista">
+        <li><a class="chip-filtro" href="#nivel-tronco">Fundamentos</a></li>
+        <li><a class="chip-filtro" href="#nivel-basico">Básico</a></li>
+        <li><a class="chip-filtro" href="#nivel-intermedio">Intermedio</a></li>
+        <li><a class="chip-filtro" href="#nivel-avanzado">Avanzado</a></li>
+        <li><a class="chip-filtro" href="#nivel-cierre">Especialización</a></li>
+      </ol>
+    </nav>
+
+    <ul class="camino__leyenda" aria-label="Leyenda de estados">
+      <li><span class="camino__muestra camino__muestra--disponible" aria-hidden="true"></span>Disponible</li>
+      <li><span class="camino__muestra camino__muestra--proximamente" aria-hidden="true"></span>Próximamente</li>
+    </ul>
+
+    <div class="camino-tronco camino-anim" id="nivel-tronco">
+      <h2 class="visualmente-oculto">Fundamentos</h2>
+      <span class="camino-riel camino-riel--neutro" aria-hidden="true"></span>
+      <ol aria-label="Fundamentos, tronco común">
+        {tronco.map((nodo) => (
+          <li>
+            <NodoCamino nodo={nodo} base={base} />
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <div class="camino-split camino-anim" aria-hidden="true">
+      <svg viewBox="0 0 100 64" preserveAspectRatio="none" focusable="false">
+        <path class="camino-trazo" pathLength="1" d="M50 2 C50 26 28 26 6 62" />
+        <path class="camino-trazo" pathLength="1" d="M50 2 C50 26 72 26 94 62" />
+      </svg>
+    </div>
+
+    {niveles.map(({ nivel, red, blue, purple }) => (
+      <section class="camino-nivel" id={`nivel-${nivel}`} aria-labelledby={`titulo-${nivel}`}>
+        <div class="camino-nivel__cabecera">
+          <h2 class="camino-nivel__titulo" id={`titulo-${nivel}`}>Nivel {nombreNivel(nivel).toLowerCase()}</h2>
+          <p class="camino-nivel__bajada">RED · {rolRed} — BLUE · {rolBlue}</p>
+        </div>
+        <div class="camino-carriles camino-carriles--nivel">
+          <div>
+            <p class="camino-carril__etiqueta" aria-hidden="true">RED · {rolRed}</p>
+            <ol class="camino-carril camino-carril--red camino-anim" aria-label={`Nivel ${nombreNivel(nivel).toLowerCase()} · RED`}>
+              <span class="camino-riel camino-riel--rojo" aria-hidden="true"></span>
+              {red.map((nodo) => (
+                <li>
+                  <NodoCamino nodo={nodo} base={base} />
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div>
+            <p class="camino-carril__etiqueta" aria-hidden="true">BLUE · {rolBlue}</p>
+            <ol class="camino-carril camino-carril--blue camino-anim" aria-label={`Nivel ${nombreNivel(nivel).toLowerCase()} · BLUE`}>
+              <span class="camino-riel camino-riel--azul" aria-hidden="true"></span>
+              {blue.map((nodo) => (
+                <li>
+                  <NodoCamino nodo={nodo} base={base} />
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+        {purple.length > 0 && (
+          <div class="camino-puente camino-anim">
+            <ol aria-label={`Nivel ${nombreNivel(nivel).toLowerCase()} · Purple`}>
+              {purple.map((nodo) => (
+                <li>
+                  <NodoCamino nodo={nodo} base={base} />
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </section>
+    ))}
+
+    <div class="camino-join camino-anim" aria-hidden="true">
+      <svg viewBox="0 0 100 64" preserveAspectRatio="none" focusable="false">
+        <path class="camino-trazo" pathLength="1" d="M6 2 C28 38 50 38 50 62" />
+        <path class="camino-trazo" pathLength="1" d="M94 2 C72 38 50 38 50 62" />
+      </svg>
+    </div>
+
+    <div class="camino-cierre camino-anim" id="nivel-cierre">
+      <h2 class="visualmente-oculto">Especialización</h2>
+      <span class="camino-riel camino-riel--neutro" aria-hidden="true"></span>
+      <ol aria-label="Especialización, tramo final">
+        {cierre.map((nodo) => (
+          <li>
+            <NodoCamino nodo={nodo} base={base} />
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <details class="camino-lista">
+      <summary>Ver el camino como lista</summary>
+      <ol>
+        {nodos.map((nodo) => (
+          <li>
+            {nodo.href ? <a href={nodo.href}>{nodo.titulo}</a> : <span>{nodo.titulo}</span>}
+            {' — '}
+            {nodo.meta}
+            {' · '}
+            {nodo.estado === 'disponible' ? 'Disponible' : 'Próximamente'}
+          </li>
+        ))}
+      </ol>
+    </details>
   </section>
 
   <AsistenteFlotante />
 </Base>
+
+<script>
+  import '../../scripts/camino.js';
+</script>

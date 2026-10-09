@@ -89,7 +89,8 @@ test('con las dos guías reales: 3 nodos Disponibles con rutas reales', () => {
   assert.equal(purple.estado, 'disponible');
   assert.equal(purple.href, '/rutas/reconocimiento-nmap/');
   assert.equal(purple.meta, 'RED + BLUE · Nmap');
-  assert.deepEqual(purple.pareja, { roja: 'red/nmap-basico', azul: 'blue/detectar-escaneo-nmap' });
+  assert.deepEqual(purple.pareja, { roja: 'red/nmap-basico', azul: 'blue/detectar-escaneo-nmap', tituloRoja: GUIA_RED.titulo, tituloAzul: GUIA_BLUE.titulo });
+  assert.equal(purple.cta, 'Ver ruta');
 });
 
 test('la descripción de un nodo de pago sale solo de la vista previa', () => {

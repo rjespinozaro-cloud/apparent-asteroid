@@ -99,7 +99,8 @@ export const CURRICULO = [
  *   icono: string, equipo: 'neutro'|'red'|'blue'|'purple',
  *   estado: 'disponible'|'proximamente', acceso: 'gratis'|'pago'|null,
  *   href: string|null, meta: string, guiaSlug: string|null,
- *   pareja: { roja: string, azul: string } | null,
+ *   pareja: { roja: string, azul: string, tituloRoja: string, tituloAzul: string } | null,
+ *   cta: string|null,
  * }} NodoCamino
  */
 
@@ -180,7 +181,8 @@ function nodoPurpleDisponible(definicion, pareja, baseUrl) {
     href: destino,
     meta: `RED + BLUE · ${nombreHerramienta(pareja.herramienta)}`,
     guiaSlug: null,
-    pareja: { roja: pareja.roja.slug, azul: pareja.azul.slug },
+    pareja: { roja: pareja.roja.slug, azul: pareja.azul.slug, tituloRoja: pareja.roja.titulo, tituloAzul: pareja.azul.titulo },
+    cta: definicion.rutaSlug ? 'Ver ruta' : 'Ver herramienta',
   };
 }
 
@@ -201,6 +203,7 @@ function nodoProximamente(definicion) {
       : TRAMOS[definicion.tramo]?.nombre ?? '',
     guiaSlug: null,
     pareja: null,
+    cta: null,
   };
 }
 
@@ -242,6 +245,7 @@ export function construirCamino(guiaLista, base = '/') {
       meta: `${nombreHerramienta(guia.herramienta)} · ${nombreNivel(guia.nivel)} · ${nombreAcceso(guia.acceso)}`,
       guiaSlug: guia.slug,
       pareja: null,
+      cta: 'Ver guía',
     };
   });
 
@@ -269,7 +273,8 @@ export function construirCamino(guiaLista, base = '/') {
       href: `${baseUrl}herramientas/${pareja.herramienta}/`,
       meta: `RED + BLUE · ${nombreHerramienta(pareja.herramienta)}`,
       guiaSlug: null,
-      pareja: { roja: pareja.roja.slug, azul: pareja.azul.slug },
+      pareja: { roja: pareja.roja.slug, azul: pareja.azul.slug, tituloRoja: pareja.roja.titulo, tituloAzul: pareja.azul.titulo },
+      cta: 'Ver herramienta',
     });
   }
 

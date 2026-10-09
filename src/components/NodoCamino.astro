@@ -1,0 +1,119 @@
+---
+/**
+ * Nodo del camino de leyendas.
+ * - Disponible: un único enlace real (toda la tarjeta, objetivo > 44px).
+ * - Purple disponible: enlace a la ruta + los dos guías como enlaces hermanos.
+ * - Próximamente: elemento no interactivo con `aria-disabled` y etiqueta visible.
+ * Reutiliza vocabulario y utilidades del proyecto; el icono sale de IconoCamino.
+ */
+import IconoCamino from './IconoCamino.astro';
+
+interface Pareja {
+  roja: string;
+  azul: string;
+  tituloRoja: string;
+  tituloAzul: string;
+}
+
+interface Nodo {
+  id: string;
+  tramo: string;
+  nivel: string;
+  titulo: string;
+  descripcion: string;
+  icono: string;
+  equipo: 'neutro' | 'red' | 'blue' | 'purple';
+  estado: 'disponible' | 'proximamente';
+  acceso: 'gratis' | 'pago' | null;
+  href: string | null;
+  meta: string;
+  pareja: Pareja | null;
+  cta: string | null;
+}
+
+interface Props {
+  nodo: Nodo;
+  base: string;
+}
+
+const { nodo, base } = Astro.props;
+const disponible = nodo.estado === 'disponible' && nodo.href;
+const esPurple = nodo.equipo === 'purple';
+---
+
+{
+  esPurple && disponible && nodo.pareja ? (
+    <article class:list={['nodo', 'nodo--purple', 'nodo--disponible']}>
+      <a class="nodo__principal" href={nodo.href!}>
+        <span class="nodo__marcador" aria-hidden="true">
+          <IconoCamino nombre={nodo.icono} />
+        </span>
+        <span class="nodo__texto">
+          <span class="nodo__titulo">{nodo.titulo}</span>
+          <span class="nodo__meta">{nodo.meta}</span>
+          <span class="nodo__desc" aria-hidden="false">
+            <span class="nodo__desc-int">{nodo.descripcion}</span>
+          </span>
+          <span class="nodo__pie">
+            <span class="nodo__cta">{nodo.cta} <span aria-hidden="true">→</span></span>
+          </span>
+        </span>
+      </a>
+      <ul class="nodo__pareja">
+        <li>
+          <a href={`${base}guias/${nodo.pareja.roja}/`}>
+            <span class="nodo__pareja-equipo nodo__pareja-equipo--red">RED</span> {nodo.pareja.tituloRoja}
+          </a>
+        </li>
+        <li>
+          <a href={`${base}guias/${nodo.pareja.azul}/`}>
+            <span class="nodo__pareja-equipo nodo__pareja-equipo--blue">BLUE</span> {nodo.pareja.tituloAzul}
+          </a>
+        </li>
+      </ul>
+    </article>
+  ) : disponible ? (
+    <a class:list={['nodo', `nodo--${nodo.equipo}`, 'nodo--disponible']} href={nodo.href!}>
+      <span class="nodo__marcador" aria-hidden="true">
+        <IconoCamino nombre={nodo.icono} />
+      </span>
+      <span class="nodo__texto">
+        <span class="nodo__titulo">{nodo.titulo}</span>
+        <span class="nodo__meta">{nodo.meta}</span>
+        <span class="nodo__desc">
+          <span class="nodo__desc-int">{nodo.descripcion}</span>
+        </span>
+        <span class="nodo__pie">
+          {nodo.acceso === 'pago' ? (
+            <span class="nodo__acceso nodo__acceso--pago">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                <rect x="4" y="10" width="16" height="11" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+              </svg>{' '}
+              Premium
+            </span>
+          ) : (
+            <span class="nodo__acceso">Gratis</span>
+          )}
+          <span class="nodo__cta">{nodo.cta} <span aria-hidden="true">→</span></span>
+        </span>
+      </span>
+    </a>
+  ) : (
+    <span class:list={['nodo', `nodo--${nodo.equipo}`, 'nodo--proximamente']} aria-disabled="true">
+      <span class="nodo__marcador" aria-hidden="true">
+        <IconoCamino nombre={nodo.icono} />
+      </span>
+      <span class="nodo__texto">
+        <span class="nodo__titulo">{nodo.titulo}</span>
+        <span class="nodo__meta">{nodo.meta}</span>
+        <span class="nodo__desc nodo__desc--fija">
+          <span class="nodo__desc-int">{nodo.descripcion}</span>
+        </span>
+        <span class="nodo__pie">
+          <span class="nodo__estado">Próximamente</span>
+        </span>
+      </span>
+    </span>
+  )
+}

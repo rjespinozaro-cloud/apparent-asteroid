@@ -1,0 +1,652 @@
+/**
+ * Camino de leyendas (/rutas/).
+ * Todo va prefijado con `.camino`: este archivo no toca el portal, el inicio
+ * ni el resto del catálogo. Trazos decorativos (rieles CSS + puentes SVG)
+ * con dibujo progresivo solo cuando hay JS (`html.js`) y sin movimiento
+ * reducido; el contenido siempre es legible desde el primer render.
+ */
+
+.camino {
+  --camino-riel-rojo: var(--red);
+  --camino-riel-azul: var(--blue);
+  --camino-riel-violeta: var(--purple);
+  --camino-riel-neutro: var(--linea-fuerte);
+}
+
+/* Progreso narrativo: mapa mental antes del sendero ------------------------ */
+.camino__progreso {
+  margin-block: var(--espacio-m) var(--espacio-l);
+  padding: var(--espacio-s) var(--espacio-m);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  background: var(--papel-alto);
+}
+
+.camino__progreso-titulo {
+  margin: 0 0 var(--espacio-2xs);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+.camino__progreso-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2xs);
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.camino__progreso-lista li {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2xs);
+}
+
+.camino__progreso-lista li:not(:last-child)::after {
+  content: '→';
+  color: var(--tinta-suave);
+  font-size: var(--texto-sm);
+}
+
+/* Leyenda de estados -------------------------------------------------------- */
+.camino__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-xs) var(--espacio-m);
+  margin: 0 0 var(--espacio-l);
+  padding: 0;
+  list-style: none;
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  color: var(--tinta-suave);
+}
+
+.camino__leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-3xs);
+}
+
+.camino__muestra {
+  inline-size: 0.8rem;
+  block-size: 0.8rem;
+  border-radius: 50%;
+  border: 2px solid var(--linea-fuerte);
+  flex: none;
+}
+
+.camino__muestra--disponible {
+  border-color: var(--red);
+  background: var(--red-tenue);
+}
+
+.camino__muestra--proximamente {
+  border-style: dashed;
+}
+
+/* Rieles (decorativos): segmentos por tramo --------------------------------- */
+.camino-carriles {
+  position: relative;
+}
+
+.camino-riel {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 2px;
+  border-radius: 2px;
+  transform-origin: 50% 0;
+}
+
+html.js .camino-anim .camino-riel {
+  transform: scaleY(0);
+}
+
+html.js .camino-anim.dibujado .camino-riel {
+  transform: scaleY(1);
+}
+
+.camino-anim .camino-riel {
+  transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.camino-riel--rojo { background: var(--camino-riel-rojo); opacity: 0.55; }
+.camino-riel--azul { background: var(--camino-riel-azul); opacity: 0.55; }
+.camino-riel--violeta { background: var(--camino-riel-violeta); opacity: 0.6; }
+.camino-riel--neutro { background: var(--camino-riel-neutro); opacity: 0.8; }
+
+/* Bifurcación y unión (SVG decorativos, geometría proporcional) ------------- */
+.camino-split,
+.camino-join {
+  block-size: 4rem;
+}
+
+.camino-split svg,
+.camino-join svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.camino-trazo {
+  fill: none;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
+
+.camino-split .camino-trazo { stroke: var(--linea-fuerte); }
+.camino-join .camino-trazo { stroke: var(--linea-fuerte); }
+
+html.js .camino-anim .camino-trazo {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+html.js .camino-anim.dibujado .camino-trazo {
+  stroke-dashoffset: 0;
+}
+
+.camino-anim .camino-trazo {
+  transition: stroke-dashoffset 1.2s ease-out;
+}
+
+/* Tronco y cierre: columna centrada ------------------------------------------ */
+.camino-tronco,
+.camino-cierre {
+  position: relative;
+  max-inline-size: 38rem;
+  margin-inline: auto;
+}
+
+.camino-tronco .camino-riel--neutro,
+.camino-cierre .camino-riel--neutro {
+  inset-inline-start: 50%;
+  margin-inline-start: -1px;
+}
+
+.camino-tronco > ol,
+.camino-cierre > ol {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--espacio-m);
+  margin: 0;
+  padding: var(--espacio-xs) 0;
+  list-style: none;
+}
+
+/* Nivel: cabecera + dos carriles + puente Purple ------------------------------- */
+.camino-nivel {
+  margin-block-start: var(--espacio-xl);
+}
+
+.camino-nivel__cabecera {
+  text-align: center;
+  margin-block-end: var(--espacio-m);
+}
+
+.camino-nivel__titulo {
+  display: inline-block;
+  margin: 0;
+  padding: var(--espacio-2xs) var(--espacio-m);
+  font-size: var(--texto-md);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 999px;
+  background: var(--papel-alto);
+}
+
+.camino-nivel__bajada {
+  margin: var(--espacio-2xs) 0 0;
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.06em;
+  color: var(--tinta-suave);
+}
+
+.camino-carriles--nivel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espacio-xl);
+}
+
+.camino-carril {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--espacio-m);
+  align-content: start;
+}
+
+.camino-carril--red { padding-inline-start: calc(6% + 1rem); }
+.camino-carril--blue { padding-inline-end: calc(6% + 1rem); }
+
+.camino-carril--red .camino-riel--rojo {
+  inset-inline-start: 6%;
+}
+
+.camino-carril--blue .camino-riel--azul {
+  inset-inline-end: 6%;
+}
+
+.camino-carril__etiqueta {
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.08em;
+  color: var(--tinta-suave);
+}
+
+.camino-carril--red .camino-carril__etiqueta { color: var(--red); }
+.camino-carril--blue .camino-carril__etiqueta { color: var(--blue); }
+
+/* Puente Purple: línea violeta con el nodo encima ------------------------------ */
+.camino-puente {
+  position: relative;
+  margin-block-start: var(--espacio-l);
+  padding-block: var(--espacio-m);
+}
+
+.camino-puente::before {
+  content: '';
+  position: absolute;
+  inset-inline: 6%;
+  inset-block-start: 50%;
+  block-size: 2px;
+  margin-block-start: -1px;
+  border-radius: 2px;
+  background: var(--camino-riel-violeta);
+  opacity: 0.6;
+  transform-origin: 50% 50%;
+}
+
+html.js .camino-anim .camino-puente::before {
+  transform: scaleX(0);
+}
+
+html.js .camino-anim.dibujado .camino-puente::before {
+  transform: scaleX(1);
+}
+
+.camino-anim .camino-puente::before {
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.camino-puente > ol {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--espacio-m);
+  max-inline-size: 44rem;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+/* Nodo ------------------------------------------------------------------------- */
+.nodo {
+  display: flex;
+  gap: var(--espacio-s);
+  align-items: flex-start;
+  padding: var(--espacio-s) var(--espacio-m);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  background: var(--papel-alto);
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+a.nodo--disponible {
+  transition: transform 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+a.nodo--disponible:hover,
+a.nodo--disponible:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.7);
+}
+
+a.nodo--disponible:active {
+  transform: translateY(-1px);
+}
+
+a.nodo--disponible:focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 3px;
+}
+
+.nodo--red:hover, .nodo--red:focus-visible { border-color: var(--red); }
+.nodo--blue:hover, .nodo--blue:focus-visible { border-color: var(--blue); }
+.nodo--purple:hover, .nodo--purple:focus-visible { border-color: var(--purple); }
+.nodo--neutro:hover, .nodo--neutro:focus-visible { border-color: var(--linea-fuerte); }
+
+.nodo__marcador {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--linea-fuerte);
+  background: var(--papel-contraste);
+  color: var(--tinta-suave);
+}
+
+.nodo--red .nodo__marcador { border-color: var(--red); background: var(--red-tenue); color: var(--red); }
+.nodo--blue .nodo__marcador { border-color: var(--blue); background: var(--blue-tenue); color: var(--blue); }
+.nodo--purple .nodo__marcador { border-color: var(--purple); background: var(--glow-violet); color: var(--purple); }
+
+.nodo--proximamente {
+  border-style: dashed;
+}
+
+.nodo--proximamente .nodo__marcador {
+  background: transparent;
+}
+
+.nodo__texto {
+  flex: 1;
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--espacio-3xs);
+}
+
+.nodo__titulo {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  font-size: 1.05rem;
+  line-height: var(--altura-linea-corta);
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+}
+
+.nodo__meta {
+  margin: 0;
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.04em;
+  color: var(--tinta-suave);
+}
+
+/* Descripción: plegada en escritorio hasta hover/foco; siempre visible en
+   táctil, en Próximamente y sin movimiento (también sin JS: puro CSS). */
+.nodo__desc {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease-out;
+}
+
+.nodo__desc-int {
+  overflow: hidden;
+  min-block-size: 0;
+  margin: 0;
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+}
+
+.nodo--disponible:is(:hover, :focus-within) .nodo__desc {
+  grid-template-rows: 1fr;
+}
+
+.nodo--proximamente .nodo__desc {
+  grid-template-rows: 1fr;
+}
+
+.nodo__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2xs);
+  margin-block-start: var(--espacio-3xs);
+}
+
+.nodo__acceso {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-3xs);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  color: var(--tinta-suave);
+}
+
+.nodo__acceso--pago { color: var(--tinta); }
+.nodo__acceso--pago svg { color: var(--red); }
+
+.nodo__estado {
+  display: inline-block;
+  padding: 0.1rem var(--espacio-2xs);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.06em;
+  color: var(--tinta-suave);
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: 999px;
+}
+
+.nodo__cta {
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--tinta);
+  white-space: nowrap;
+}
+
+a.nodo--disponible:hover .nodo__cta {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Purple con pareja: enlace principal + dos guías hermanas ----------------------- */
+article.nodo--purple {
+  display: grid;
+  gap: var(--espacio-s);
+}
+
+.nodo__principal {
+  display: flex;
+  gap: var(--espacio-s);
+  align-items: flex-start;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radio-m);
+}
+
+.nodo__principal:focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 3px;
+}
+
+article.nodo--purple:hover {
+  border-color: var(--purple);
+}
+
+.nodo__pareja {
+  display: grid;
+  gap: var(--espacio-2xs);
+  margin: 0;
+  padding: var(--espacio-2xs) 0 0;
+  list-style: none;
+  border-block-start: 1px solid var(--linea);
+}
+
+.nodo__pareja a {
+  display: flex;
+  align-items: baseline;
+  gap: var(--espacio-2xs);
+  padding: var(--espacio-2xs) var(--espacio-xs);
+  border-radius: var(--radio-m);
+  color: var(--tinta);
+  text-decoration: none;
+  font-size: var(--texto-sm);
+  min-block-size: 2.75rem;
+}
+
+.nodo__pareja a:hover {
+  background: var(--papel-contraste);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nodo__pareja a:focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 2px;
+}
+
+.nodo__pareja-equipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  color: var(--tinta);
+  flex: none;
+}
+
+.nodo__pareja-equipo::before {
+  content: '';
+  inline-size: 0.55rem;
+  block-size: 0.55rem;
+  border-radius: 50%;
+  flex: none;
+}
+
+.nodo__pareja-equipo--red::before { background: var(--red); }
+.nodo__pareja-equipo--blue::before { background: var(--blue); }
+
+/* Listado textual de respaldo ------------------------------------------------------ */
+.camino-lista {
+  margin-block-start: var(--espacio-2xl);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  background: var(--papel-alto);
+  padding: var(--espacio-s) var(--espacio-m);
+}
+
+.camino-lista summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding-block: var(--espacio-2xs);
+  border-radius: var(--radio-m);
+}
+
+.camino-lista summary:focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 2px;
+}
+
+.camino-lista ol {
+  display: grid;
+  gap: var(--espacio-2xs);
+  margin: var(--espacio-s) 0 0;
+  padding-inline-start: var(--espacio-m);
+  font-size: var(--texto-sm);
+}
+
+.camino-lista li::marker {
+  color: var(--tinta-suave);
+}
+
+.camino-lista a {
+  color: var(--tinta);
+}
+
+/* Móvil: una sola columna con riel izquierdo ---------------------------------------- */
+@media (max-width: 59.99rem) {
+  .camino-split,
+  .camino-join {
+    display: none;
+  }
+
+  .camino-carriles--nivel {
+    grid-template-columns: 1fr;
+    gap: var(--espacio-m);
+  }
+
+  .camino-carril--red,
+  .camino-carril--blue {
+    padding-inline: 0 0;
+    padding-inline-start: 2.25rem;
+  }
+
+  .camino-carril--red .camino-riel--rojo,
+  .camino-carril--blue .camino-riel--azul {
+    inset-inline: auto auto auto 0.7rem;
+  }
+
+  .camino-tronco,
+  .camino-cierre {
+    max-inline-size: none;
+    padding-inline-start: 2.25rem;
+  }
+
+  .camino-tronco .camino-riel--neutro,
+  .camino-cierre .camino-riel--neutro {
+    inset-inline: auto auto auto 0.7rem;
+    margin-inline-start: 0;
+  }
+
+  .camino-puente {
+    padding-inline-start: 2.25rem;
+    padding-block: var(--espacio-xs);
+  }
+
+  .camino-puente::before {
+    inset-inline: auto auto auto 0.7rem;
+    inset-block: 0;
+    inline-size: 2px;
+    block-size: auto;
+    margin-block-start: 0;
+  }
+
+  html.js .camino-anim .camino-puente::before {
+    transform: scaleY(0);
+  }
+
+  html.js .camino-anim.dibujado .camino-puente::before {
+    transform: scaleY(1);
+  }
+
+  .camino-puente > ol {
+    max-inline-size: none;
+  }
+
+  .nodo__desc {
+    grid-template-rows: 1fr;
+  }
+}
+
+@media (hover: none) {
+  .nodo--disponible .nodo__desc {
+    grid-template-rows: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camino-anim .camino-riel,
+  .camino-anim .camino-trazo,
+  .camino-anim .camino-puente::before {
+    transition: none;
+  }
+
+  html.js .camino-anim .camino-riel,
+  html.js .camino-anim .camino-puente::before {
+    transform: none;
+  }
+
+  html.js .camino-anim .camino-trazo {
+    stroke-dashoffset: 0;
+  }
+
+  .nodo__desc {
+    grid-template-rows: 1fr;
+    transition: none;
+  }
+
+  a.nodo--disponible {
+    transition: none;
+  }
+}
