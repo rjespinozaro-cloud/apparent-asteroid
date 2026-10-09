@@ -46,6 +46,10 @@
   text-decoration: none;
 }
 
+.marca picture {
+  display: contents;
+}
+
 .marca__logo {
   height: auto;
   width: 9.5rem;

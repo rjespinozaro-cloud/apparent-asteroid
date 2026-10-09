@@ -6,6 +6,10 @@
 (function () {
   'use strict';
 
+  // Marca que hay JS activo. Las mejoras de movimiento (reveals, secciones del
+  // inicio) se activan solo con html.js; sin JS el contenido queda visible.
+  document.documentElement.classList.add('js');
+
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isFinePointer = window.matchMedia('(pointer: fine)').matches;
 

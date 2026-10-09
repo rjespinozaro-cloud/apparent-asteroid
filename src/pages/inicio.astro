@@ -12,6 +12,13 @@ import {
 } from '../lib/db.js';
 import { plural } from '../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
+import bricolage600 from '@fontsource/bricolage-grotesque/files/bricolage-grotesque-latin-600-normal.woff2?url';
+import plex400 from '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2?url';
+import plex500 from '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff2?url';
+import plex600 from '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2?url';
+import mono400 from '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url';
+
+const fuentesHero = [bricolage600, plex400, plex500, plex600, mono400];
 
 export const prerender = false;
 
@@ -25,79 +32,202 @@ const [ultimas, herramientasDestacadas, rutasConTipologia, guiasDestacadas] = aw
 
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
+// Datos del carrusel del hero: un único lugar para imágenes, textos y CTAs.
+const slides = [
+  {
+    id: '01-bienvenida',
+    tono: 'violet',
+    kicker: 'Bienvenida',
+    apoyo: 'Guías, rutas y herramientas para practicar seguridad desde el primer día.',
+    cta: 'Explorar guías',
+    href: `${base}guias/`,
+  },
+  {
+    id: '02-red-team',
+    tono: 'red',
+    kicker: 'RED',
+    apoyo: 'Reconocimiento, enumeración y explotación con autorización explícita.',
+    cta: 'Ver guías RED',
+    href: `${base}guias/?equipo=red`,
+  },
+  {
+    id: '03-blue-team',
+    tono: 'blue',
+    kicker: 'BLUE',
+    apoyo: 'Detección, validación y endurecimiento para equipos defensivos.',
+    cta: 'Ver guías BLUE',
+    href: `${base}guias/?equipo=blue`,
+  },
+  {
+    id: '04-laboratorio',
+    tono: 'violet',
+    kicker: 'Laboratorio',
+    apoyo: 'Practica en un entorno controlado, con cada paso explicado.',
+    cta: 'Ver rutas',
+    href: `${base}rutas/`,
+  },
+  {
+    id: '05-purple-team',
+    tono: 'violet',
+    kicker: 'Purple team',
+    apoyo: 'Ataque y defensa sobre el mismo escenario para aprender más rápido.',
+    cta: 'Conocer las rutas',
+    href: `${base}rutas/`,
+  },
+] as const;
+
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
 
 <Base clase="page-enter">
-  <section class="portada portada--hero" aria-labelledby="inicio-titulo">
+  <Fragment slot="cabecera">
+    {fuentesHero.map((fuente) => (
+      <link rel="preload" as="font" type="font/woff2" crossorigin href={fuente} />
+    ))}
+    <link
+      rel="preload"
+      as="image"
+      type="image/avif"
+      fetchpriority="high"
+      imagesizes="100vw"
+      imagesrcset={`${base}inicio-hero/01-bienvenida-960.avif 960w, ${base}inicio-hero/01-bienvenida-1024.avif 1024w`}
+      href={`${base}inicio-hero/01-bienvenida-1024.avif`}
+    />
+  </Fragment>
+
+  <section
+    class="portada portada--hero"
+    data-carrusel
+    aria-labelledby="inicio-titulo"
+    aria-roledescription="carrusel"
+  >
     <div class="portada--hero__bg" aria-hidden="true">
-      <picture class="portada--hero__fondo" aria-hidden="true">
-        <source
-          srcset={`${base}hero/fondo-hd-vertical.webp`}
-          type="image/webp"
-          media="(max-aspect-ratio: 1/1)"
-        />
-        <source
-          srcset={`${base}hero/fondo-hd-1280.webp 1280w, ${base}hero/fondo-hd-1920.webp 1920w, ${base}hero/fondo-hd-2560.webp 2560w`}
-          type="image/webp"
-          sizes="100vw"
-        />
-        <img
-          src={`${base}hero/fondo-hd-1920.webp`}
-          width="1920"
-          height="1072"
-          alt=""
-          fetchpriority="high"
-          decoding="async"
-        />
-      </picture>
-      <div class="portada--hero__glow portada--hero__glow--red"></div>
-      <div class="portada--hero__glow portada--hero__glow--blue"></div>
-      <div class="portada--hero__grid"></div>
+      {slides.map((slide, i) => (
+        <div
+          class:list={['portada--hero__slide', i === 0 && 'is-activa']}
+          data-slide
+          role="group"
+          aria-roledescription="diapositiva"
+          aria-label={`${i + 1} de ${slides.length}`}
+          aria-hidden={i === 0 ? 'false' : 'true'}
+        >
+          <picture>
+            <source
+              type="image/avif"
+              sizes="100vw"
+              {...(i === 0
+                ? {
+                    srcset: `${base}inicio-hero/${slide.id}-960.avif 960w, ${base}inicio-hero/${slide.id}-1024.avif 1024w`,
+                  }
+                : {
+                    'data-srcset': `${base}inicio-hero/${slide.id}-960.avif 960w, ${base}inicio-hero/${slide.id}-1024.avif 1024w`,
+                  })}
+            />
+            <source
+              type="image/webp"
+              sizes="100vw"
+              {...(i === 0
+                ? {
+                    srcset: `${base}inicio-hero/${slide.id}-960.webp 960w, ${base}inicio-hero/${slide.id}-1024.webp 1024w`,
+                  }
+                : {
+                    'data-srcset': `${base}inicio-hero/${slide.id}-960.webp 960w, ${base}inicio-hero/${slide.id}-1024.webp 1024w`,
+                  })}
+            />
+            <img
+              src={i === 0 ? `${base}inicio-hero/${slide.id}-1024.webp` : undefined}
+              data-src={i === 0 ? undefined : `${base}inicio-hero/${slide.id}-1024.webp`}
+              width="1024"
+              height="572"
+              alt=""
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding={i === 0 ? 'sync' : 'async'}
+              fetchpriority={i === 0 ? 'high' : undefined}
+            />
+          </picture>
+        </div>
+      ))}
       <div class="portada--hero__scrim"></div>
     </div>
+
     <div class="portada--hero__contenido">
-      <div class="portada--hero__constelacion" aria-hidden="true">
-        <picture>
-          <source media="(max-width: 700px)" srcset={`${base}hero/constelacion-joanix-movil.svg`} />
-          <img src={`${base}hero/constelacion-joanix.svg`} alt="" width="1280" height="209" decoding="async" />
-        </picture>
+      <p class="portada--hero__kicker">Cybersecurity Knowledge Lab</p>
+      <h1 id="inicio-titulo">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</h1>
+
+      <div class="portada--hero__slides" data-carrusel-vivo aria-live="off" aria-atomic="true">
+        {slides.map((slide, i) => (
+          <div
+            class:list={['portada--hero__slide-texto', i === 0 && 'is-activa']}
+            data-slide-texto
+            data-tono={slide.tono}
+            role="group"
+            aria-roledescription="diapositiva"
+            aria-label={`${i + 1} de ${slides.length}`}
+            aria-hidden={i === 0 ? 'false' : 'true'}
+            inert={i === 0 ? undefined : true}
+          >
+            <p class="portada--hero__kicker">{slide.kicker}</p>
+            <p class="portada--hero__apoyo">{slide.apoyo}</p>
+            <a class="portada--hero__cta" href={slide.href}>{slide.cta}</a>
+          </div>
+        ))}
       </div>
-      <div class="portada--hero__texto">
-        <h1 id="inicio-titulo" class="visualmente-oculto">JOANIX GUIDES</h1>
-        <p class="portada--hero__eyebrow">Cybersecurity Knowledge Lab</p>
-        <h2 class="portada--hero__titular">
-          <span class="portada--hero__titular-ventana">
-            <span class="portada--hero__titular-pista">
-              <span>Aprende seguridad ofensiva</span>
-              <span aria-hidden="true">Defiende como equipo azul</span>
-              <span aria-hidden="true">Purple team: ataque y defensa</span>
-              <span aria-hidden="true">Aprende seguridad ofensiva</span>
-            </span>
-          </span>
-        </h2>
-        <p class="portada--hero__subtitulo">Aprende seguridad ofensiva y defensiva desde una misma plataforma.</p>
-        <div class="portada__acciones portada--hero__acciones">
-          <a class="boton--premium" href={`${base}guias/`}>Explorar guías</a>
-          <a class="boton--ghost" href={`${base}herramientas/`}>Explorar herramientas</a>
+
+      <form class="buscador" method="get" action={`${base}buscar/`} role="search">
+        <label class="visualmente-oculto" for="buscar-inicio">Buscar guías</label>
+        <input
+          id="buscar-inicio"
+          name="q"
+          type="search"
+          maxlength="80"
+          autocomplete="off"
+          enterkeyhint="search"
+          placeholder="Buscar guías por texto…"
+        />
+        <button type="submit" class="boton--premium">Buscar</button>
+      </form>
+
+      <div class="portada--hero__controles">
+        <button
+          type="button"
+          class="portada--hero__control portada--hero__control--pausa"
+          data-carrusel-pausa
+          aria-pressed="false"
+        >
+          <span data-pausa-icono aria-hidden="true">❚❚</span>
+          <span data-pausa-texto>Pausa</span>
+        </button>
+        <button
+          type="button"
+          class="portada--hero__control"
+          data-carrusel-prev
+          aria-label="Diapositiva anterior"
+        >
+          <span aria-hidden="true">‹</span>
+        </button>
+        <div class="portada--hero__indicadores" role="group" aria-label="Ir a una diapositiva">
+          {slides.map((_, i) => (
+            <button
+              type="button"
+              class="portada--hero__indicador"
+              data-indicador
+              aria-label={`Ir a la diapositiva ${i + 1}`}
+              aria-current={i === 0 ? 'true' : 'false'}
+            >
+              <span class="portada--hero__indicador-pista">
+                <span class="portada--hero__indicador-barra"></span>
+              </span>
+            </button>
+          ))}
         </div>
-        <form class="buscador" method="get" action={`${base}buscar/`} role="search">
-          <label class="visualmente-oculto" for="buscar-inicio">Buscar guías</label>
-          <input
-            id="buscar-inicio"
-            name="q"
-            type="search"
-            maxlength="80"
-            autocomplete="off"
-            enterkeyhint="search"
-            placeholder="Buscar guías por texto…"
-          />
-          <button type="submit" class="boton--premium">Buscar</button>
-        </form>
-        <div class="portada--hero__scroll" aria-hidden="true">
-          <span class="portada--hero__scroll-text">Desplázate hacia abajo</span>
-          <span class="portada--hero__scroll-line"></span>
-        </div>
+        <button
+          type="button"
+          class="portada--hero__control"
+          data-carrusel-next
+          aria-label="Diapositiva siguiente"
+        >
+          <span aria-hidden="true">›</span>
+        </button>
       </div>
     </div>
   </section>
@@ -239,5 +369,5 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
 <script>
   import '../scripts/continua.js';
-  import '../scripts/hero-constelacion.js';
+  import '../scripts/hero-carrusel.js';
 </script>

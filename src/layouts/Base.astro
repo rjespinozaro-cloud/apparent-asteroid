@@ -80,7 +80,17 @@ const imagenOg = new URL(ogImage, origen).href;
     <header class="cabecera">
       <div class="cabecera__interna contenedor">
         <a class="marca" href={`${baseAsset}inicio/`} aria-label="JOANIX GUIDES, inicio">
-          <img class="marca__logo" src={`${baseAsset}logo.png`} alt="JOANIX GUIDES" width="180" height="90" fetchpriority="high" loading="lazy" decoding="async" />
+          <picture>
+            <source
+              type="image/avif"
+              srcset={`${baseAsset}logo-160.avif 1x, ${baseAsset}logo-320.avif 2x`}
+            />
+            <source
+              type="image/webp"
+              srcset={`${baseAsset}logo-160.webp 1x, ${baseAsset}logo-320.webp 2x`}
+            />
+            <img class="marca__logo" src={`${baseAsset}logo.png`} alt="JOANIX GUIDES" width="180" height="90" decoding="async" />
+          </picture>
         </a>
         <Menu ruta={Astro.url.pathname} />
       </div>

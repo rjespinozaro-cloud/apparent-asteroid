@@ -64,7 +64,7 @@ export default defineConfig({
 			directives: [
 				"default-src 'self'",
 				"img-src 'self' data:",
-				"font-src 'self'",
+				"font-src 'self' data:",
 				"connect-src 'self'",
 				"base-uri 'self'",
 				"form-action 'self'",

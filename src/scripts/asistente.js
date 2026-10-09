@@ -251,15 +251,8 @@ if (typeof document !== 'undefined') {
       });
     });
 
-    // Aviso contextual: una vez por sesión; descartarlo es permanente.
-    const descartado = (() => {
-      try {
-        return localStorage.getItem(CLAVE_DESCARTADO) === '1' || sessionStorage.getItem(CLAVE_VISTO_SESION) === '1';
-      } catch {
-        return true;
-      }
-    })();
-
+    // El aviso contextual nunca aparece solo: se abre únicamente cuando la
+    // persona interactúa con el launcher. Descartarlo es permanente.
     const descartarAviso = () => {
       mostrar(aviso, false);
       try {
@@ -279,18 +272,5 @@ if (typeof document !== 'undefined') {
       abrirPanel(false);
       void sugerir();
     });
-
-    if (!descartado) {
-      setTimeout(() => {
-        if ((panel?.hidden ?? true) && aviso instanceof HTMLElement && aviso.hidden) {
-          mostrar(aviso, true);
-          try {
-            sessionStorage.setItem(CLAVE_VISTO_SESION, '1');
-          } catch {
-            /* sin almacenamiento el aviso puede repetirse */
-          }
-        }
-      }, 1500);
-    }
   }
 }

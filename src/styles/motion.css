@@ -270,10 +270,10 @@
   flex-direction: column;
 }
 
+/* Visible por defecto: la entrada es solo una mejora. Ningún estado base deja
+   opacity 0; si la animación no corre, el contenido se ve igualmente. */
 .page-enter > * {
-  opacity: 0;
-  transform: translateY(16px);
-  animation: page-enter-item 500ms var(--curva) forwards;
+  animation: page-enter-item 500ms var(--curva) both;
 }
 
 .page-enter > *:nth-child(1) { animation-delay: 0ms; }
