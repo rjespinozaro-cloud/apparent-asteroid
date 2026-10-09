@@ -57,6 +57,11 @@ body.pagina-rutas .nodo {
   }
 }
 
+/* Pie en negro como los cuadros del esquema (solo /rutas/). */
+body.pagina-rutas .pie {
+  background: var(--papel-alto);
+}
+
 /* Placa de cabecera: texto sobre fondo translúcido (el fondo queda intacto). */
 .rutas-intro {
   padding: clamp(1.25rem, 3vw, 2rem);
