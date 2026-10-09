@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="favicon-title">
+  <title id="favicon-title">JOANIX GUIDE</title>
+  <rect width="128" height="128" fill="#0B111A"/>
+  <path d="M10 10h108v108H10z" fill="none" stroke="#41566B" stroke-width="4"/>
+  <path d="M40 36v40c0 17 8 25 22 25s22-8 22-25V36" fill="none" stroke="#E7EEF6" stroke-linecap="square" stroke-width="11"/>
+  <path d="M84 36h14v66H84M84 68h11" fill="none" stroke="#76B5FF" stroke-linecap="square" stroke-width="11"/>
+</svg>
