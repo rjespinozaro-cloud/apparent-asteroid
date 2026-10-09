@@ -75,20 +75,12 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </ol>
     </div>
 
-    <div class="camino-split camino-anim" aria-hidden="true">
-      <svg viewBox="0 0 100 64" preserveAspectRatio="none" focusable="false">
-        <path class="camino-trazo" pathLength="1" d="M50 2 C50 26 28 26 6 62" />
-        <path class="camino-trazo" pathLength="1" d="M50 2 C50 26 72 26 94 62" />
-      </svg>
-    </div>
-
     {niveles.map(({ nivel, red, blue, purple }) => (
       <section class="camino-nivel" id={`nivel-${nivel}`} aria-labelledby={`titulo-${nivel}`}>
         <div class="camino-nivel__cabecera">
           <h2 class="camino-nivel__titulo" id={`titulo-${nivel}`}>Nivel {nombreNivel(nivel).toLowerCase()}</h2>
-          <p class="camino-nivel__bajada">RED · {rolRed} — BLUE · {rolBlue}</p>
         </div>
-        <div class="camino-carriles camino-carriles--nivel">
+        <div class="camino-carriles camino-carriles--nivel arbol">
           <div>
             <p class="camino-carril__etiqueta" aria-hidden="true">RED · {rolRed}</p>
             <ol class="camino-carril camino-carril--red camino-anim" aria-label={`Nivel ${nombreNivel(nivel).toLowerCase()} · RED`}>
@@ -126,12 +118,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </section>
     ))}
 
-    <div class="camino-join camino-anim" aria-hidden="true">
-      <svg viewBox="0 0 100 64" preserveAspectRatio="none" focusable="false">
-        <path class="camino-trazo" pathLength="1" d="M6 2 C28 38 50 38 50 62" />
-        <path class="camino-trazo" pathLength="1" d="M94 2 C72 38 50 38 50 62" />
-      </svg>
-    </div>
+    <div class="camino-carriles arbol arbol--union" aria-hidden="true"></div>
 
     <div class="camino-cierre camino-anim" id="nivel-cierre">
       <h2 class="visualmente-oculto">Especialización</h2>

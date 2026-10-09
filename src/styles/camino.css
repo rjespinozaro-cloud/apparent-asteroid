@@ -119,40 +119,52 @@ html.js .camino-anim.dibujado .camino-riel {
 .camino-riel--violeta { background: var(--camino-riel-violeta); opacity: 0.6; }
 .camino-riel--neutro { background: var(--camino-riel-neutro); opacity: 0.8; }
 
-/* Bifurcación y unión (SVG decorativos, geometría proporcional) ------------- */
-.camino-split,
-.camino-join {
-  block-size: 4rem;
+/* Conector de bifurcación/unión: tallo + barra + dos bajadas, continuo ---------
+   Geometría proporcional: las bajadas caen en el centro exacto de cada
+   columna (25% menos un cuarto del gap). Solo pseudo-elementos, sin SVG. */
+.arbol {
+  padding-top: 3.5rem;
 }
 
-.camino-split svg,
-.camino-join svg {
-  display: block;
-  inline-size: 100%;
-  block-size: 100%;
+.arbol::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 1.75rem;
+  transform: translateX(-50%);
+  background: linear-gradient(var(--violet-300), var(--violet-500));
 }
 
-.camino-trazo {
-  fill: none;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-  stroke-linecap: round;
+.arbol::after {
+  content: "";
+  position: absolute;
+  top: 1.75rem;
+  left: calc(25% - var(--espacio-xl) / 4);
+  right: calc(25% - var(--espacio-xl) / 4);
+  height: 1.75rem;
+  border: solid transparent;
+  border-width: 2px 2px 0;
+  border-image: linear-gradient(90deg, var(--red), var(--violet-500) 50%, var(--blue)) 1;
 }
 
-.camino-split .camino-trazo { stroke: var(--linea-fuerte); }
-.camino-join .camino-trazo { stroke: var(--linea-fuerte); }
-
-html.js .camino-anim .camino-trazo {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
+/* Unión espejada (carriles → cierre): barra con bajadas hacia arriba y tallo */
+.arbol--union {
+  padding-top: 0;
+  padding-bottom: 3.5rem;
+  min-block-size: 3.5rem;
 }
 
-html.js .camino-anim.dibujado .camino-trazo {
-  stroke-dashoffset: 0;
+.arbol--union::before {
+  top: auto;
+  bottom: 0;
 }
 
-.camino-anim .camino-trazo {
-  transition: stroke-dashoffset 1.2s ease-out;
+.arbol--union::after {
+  top: auto;
+  bottom: 1.75rem;
+  border-width: 0 2px 2px;
 }
 
 /* Tronco y cierre: columna centrada ------------------------------------------ */
@@ -200,14 +212,6 @@ html.js .camino-anim.dibujado .camino-trazo {
   background: var(--papel-alto);
 }
 
-.camino-nivel__bajada {
-  margin: var(--espacio-2xs) 0 0;
-  font-family: var(--fuente-mono);
-  font-size: var(--texto-xs);
-  letter-spacing: 0.06em;
-  color: var(--tinta-suave);
-}
-
 .camino-carriles--nivel {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -242,7 +246,10 @@ html.js .camino-anim.dibujado .camino-trazo {
   color: var(--tinta-suave);
 }
 
-.camino-carril--red .camino-carril__etiqueta { color: var(--red); }
+.camino-carril--red .camino-carril__etiqueta {
+  color: var(--red);
+  padding-inline-start: calc(6% + 1rem);
+}
 .camino-carril--blue .camino-carril__etiqueta { color: var(--blue); }
 
 /* Puente Purple: línea violeta con el nodo encima ------------------------------ */
@@ -556,9 +563,25 @@ article.nodo--purple:hover {
 
 /* Móvil: una sola columna con riel izquierdo ---------------------------------------- */
 @media (max-width: 59.99rem) {
-  .camino-split,
-  .camino-join {
+  /* Una columna: solo el tallo vertical, alineado con los rieles */
+  .arbol {
+    padding-top: 2rem;
+  }
+
+  .arbol::before {
+    left: 0.7rem;
+    transform: none;
+    height: 2rem;
+  }
+
+  .arbol::after {
     display: none;
+  }
+
+  .arbol--union {
+    padding-top: 0;
+    padding-bottom: 2rem;
+    min-block-size: 2rem;
   }
 
   .camino-carriles--nivel {
@@ -627,7 +650,6 @@ article.nodo--purple:hover {
 
 @media (prefers-reduced-motion: reduce) {
   .camino-anim .camino-riel,
-  .camino-anim .camino-trazo,
   .camino-anim .camino-puente::before {
     transition: none;
   }
@@ -635,10 +657,6 @@ article.nodo--purple:hover {
   html.js .camino-anim .camino-riel,
   html.js .camino-anim .camino-puente::before {
     transform: none;
-  }
-
-  html.js .camino-anim .camino-trazo {
-    stroke-dashoffset: 0;
   }
 
   .nodo__desc {

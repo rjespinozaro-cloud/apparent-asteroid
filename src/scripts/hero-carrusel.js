@@ -3,11 +3,11 @@
  *
  * - Autoplay de 7 s con fundido cruzado (la transición vive en CSS).
  * - Ken Burns solo en la slide activa.
- * - Pausa con hover, foco dentro, toque; se detiene si la pestaña
- *   se oculta o el hero sale de pantalla.
- * - Navegación: pausa/play, anterior, siguiente, indicadores, teclado
- *   (flechas) y swipe táctil.
+ * - Pausa temporal con hover, foco dentro o mientras se toca/arrastra;
+ *   se detiene del todo si la pestaña se oculta o tras un ciclo completo.
  * - Sin autoplay ni Ken Burns con prefers-reduced-motion o saveData/2G.
+ * - Navegación manual: anterior, siguiente, indicadores, teclado (flechas)
+ *   y swipe táctil. La navegación manual no reactiva un autoplay detenido.
  * - Las slides 2..5 no cargan su imagen hasta estar en reposo (idle).
  *
  * Sin JS, la slide 1 queda visible y funcional (el CSS parte de ahí).
@@ -22,7 +22,6 @@
   var slides = Array.prototype.slice.call(raiz.querySelectorAll('[data-slide]'));
   var textos = Array.prototype.slice.call(raiz.querySelectorAll('[data-slide-texto]'));
   var indicadores = Array.prototype.slice.call(raiz.querySelectorAll('[data-indicador]'));
-  var btnPausa = raiz.querySelector('[data-carrusel-pausa]');
   var btnPrev = raiz.querySelector('[data-carrusel-prev]');
   var btnNext = raiz.querySelector('[data-carrusel-next]');
   var viva = raiz.querySelector('[data-carrusel-vivo]');
@@ -36,11 +35,12 @@
   var INTERVALO = 7000;
 
   var actual = 0;
-  var pausadoManual = false;
   var enHover = false;
   var enFoco = false;
   var tocando = false;
   var visible = true;
+  /** Parada permanente: pestaña oculta o ciclo completo. No se rearma sola. */
+  var detenido = false;
   var temporizador = 0;
 
   /** Carga real de una slide (las 2..5 llegan por data-src/data-srcset). */
@@ -87,45 +87,47 @@
     if (viva) viva.setAttribute('aria-live', manual ? 'polite' : 'off');
   }
 
-  /** Refleja el estado de pausa en el CSS (barra de progreso detenida). */
+  function enPausa() {
+    return !autoPermitido || detenido || enHover || enFoco || tocando || !visible || document.hidden;
+  }
+
+  /** Refleja la pausa en el CSS (barra de progreso detenida). */
   function sincronizarPausaVisual() {
-    var detenido = !autoPermitido || pausadoManual || enHover || enFoco || tocando || !visible || document.hidden;
-    raiz.classList.toggle('esta-pausado', detenido);
+    raiz.classList.toggle('esta-pausado', enPausa());
   }
 
   function programar() {
     window.clearTimeout(temporizador);
     sincronizarPausaVisual();
-    if (!autoPermitido || pausadoManual || enHover || enFoco || tocando || !visible || document.hidden) return;
+    if (enPausa()) return;
     temporizador = window.setTimeout(function () {
       ir(actual + 1, false);
     }, INTERVALO);
   }
 
-  function ir(destino, manual) {
-    actual = ((destino % total) + total) % total;
-    cargar(actual);
-    pintar(manual === true);
-    if (btnPausa) btnPausa.setAttribute('data-actual', String(actual + 1));
-    programar();
+  /** Detiene el autoplay para siempre (no lo reactiva la navegación manual). */
+  function detener() {
+    detenido = true;
+    window.clearTimeout(temporizador);
+    sincronizarPausaVisual();
   }
 
-  function alternarPausa() {
-    pausadoManual = !pausadoManual;
-    if (btnPausa) {
-      btnPausa.setAttribute('aria-pressed', pausadoManual ? 'true' : 'false');
-      var etiqueta = btnPausa.querySelector('[data-pausa-texto]');
-      if (etiqueta) etiqueta.textContent = pausadoManual ? 'Reproducir' : 'Pausa';
-      var icono = btnPausa.querySelector('[data-pausa-icono]');
-      if (icono) icono.textContent = pausadoManual ? '▶' : '❚❚';
+  function ir(destino, manual) {
+    var siguiente = ((destino % total) + total) % total;
+    if (!manual && !detenido && total > 1 && siguiente === 0 && actual === total - 1) {
+      actual = 0;
+      cargar(0);
+      pintar(false);
+      detener();
+      return;
     }
+    actual = siguiente;
+    cargar(actual);
+    pintar(manual === true);
     programar();
   }
 
   // --- Controles -----------------------------------------------------------
-  if (btnPausa instanceof HTMLButtonElement) {
-    btnPausa.addEventListener('click', alternarPausa);
-  }
   if (btnPrev instanceof HTMLButtonElement) {
     btnPrev.addEventListener('click', function () {
       ir(actual - 1, true);
@@ -170,22 +172,18 @@
     enFoco = false;
     programar();
   });
-  raiz.addEventListener(
-    'touchstart',
-    function () {
-      tocando = true;
-      programar();
-    },
-    { passive: true }
-  );
-  raiz.addEventListener(
-    'touchend',
-    function () {
-      tocando = false;
-      programar();
-    },
-    { passive: true }
-  );
+  raiz.addEventListener('pointerdown', function () {
+    tocando = true;
+    programar();
+  });
+  raiz.addEventListener('pointerup', function () {
+    tocando = false;
+    programar();
+  });
+  raiz.addEventListener('pointercancel', function () {
+    tocando = false;
+    programar();
+  });
 
   // --- Swipe táctil --------------------------------------------------------
   var x0 = 0;
@@ -214,7 +212,7 @@
 
   // --- Detener fuera de pantalla / pestaña oculta --------------------------
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) programar();
+    if (document.hidden) detener();
   });
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(

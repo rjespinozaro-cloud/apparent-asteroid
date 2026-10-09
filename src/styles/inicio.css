@@ -260,13 +260,6 @@ html.js .portada--hero__controles {
   outline-offset: 2px;
 }
 
-.portada--hero__control--pausa {
-  min-width: auto;
-  padding-inline: 1rem;
-  gap: 0.5rem;
-  font-weight: 600;
-}
-
 .portada--hero__indicadores {
   display: flex;
   align-items: center;
