@@ -40,6 +40,12 @@
   z-index: 40;
 }
 
+/* Sin animación de entrada global: su fill permanente crearía un containing
+   block en la raíz y rompería el posicionamiento del panel fijo. */
+.ai[data-ai] {
+  animation: none;
+}
+
 .ai-launcher {
   align-items: center;
   background: var(--papel-alto);
@@ -48,18 +54,78 @@
   bottom: calc(var(--espacio-m) + env(safe-area-inset-bottom, 0px));
   cursor: pointer;
   display: flex;
-  height: 3.5rem;
   justify-content: center;
-  padding: 0;
+  padding: 6px;
   position: fixed;
   right: calc(var(--espacio-m) + env(safe-area-inset-right, 0px));
   touch-action: manipulation;
-  width: 3.5rem;
+  animation: ai-flotar 6s ease-in-out infinite;
+}
+
+/* Aro con degradado violeta + pulso lento (solo opacidad). */
+.ai-launcher::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--violet-500), var(--fuchsia) 55%, var(--blue));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: ai-aro 2.8s ease-in-out infinite;
+}
+
+@keyframes ai-aro {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ai-flotar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 .ai-launcher .asistente-mascota {
-  height: 2.5rem;
-  width: 2.5rem;
+  width: clamp(76px, 18vw, 88px);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+/* Etiqueta al pasar el cursor o enfocar (decorativa: el nombre lo da aria-label). */
+.ai-launcher__etiqueta {
+  position: absolute;
+  right: calc(100% + 0.75rem);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  white-space: nowrap;
+  background: var(--papel-contraste);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio-m);
+  color: var(--tinta);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+.ai-launcher:is(:hover, :focus-visible) .ai-launcher__etiqueta {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
 }
 
 .ai-launcher:hover {
@@ -129,23 +195,37 @@
   display: flex;
   flex-direction: column;
   gap: var(--espacio-s);
-  max-height: min(70dvh, 34rem);
+  height: min(36rem, 80dvh);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--espacio-m);
   position: fixed;
   right: calc(var(--espacio-m) + env(safe-area-inset-right, 0px));
-  width: min(24rem, calc(100dvw - 2 * var(--espacio-m)));
+  width: min(26rem, calc(100vw - 2rem));
 }
 
 .ai-panel[hidden] {
   display: none;
 }
 
+/* Cabecera con fondo ambiental (respaldo en degradado: aún no hay
+   public/assistant/fondo-cascada.webp) y scrim oscuro para contraste. */
 .ai-panel__cabecera {
-  align-items: start;
+  align-items: center;
   display: flex;
   gap: var(--espacio-s);
+  margin: calc(-1 * var(--espacio-m)) calc(-1 * var(--espacio-m)) 0;
+  padding: var(--espacio-m);
+  border-radius: var(--radio-l) var(--radio-l) 0 0;
+  background:
+    linear-gradient(rgba(5, 6, 12, 0.78), rgba(5, 6, 12, 0.9)),
+    linear-gradient(135deg, #3b1f66 0%, #1e2a63 60%, #12395b 100%);
+  background-size: cover;
+}
+
+.ai-panel__mascota {
+  width: clamp(96px, 26vw, 120px);
+  height: auto;
 }
 
 .ai-panel__titulo {
@@ -164,9 +244,31 @@
 }
 
 .ai-panel__titulo p {
-  color: var(--tinta-suave);
+  color: var(--tinta);
   margin: 0;
   max-width: none;
+  background: rgb(255 255 255 / 0.07);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  padding: var(--espacio-2xs) var(--espacio-xs);
+  font-size: var(--texto-sm);
+}
+
+/* Indicador "buscando" animado (solo opacidad). */
+.ai[data-estado="searching"] [data-ai-mensaje]::after,
+.ai[data-estado="thinking"] [data-ai-mensaje]::after {
+  content: " …";
+  animation: ai-parpadeo 1s ease-in-out infinite;
+}
+
+@keyframes ai-parpadeo {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .ai-cerrar {
@@ -223,6 +325,33 @@
   margin: 0 0 var(--espacio-s);
 }
 
+/* Tarjetas compactas dentro del panel (el clon ya trae insignia, nivel y herramienta). */
+.ai-resultados .tarjeta-premium {
+  padding: var(--espacio-s);
+}
+
+.ai-resultados .tarjeta__titulo {
+  font-size: 1rem;
+}
+
+.ai-resultados .tarjeta__resumen {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Foco visible en todos los controles del asistente. */
+.ai-launcher:focus-visible,
+.ai-cerrar:focus-visible,
+.ai-aviso__cerrar:focus-visible,
+.ai-acciones .chip:focus-visible,
+.ai-aviso__acciones .boton--ghost:focus-visible,
+.ai-resultados a:focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 2px;
+}
+
 .ai-vertodo {
   width: 100%;
 }
@@ -245,13 +374,24 @@
 
 @media (max-width: 47.99rem) {
   .ai-panel {
-    left: var(--espacio-s);
-    right: var(--espacio-s);
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
+    height: min(38rem, calc(100dvh - 5rem));
   }
 
   .ai-form {
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-launcher,
+  .ai-launcher::before,
+  .ai[data-estado="searching"] [data-ai-mensaje]::after,
+  .ai[data-estado="thinking"] [data-ai-mensaje]::after {
+    animation: none;
   }
 }
 

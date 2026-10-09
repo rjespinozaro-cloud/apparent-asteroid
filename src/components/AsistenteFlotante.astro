@@ -29,15 +29,15 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
     class="ai-panel"
     role="dialog"
     aria-modal="false"
-    aria-labelledby="ai-titulo"
+    aria-label="JOANIX AI: busca en el catálogo"
     data-ai-panel
     hidden
   >
     <div class="ai-panel__cabecera">
-      <AssistantMascot estado="curious" eager />
+      <AssistantMascot estado="curious" clase="ai-panel__mascota" />
       <div class="ai-panel__titulo">
         <h2 id="ai-titulo">JOANIX AI</h2>
-        <p role="status" data-ai-mensaje>Hola, soy JOANIX AI. ¿Qué quieres aprender hoy?</p>
+        <p role="status" data-ai-mensaje>Busca en el catálogo</p>
       </div>
       <button type="button" class="ai-cerrar" aria-label="Cerrar asistente" data-ai-cerrar>×</button>
     </div>
@@ -75,9 +75,86 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
     data-ai-abrir
   >
     <AssistantMascot estado="assistant" decorativa eager />
+    <span class="ai-launcher__etiqueta" aria-hidden="true">Pregúntale a JOANIX</span>
   </button>
 </div>
 
-<script>
-  import '../scripts/asistente.js';
+<script type="module">
+  /**
+   * Arranque diferido del asistente: el módulo completo (`asistente.js`, con
+   * su lógica de búsqueda) solo se descarga al primer contacto con el
+   * lanzador. Este arranque mínimo oculta el asistente en /admin y /buscar y
+   * gestiona el globo contextual (una vez por sesión tras 8 s de inactividad).
+   */
+  const raizAi = document.querySelector('[data-ai]');
+  if (raizAi instanceof HTMLElement) {
+    const rutaAi = window.location.pathname || '';
+    if (/^\/(admin|buscar)(\/|$)/.test(rutaAi)) {
+      raizAi.hidden = true;
+    } else {
+      const abrirAi = raizAi.querySelector('[data-ai-abrir]');
+      const movimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let promesaAi = null;
+      let listoAi = false;
+      let abriendoAi = false;
+      const importarAi = () => {
+        if (!promesaAi) {
+          promesaAi = import('../scripts/asistente.js')
+            .then((modulo) => {
+              listoAi = true;
+              return modulo;
+            })
+            .catch(() => null);
+        }
+        return promesaAi;
+      };
+      abrirAi?.addEventListener('pointerenter', () => void importarAi());
+      abrirAi?.addEventListener('focusin', () => void importarAi());
+      abrirAi?.addEventListener('click', () => {
+        if (listoAi || abriendoAi) return;
+        abriendoAi = true;
+        void importarAi().then((modulo) => {
+          abriendoAi = false;
+          if (modulo && abrirAi instanceof HTMLButtonElement) abrirAi.click();
+        });
+      });
+
+      const CLAVE_GLOBO = 'joanix-ai-aviso';
+      let globoVisto = false;
+      try {
+        globoVisto = sessionStorage.getItem(CLAVE_GLOBO) === '1';
+      } catch {
+        globoVisto = false;
+      }
+      let temporizadorAi = 0;
+      const mostrarGlobo = () => {
+        const panelAi = raizAi.querySelector('[data-ai-panel]');
+        if (panelAi instanceof HTMLElement && !panelAi.hidden) {
+          rearmarGlobo();
+          return;
+        }
+        globoVisto = true;
+        try {
+          sessionStorage.setItem(CLAVE_GLOBO, '1');
+        } catch {
+          /* sin almacenamiento el globo puede repetirse */
+        }
+        void importarAi().then((modulo) => {
+          if (modulo) raizAi.dispatchEvent(new CustomEvent('ai:mostrar-aviso'));
+        });
+      };
+      const rearmarGlobo = () => {
+        window.clearTimeout(temporizadorAi);
+        if (globoVisto || movimiento) return;
+        temporizadorAi = window.setTimeout(mostrarGlobo, 8000);
+      };
+      const rearmarPasivo = () => rearmarGlobo();
+      window.addEventListener('pointermove', rearmarPasivo, { passive: true });
+      window.addEventListener('pointerdown', rearmarPasivo, { passive: true });
+      window.addEventListener('keydown', rearmarPasivo);
+      window.addEventListener('scroll', rearmarPasivo, { passive: true });
+      window.addEventListener('touchstart', rearmarPasivo, { passive: true });
+      rearmarGlobo();
+    }
+  }
 </script>

@@ -44,7 +44,7 @@ const esPurple = nodo.equipo === 'purple';
 {
   esPurple && disponible && nodo.pareja ? (
     <article class:list={['nodo', 'nodo--purple', 'nodo--disponible']}>
-      <a class="nodo__principal" href={nodo.href!}>
+      <a class="nodo__principal" href={nodo.href!} data-ruta-titulo={nodo.titulo.toLowerCase()}>
         <span class="nodo__marcador" aria-hidden="true">
           <IconoCamino nombre={nodo.icono} />
         </span>

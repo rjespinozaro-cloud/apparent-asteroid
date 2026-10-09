@@ -35,6 +35,7 @@ export function urlSugerencia(base) {
 const TIEMPO_MAXIMO_MS = 15_000;
 const CLAVE_VISTO_SESION = 'joanix-ai-visto';
 const CLAVE_DESCARTADO = 'joanix-ai-descartado';
+const CLAVE_ULTIMA = 'joanix-ai-ultima';
 
 if (typeof document !== 'undefined') {
   const raiz = document.querySelector('[data-ai]');
@@ -62,6 +63,7 @@ if (typeof document !== 'undefined') {
         mascota.alt = meta.alt;
       }
       if (mensaje) mensaje.textContent = texto;
+      raiz.dataset.estado = meta ? estado : 'curious';
     };
 
     const mostrar = (elemento, visible) => {
@@ -80,6 +82,14 @@ if (typeof document !== 'undefined') {
         sessionStorage.setItem(CLAVE_VISTO_SESION, '1');
       } catch {
         /* almacenamiento no disponible: el aviso simplemente reaparece */
+      }
+      if (campo instanceof HTMLInputElement && !campo.value) {
+        try {
+          const ultima = sessionStorage.getItem(CLAVE_ULTIMA);
+          if (ultima) campo.value = ultima;
+        } catch {
+          /* sin almacenamiento no hay última búsqueda */
+        }
       }
       if (foco) enfocarEntrada();
     };
@@ -229,6 +239,11 @@ if (typeof document !== 'undefined') {
         enfocarEntrada();
         return;
       }
+      try {
+        sessionStorage.setItem(CLAVE_ULTIMA, termino);
+      } catch {
+        /* sin almacenamiento no se recuerda la búsqueda */
+      }
       void buscar(termino);
     });
 
@@ -251,8 +266,8 @@ if (typeof document !== 'undefined') {
       });
     });
 
-    // El aviso contextual nunca aparece solo: se abre únicamente cuando la
-    // persona interactúa con el launcher. Descartarlo es permanente.
+    // El globo contextual lo dispara el arranque diferido (`ai:mostrar-aviso`,
+    // una vez por sesión tras 8 s de inactividad). Descartarlo es permanente.
     const descartarAviso = () => {
       mostrar(aviso, false);
       try {
@@ -271,6 +286,17 @@ if (typeof document !== 'undefined') {
       descartarAviso();
       abrirPanel(false);
       void sugerir();
+    });
+
+    raiz.addEventListener('ai:mostrar-aviso', () => {
+      let descartado = false;
+      try {
+        descartado = localStorage.getItem(CLAVE_DESCARTADO) === '1';
+      } catch {
+        descartado = false;
+      }
+      if (descartado || !(aviso instanceof HTMLElement) || !(panel instanceof HTMLElement) || !panel.hidden) return;
+      mostrar(aviso, true);
     });
   }
 }
