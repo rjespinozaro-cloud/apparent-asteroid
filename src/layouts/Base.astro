@@ -24,6 +24,8 @@ interface Props {
   noindex?: boolean;
   /** Clase extra del elemento <main>, para páginas con ancho completo. */
   clase?: string;
+  /** Clase extra del elemento <body> (solo la página que la declara). */
+  claseBody?: string;
 }
 
 // BASE_URL trae el subpath en modo Pages ('/apparent-asteroid') y '/' en
@@ -37,6 +39,7 @@ const {
   ogType = 'website',
   noindex = false,
   clase,
+  claseBody,
 } = Astro.props;
 
 const origen = Astro.site ?? Astro.url.origin;
@@ -75,7 +78,7 @@ const imagenOg = new URL(ogImage, origen).href;
     <title>{title}</title>
     <slot name="cabecera" />
   </head>
-  <body>
+  <body class={claseBody}>
     <a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
 
     <header class="cabecera">

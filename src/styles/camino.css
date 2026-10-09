@@ -11,31 +11,48 @@
   --camino-riel-azul: var(--blue);
   --camino-riel-violeta: var(--purple);
   --camino-riel-neutro: var(--linea-fuerte);
-  position: relative;
 }
 
-/* Fondo ambiental de la página (arte del usuario, scrim oscuro para
-   contraste: las tarjetas son opacas y el texto nunca pisa zonas claras). */
-.camino-fondo {
-  position: absolute;
+/* Fondo de página (/rutas/): sustituye al ambiente global solo aquí --------
+   (mayor especificidad que `body::before/::after` de base.css). Fuente real:
+   1024x572 nativa (ver informe): sin variantes mayores, sin estirar. */
+body.pagina-rutas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image: url("../rutas/camino-fondo.webp");
+  background-image: image-set(
+    url("../rutas/camino-fondo.avif") type("image/avif"),
+    url("../rutas/camino-fondo.webp") type("image/webp")
+  );
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0.9;
+}
+
+/* Viñeta suave: transparente al centro, oscura en bordes. Sin scrim central. */
+body.pagina-rutas::after {
+  content: "";
+  position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    linear-gradient(rgb(5 6 12 / 0.86), rgb(5 6 12 / 0.9)),
-    url("../rutas-fondo-1536.webp") center top / cover no-repeat;
+  background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgb(5 6 12 / 0.45) 100%);
 }
 
-@media (max-width: 59.99rem) {
-  .camino-fondo {
-    background:
-      linear-gradient(rgb(5 6 12 / 0.84), rgb(5 6 12 / 0.88)),
-      url("../rutas-fondo-768.webp") center top / cover no-repeat;
-  }
+/* Tarjetas translúcidas sobre el fondo (bordes de equipo intactos). */
+body.pagina-rutas .nodo {
+  background: rgb(13 15 26 / 0.68);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 @media (prefers-color-scheme: light) {
-  .camino-fondo {
+  body.pagina-rutas::before,
+  body.pagina-rutas::after {
     display: none;
   }
 }
