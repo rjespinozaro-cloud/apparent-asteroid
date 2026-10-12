@@ -29,6 +29,22 @@ const proximamente = nodos.filter((n) => n.estado === 'proximamente').length;
 const totalNiveles = niveles.length;
 const totalNodos = nodos.length;
 
+/* Datos reales por tramo para la barra de niveles: "X/Y disponibles". */
+const nivelesNav = [
+  { id: 'tronco', etiqueta: 'Fundamentos', nodos: tronco },
+  ...niveles.map(({ nivel, red, blue, purple }) => ({
+    id: nivel,
+    etiqueta: nombreNivel(nivel),
+    nodos: [...red, ...blue, ...purple],
+  })),
+  { id: 'cierre', etiqueta: 'Especialización', nodos: cierre },
+].map(({ id, etiqueta, nodos: grupo }) => ({
+  id,
+  etiqueta,
+  total: grupo.length,
+  disponibles: grupo.filter((n) => n.estado === 'disponible').length,
+}));
+
 const rolRed = EQUIPOS.red.rol;
 const rolBlue = EQUIPOS.blue.rol;
 
@@ -42,9 +58,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   claseBody="pagina-rutas"
 >
   <section class="rutas-hero" aria-labelledby="rutas-titulo">
-    <div class="rutas-hero__bg" aria-hidden="true"></div>
-
-    <div class="rutas-hero__contenido">
+    <div class="rutas-hero__contenido contenedor">
       <Migas clase="rutas-migas__lista" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
 
       <h1 id="rutas-titulo" class="rutas-hero__titulo">
@@ -80,44 +94,42 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         </span>
       </div>
 
-      <div id="progreso-recorrido" class="rutas-progreso" aria-label="Progreso del recorrido" role="progressbar" aria-valuemin="0" aria-valuemax={totalNodos} aria-valuenow="0">
-        <div class="rutas-progreso__barra"></div>
+      {/* Progreso local: oculto por defecto. El script solo lo muestra si
+          hay datos en localStorage (nunca escribe nada en el servidor). */}
+      <div id="progreso-recorrido" class="rutas-progreso" hidden>
+        <progress class="rutas-progreso__barra" max={totalNodos} value="0"></progress>
         <span class="rutas-progreso__texto">0 de {totalNodos} completadas</span>
       </div>
 
       <div class="rutas-hero__acciones">
         <a class="boton--premium" href="#nivel-tronco">Empezar por Fundamentos</a>
-        <a class="boton--ghost" href="#lista-camino">Ver como lista</a>
       </div>
     </div>
   </section>
 
-  <nav class="niveles" aria-label="Niveles del camino">
-    <ul class="niveles__lista" role="tablist">
-      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="true" href="#nivel-tronco">Fundamentos</a></li>
-      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-basico">Básico</a></li>
-      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-intermedio">Intermedio</a></li>
-      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-avanzado">Avanzado</a></li>
-      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-cierre">Especialización</a></li>
+  <nav class="niveles contenedor" aria-label="Niveles del camino">
+    <ul class="niveles__lista">
+      {nivelesNav.map((nivel, i) => (
+        <li>
+          <a
+            class="niveles__item"
+            href={`#nivel-${nivel.id}`}
+            data-nivel={nivel.id}
+            aria-current={i === 0 ? 'true' : undefined}
+          >
+            <span class="niveles__nombre">{nivel.etiqueta}</span>
+            <span class="niveles__datos">{nivel.disponibles}/{nivel.total}</span>
+          </a>
+        </li>
+      ))}
     </ul>
   </nav>
 
   <section class="seccion camino contenedor" aria-labelledby="rutas-titulo">
-    <nav class="camino__progreso" id="mapa" aria-label="Mapa del camino">
-      <p class="camino__progreso-titulo">Mapa del camino</p>
-      <ol class="camino__progreso-lista">
-        <li><a class="chip-filtro" href="#nivel-tronco">Fundamentos</a></li>
-        <li><a class="chip-filtro" href="#nivel-basico">Básico</a></li>
-        <li><a class="chip-filtro" href="#nivel-intermedio">Intermedio</a></li>
-        <li><a class="chip-filtro" href="#nivel-avanzado">Avanzado</a></li>
-        <li><a class="chip-filtro" href="#nivel-cierre">Especialización</a></li>
-      </ol>
-    </nav>
-
-    <ul class="camino__leyenda" aria-label="Leyenda de estados">
-      <li><span class="camino__muestra camino__muestra--disponible" aria-hidden="true"></span>Disponible</li>
-      <li><span class="camino__muestra camino__muestra--proximamente" aria-hidden="true"></span>Próximamente</li>
-      <li><span class="camino__muestra camino__muestra--pago" aria-hidden="true"></span>Premium</li>
+    <ul class="leyenda" aria-label="Leyenda de estados">
+      <li><span class="leyenda__icono leyenda__icono--disponible" aria-hidden="true"></span>Disponible</li>
+      <li><span class="leyenda__icono leyenda__icono--proximamente" aria-hidden="true"></span>Próximamente</li>
+      <li><span class="leyenda__icono leyenda__icono--pago" aria-hidden="true"></span>Premium</li>
     </ul>
 
     <div class="camino-tronco camino-anim" id="nivel-tronco">

@@ -89,82 +89,50 @@ body.pagina-rutas .pie {
   text-shadow: 0 1px 14px rgb(5 6 12 / 0.85);
 }
 
-/* Progreso narrativo: mapa mental antes del sendero ------------------------ */
-.camino__progreso {
-  margin-block: var(--espacio-m) var(--espacio-l);
-  padding: var(--espacio-s) var(--espacio-m);
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-l);
-  background: rgb(7 8 15 / 0.72);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-}
-
-.camino__progreso-titulo {
-  margin: 0 0 var(--espacio-2xs);
-  font-family: var(--fuente-mono);
-  font-size: var(--texto-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--tinta-suave);
-}
-
-.camino__progreso-lista {
-  display: flex;
+/* Leyenda de estados: píldora de vidrio ------------------------------- */
+.leyenda {
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--espacio-2xs);
   align-items: center;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.camino__progreso-lista li {
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-2xs);
-}
-
-.camino__progreso-lista li:not(:last-child)::after {
-  content: '→';
-  color: var(--tinta-suave);
-  font-size: var(--texto-sm);
-}
-
-/* Leyenda de estados -------------------------------------------------------- */
-.camino__leyenda {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espacio-xs) var(--espacio-m);
+  gap: 1.25rem;
   margin: 0 0 var(--espacio-l);
-  padding: 0;
-  list-style: none;
-  font-family: var(--fuente-mono);
-  font-size: var(--texto-xs);
-  color: var(--tinta-suave);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  color: #e8eaf6;
+  background: rgba(5, 6, 12, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(167, 139, 250, 0.25);
 }
 
-.camino__leyenda li {
+.leyenda li {
   display: inline-flex;
   align-items: center;
   gap: var(--espacio-3xs);
 }
 
-.camino__muestra {
-  inline-size: 0.8rem;
-  block-size: 0.8rem;
+.leyenda__icono {
+  inline-size: 14px;
+  block-size: 14px;
   border-radius: 50%;
   border: 2px solid var(--linea-fuerte);
   flex: none;
 }
 
-.camino__muestra--disponible {
+.leyenda__icono--disponible {
   border-color: var(--red);
   background: var(--red-tenue);
 }
 
-.camino__muestra--proximamente {
+.leyenda__icono--proximamente {
   border-style: dashed;
+}
+
+.leyenda__icono--pago {
+  border-style: solid;
+  border-color: var(--red);
+  background: var(--red);
 }
 
 /* Rieles (decorativos): segmentos por tramo --------------------------------- */
@@ -802,14 +770,18 @@ article.nodo--purple:hover {
   background: linear-gradient(90deg, rgba(5, 6, 12, 0.78), rgba(5, 6, 12, 0.45) 38%, transparent 65%);
 }
 
+/* 2. Alineación: el hero usa el mismo contenedor que la cabecera
+   (.contenedor: max-width 72rem + padding-inline fluido).
+   El ancho legible se limita en el bloque de texto, no en el contenedor,
+   para que el borde izquierdo coincida con logo, migas y barra de niveles. */
 .rutas-hero__contenido {
   display: grid;
   gap: clamp(0.9rem, 2.4vh, 1.4rem);
   justify-items: start;
-  max-width: 46rem;
-  width: 100%;
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 3rem);
+}
+
+.rutas-hero__contenido > * {
+  max-inline-size: 46rem;
 }
 
 /* Entradas escalonadas del hero (emil-design-eng: ease-out, 400-500ms). */
@@ -856,15 +828,18 @@ article.nodo--purple:hover {
   line-height: 0.95;
   letter-spacing: -0.04em;
   font-weight: 800;
-  text-shadow: 0 1px 16px rgba(5, 6, 12, 0.9);
+  /* 3. La sombra va en el contenedor (filter), no como text-shadow:
+     text-shadow se ve a través del relleno `color: transparent` del degradado. */
+  filter: drop-shadow(0 2px 18px rgba(5, 6, 12, 0.7));
 }
 
 .rutas-hero h1 em {
   font-style: normal;
-  background: linear-gradient(90deg, #ff8fa3, #c4b5fd 50%, #8fadff);
+  background: linear-gradient(90deg, #ff9db1, #d8c7ff 50%, #a8c1ff);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  text-shadow: none;
 }
 
 .rutas-lead {
@@ -928,26 +903,42 @@ article.nodo--purple:hover {
 }
 
 .rutas-progreso {
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   max-width: 26rem;
   border: 1px solid var(--linea);
   border-radius: 999px;
-  background: rgb(5 6 12 / 0.5);
+  background: rgb(5 6 12 / 0.6);
   padding: 0.45rem 1rem;
 }
 
+.rutas-progreso[hidden] {
+  display: none;
+}
+
 .rutas-progreso__barra {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0;
+  inline-size: 4rem;
+  block-size: 0.5rem;
+  flex: none;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  border-radius: 999px;
   background: linear-gradient(90deg, var(--red), var(--violet-500) 50%, var(--blue));
-  opacity: 0.35;
-  pointer-events: none;
+}
+
+.rutas-progreso__barra::-webkit-progress-bar {
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+}
+
+.rutas-progreso__barra::-moz-progress-bar {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--red), var(--violet-500) 50%, var(--blue));
 }
 
 .rutas-progreso__texto {
-  position: relative;
   font-family: var(--fuente-mono);
   font-size: var(--texto-xs);
   color: #e8eaf6;
@@ -961,7 +952,9 @@ article.nodo--purple:hover {
   margin-top: 0.5rem;
 }
 
-/* Niveles: segmented control sticky bajo la cabecera. */
+/* Niveles: píldora de vidrio sticky bajo la cabecera.
+   El borde izquierdo coincide con logo, migas, titular y leyenda
+   (mismo .contenedor de 72rem), medido con getBoundingClientRect. */
 .niveles {
   position: sticky;
   top: calc(var(--alto-cabecera, 4.5rem) + 0.5rem);
@@ -970,33 +963,55 @@ article.nodo--purple:hover {
 
 .niveles__lista {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
   margin: 0;
-  padding: 0.6rem var(--pad-x, 1rem);
+  padding: 0.4rem;
   list-style: none;
-  background: rgb(5 6 12 / 0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-block: 1px solid var(--linea);
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-radius: 999px;
+  background: rgba(7, 8, 15, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.niveles__lista::-webkit-scrollbar {
+  display: none;
 }
 
 .niveles__item {
+  flex: none;
   display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
+  align-items: baseline;
+  gap: 0.45rem;
+  min-height: 2.5rem;
   padding: 0 1rem;
-  border: 1px solid var(--linea-fuerte);
   border-radius: 999px;
-  color: var(--tinta);
+  color: #c9ceea;
   text-decoration: none;
   font-weight: 600;
   font-size: var(--texto-sm);
+  white-space: nowrap;
 }
 
 .niveles__item[aria-current="true"] {
-  border-color: var(--violet-500);
-  background: rgb(139 92 246 / 0.18);
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 77, 109, 0.25),
+    rgba(139, 92, 246, 0.35),
+    rgba(77, 124, 255, 0.25)
+  );
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.5);
+}
+
+.niveles__datos {
+  font-family: var(--fuente-mono);
+  font-size: 0.75rem;
+  opacity: 0.85;
 }
 
 /* Nodos: aparecen y se encienden al entrar en pantalla (progresivo). */
@@ -1030,11 +1045,4 @@ a.nodo--disponible.nodo--blue:hover {
 
 a.nodo--disponible.nodo--purple:hover {
   box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.7), 0 0 24px rgb(168 85 247 / 0.35);
-}
-
-/* Icono de estado premium en la leyenda. */
-.camino__muestra--pago {
-  border-style: solid;
-  border-color: var(--red);
-  background: var(--red);
 }

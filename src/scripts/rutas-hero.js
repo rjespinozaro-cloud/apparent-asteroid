@@ -6,12 +6,13 @@
 (function () {
   'use strict';
 
-  // 1. Barra de progreso del recorrido desde localStorage.
+  // 1. Progreso del recorrido: solo si hay datos en localStorage.
+  //    Nunca escribe en el servidor ni en D1.
   try {
     var contenedor = document.getElementById('progreso-recorrido');
     if (contenedor) {
-      var total = parseInt(contenedor.getAttribute('aria-valuemax') || '0', 10);
-      var guardadas = null;
+      var total = parseInt(contenedor.querySelector('.rutas-progreso__barra').getAttribute('max') || '0', 10);
+      var guardadas = [];
       try {
         guardadas = JSON.parse(localStorage.getItem('camino-completadas') || '[]');
       } catch (e) {
@@ -19,19 +20,18 @@
       }
       var hechas = Array.isArray(guardadas) ? guardadas.length : 0;
       if (total > 0 && hechas > 0) {
-        var pct = Math.min(100, Math.round((hechas / total) * 100));
         var barra = contenedor.querySelector('.rutas-progreso__barra');
         var texto = contenedor.querySelector('.rutas-progreso__texto');
-        if (barra) barra.style.width = pct + '%';
+        if (barra) barra.value = Math.min(hechas, total);
         if (texto) texto.textContent = hechas + ' de ' + total + ' completadas';
-        contenedor.setAttribute('aria-valuenow', String(Math.min(hechas, total)));
+        contenedor.hidden = false;
       }
     }
   } catch (e) {
-    /* Sin localStorage: la barra queda en 0, sin romper nada. */
+    /* Sin localStorage o sin barra: la sección queda oculta. */
   }
 
-  // 2. Segmented control de niveles: aria-current + scroll suave.
+  // 2. Barra de niveles: marca el activo según el scroll (aria-current).
   var items = document.querySelectorAll('.niveles__item');
   if (items.length === 0) return;
 
@@ -39,20 +39,18 @@
     var mejor = null;
     var mejorTop = Infinity;
     items.forEach(function (a) {
-      var id = (a.getAttribute('href') || '').replace('#', '');
-      var sec = id && document.getElementById(id);
+      var id = a.getAttribute('data-nivel');
+      var sec = id && document.getElementById('nivel-' + id);
       if (!sec) return;
       var r = sec.getBoundingClientRect();
-      var dist = Math.abs(r.top - 120);
+      var dist = Math.abs(r.top - 140);
       if (dist < mejorTop) {
         mejorTop = dist;
         mejor = a;
       }
     });
     items.forEach(function (a) {
-      var activo = a === mejor;
-      a.setAttribute('aria-selected', activo ? 'true' : 'false');
-      if (activo) a.setAttribute('aria-current', 'true');
+      if (a === mejor) a.setAttribute('aria-current', 'true');
       else a.removeAttribute('aria-current');
     });
   }
@@ -74,14 +72,14 @@
 
   items.forEach(function (a) {
     a.addEventListener('click', function (ev) {
-      var id = (a.getAttribute('href') || '').replace('#', '');
-      var sec = id && document.getElementById(id);
+      var id = a.getAttribute('data-nivel');
+      var sec = id && document.getElementById('nivel-' + id);
       if (!sec) return;
       ev.preventDefault();
       var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       sec.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
       try {
-        history.replaceState(null, '', '#' + id);
+        history.replaceState(null, '', '#nivel-' + id);
       } catch (e) {
         /* Sin history: no pasa nada. */
       }
