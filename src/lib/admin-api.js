@@ -2,11 +2,25 @@ import { csrfValido } from './auth.js';
 
 const METODOS_SEGUROS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+/**
+ * Lee el cuerpo de la petición como objeto.
+ * Un JSON malformado o un tipo JSON que no sea objeto (null, array, cadena)
+ * devuelve `{}`: los validadores de cada ruta responden 422 con un mensaje
+ * controlado en lugar de dejar subir una excepción 500.
+ */
 export async function leerEntrada(request) {
   const tipo = request.headers.get('Content-Type') ?? '';
-  if (tipo.includes('application/json')) return request.json();
-  const formulario = await request.formData();
-  return Object.fromEntries(formulario.entries());
+  if (tipo.includes('application/json')) {
+    const datos = await request.json().catch(() => undefined);
+    if (datos !== null && typeof datos === 'object' && !Array.isArray(datos)) return datos;
+    return {};
+  }
+  if (tipo.includes('application/x-www-form-urlencoded') || tipo.includes('multipart/form-data')) {
+    const formulario = await request.formData().catch(() => null);
+    if (!formulario) return {};
+    return Object.fromEntries(formulario.entries());
+  }
+  return {};
 }
 
 export function respuestaJson(datos, status = 200, headers = {}) {

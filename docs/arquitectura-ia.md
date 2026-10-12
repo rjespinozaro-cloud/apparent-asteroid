@@ -45,12 +45,21 @@ Nunca: clave en frontend, `localStorage`, HTML sin sanitizar, scripts externos.
 3. **Entrada validada**: longitud, sin etiquetas, `encodeURIComponent` en
    cliente + recorte en servidor. Salida como texto; si se admite Markdown,
    pasar por `markdownAHtml` (escapa HTML crudo).
-4. **Rate limit**: anónimo por IP (D1 o cabecera CF) + global por minuto
-   (`LIMITES_IA`). Sin límite no hay endpoint.
+4. **Rate limit**: por usuario+IP en la instancia (topes en memoria de D1 para
+   el login; `LIMITES_IA` para el asistente). Ojo: el límite por minuto del
+   asistente vive en un `Map` de memoria, así que **es por isolate, no global**
+   en Cloudflare Workers. La garantía global es el tope mensual de tokens, que
+   sí se guarda en D1. Sin límite global persistente no hay endpoint abierto.
 5. **Sin PII en logs**: registrar longitud y resultado, nunca el texto
    íntegro ni IPs en claro más de lo necesario.
-6. **SSRF**: el proveedor es allowlist (`PROVEEDORES` + `url_base`
-   configurada en servidor). El modelo no navega: no hay tool-use web.
+6. **Destino del proveedor (SSRF / exfiltración de la clave)**: el *nombre*
+   del proveedor es allowlist (`PROVEEDORES`); para `anthropic` el endpoint es
+   fijo y la `url_base` se ignora. Para `openai_compatible` la `url_base` la
+   valida `validarUrlBase()`: solo HTTPS, sin credenciales incrustadas, sin
+   query ni fragmento, sin literales de IP, sin hosts internos (`.local`,
+   `.internal`, `localhost`) y solo puerto 443. La petición usa
+   `redirect: 'error'` para que un 3xx no lleve la clave a otro host. El modelo
+   no navega: no hay tool-use web.
 
 ## 4. Capacidades por fase (cuando exista el endpoint)
 

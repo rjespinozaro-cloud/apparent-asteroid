@@ -11,7 +11,7 @@ import {
 } from '../../../../lib/db.js';
 import { metodoNoPermitido, leerEntrada, respuestaJson, validarPeticionAdmin } from '../../../../lib/admin-api.js';
 import { cifrar, ultimosCaracteres } from '../../../../lib/cripto.js';
-import { LIMITES_IA } from '../../../../lib/ia.js';
+import { LIMITES_IA, validarUrlBase } from '../../../../lib/ia.js';
 
 export const prerender = false;
 
@@ -72,8 +72,11 @@ export async function PUT({ request, locals }) {
   if (!MODELOS_IA.test(modelo)) errores.push({ campo: 'modelo', mensaje: 'El nombre del modelo no es válido.' });
 
   const urlBase = String(entrada.urlBase ?? '').trim() || null;
-  if (urlBase && !/^https:\/\/[a-z0-9.-]{1,80}(:\d+)?(\/.*)?$/i.test(urlBase)) {
-    errores.push({ campo: 'urlBase', mensaje: 'La URL base debe empezar por https://' });
+  if (urlBase) {
+    // Se valida con el mismo validador que usa la llamada saliente: así un
+    // destino no autorizado no llega ni a guardarse ni a usarse.
+    const destino = validarUrlBase(urlBase);
+    if (!destino.ok) errores.push({ campo: 'urlBase', mensaje: destino.error });
   }
 
   const promptSistema = String(entrada.promptSistema ?? '').trim();

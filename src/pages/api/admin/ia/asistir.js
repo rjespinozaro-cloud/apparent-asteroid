@@ -1,17 +1,21 @@
 import { env } from 'cloudflare:workers';
 import { getDatabase, registrarAuditoria } from '../../../../lib/db.js';
 import { metodoNoPermitido, respuestaJson, validarPeticionAdmin } from '../../../../lib/admin-api.js';
-import { consultarIa } from '../../../../lib/ia.js';
+import { consultarIa, presupuestoContexto, SEPARADOR_PROMPT } from '../../../../lib/ia.js';
 
 export const prerender = false;
 
-const MAX_LONGITUD_CONTEXTO = 12_000;
-
-function contextoDeGuia(entrada) {
+/**
+ * El presupuesto del contexto sale de `presupuestoContexto()`: la instrucción
+ * y el contexto comparten la cota del prompt final, de modo que un cuerpo de
+ * guía largo ya no choca siempre con el límite del proveedor.
+ */
+function contextoDeGuia(entrada, longitudInstruccion) {
+  const maxCuerpo = presupuestoContexto(longitudInstruccion);
   const titulo = String(entrada.titulo ?? '').slice(0, 160);
   const equipo = String(entrada.equipo ?? '').slice(0, 10);
   const herramienta = String(entrada.herramienta ?? '').slice(0, 40);
-  const cuerpo = String(entrada.cuerpoMd ?? '').slice(0, MAX_LONGITUD_CONTEXTO);
+  const cuerpo = String(entrada.cuerpoMd ?? '').slice(0, maxCuerpo);
   const partes = [];
   if (titulo) partes.push(`Título: ${titulo}`);
   if (equipo) partes.push(`Equipo: ${equipo.toUpperCase()}`);
@@ -20,18 +24,26 @@ function contextoDeGuia(entrada) {
   return partes.join('\n\n');
 }
 
+/** Solo se acepta un objeto JSON; cualquier otro tipo es una petición inválida. */
+function objetoJson(valor) {
+  return valor !== null && typeof valor === 'object' && !Array.isArray(valor) ? valor : null;
+}
+
 export async function POST({ request, locals }) {
   const bloqueo = await validarPeticionAdmin(locals.admin, request);
   if (bloqueo) return bloqueo;
 
-  const entrada = await request.json().catch(() => ({}));
+  const cuerpo = await request.json().catch(() => undefined);
+  const entrada = objetoJson(cuerpo);
+  if (!entrada) return respuestaJson({ error: 'Se esperaba un objeto JSON.' }, 422);
+
   const database = getDatabase(env);
   const ip = request.headers.get('CF-Connecting-IP') ?? 'sin-ip';
 
   const instruccion = String(entrada.instruccion ?? '').trim();
-  const contexto = contextoDeGuia(entrada);
+  const contexto = contextoDeGuia(entrada, instruccion.length);
   const prompt = contexto
-    ? `${instruccion}\n\n---\n${contexto}`
+    ? `${instruccion}${SEPARADOR_PROMPT}${contexto}`
     : instruccion;
 
   const resultado = await consultarIa(database, env, {

@@ -161,7 +161,9 @@ git show origin/gh-pages:index.html | grep -o 'font-src[^;]*'
 git grep -o 'data:font/woff2' origin/gh-pages -- '*.css' | head -2
 ```
 
-**Arreglo (código, pendiente):** en `astro.config.mjs`, cambiar la directriz `"font-src 'self'"` por `"font-src 'self' data:"`, rebuild y republicar.
+**Arreglo (ya aplicado):** en `astro.config.mjs`, la directriz `font-src` es
+`"font-src 'self' data:"`. Verificado en la revisión actual: el CSS lleva 4
+fuentes `data:font/woff2` y la CSP las permite.
 
 ### 6.5 Caché del CDN (la página "no cambia")
 
@@ -179,7 +181,8 @@ git show origin/gh-pages:robots.txt | grep Sitemap
 curl -s -o /dev/null -w "%{http_code}\n" "https://rjespinozaro-cloud.github.io/sitemap.xml"
 ```
 
-**Arreglo (código, pendiente):** en `src/pages/robots.txt.ts`, añadir el `base` al URL del sitemap (`${origen}/apparent-asteroid/sitemap.xml`). El `sitemap.xml` en sí sí está bien.
+**Arreglo (ya aplicado):** en `src/pages/robots.txt.ts` se antepone el `base`
+al sitemap. Verificado: `Sitemap: https://rjespinozaro-cloud.github.io/apparent-asteroid/sitemap.xml`. El `sitemap.xml` en sí también es correcto.
 
 ## 7. Seguridad antes de cada push (repo público)
 
