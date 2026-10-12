@@ -24,6 +24,11 @@ const niveles = ['basico', 'intermedio', 'avanzado'].map((nivel) => ({
   purple: nodos.filter((nodo) => nodo.tramo === 'purple' && nodo.nivel === nivel),
 }));
 
+const disponibles = nodos.filter((n) => n.estado === 'disponible').length;
+const proximamente = nodos.filter((n) => n.estado === 'proximamente').length;
+const totalNiveles = niveles.length;
+const totalNodos = nodos.length;
+
 const rolRed = EQUIPOS.red.rol;
 const rolBlue = EQUIPOS.blue.rol;
 
@@ -36,20 +41,68 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
   clase="catalogo-shell"
   claseBody="pagina-rutas"
 >
-  <Migas clase="contenedor catalogo-migas" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
+  <section class="rutas-hero" aria-labelledby="rutas-titulo">
+    <div class="rutas-hero__bg" aria-hidden="true"></div>
+
+    <div class="rutas-hero__contenido">
+      <Migas clase="rutas-migas__lista" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Rutas' }]} />
+
+      <h1 id="rutas-titulo" class="rutas-hero__titulo">
+        El camino de <em>leyendas</em>
+      </h1>
+
+      <p class="rutas-lead">De los fundamentos a la especialización, paso a paso.</p>
+
+      <details class="rutas-hero__info">
+        <summary>¿Cómo se lee el mapa?</summary>
+        <div class="rutas-hero__info-contenido">
+          <p>
+            El viaje completo, de un vistazo: un tronco común de Fundamentos que se
+            bifurca en dos carriles —ofensiva RED y defensa BLUE—, se toca en los
+            nodos Purple y cierra en la especialización que está por venir. Cada
+            nodo está Disponible o Próximamente; nada más.
+          </p>
+        </div>
+      </details>
+
+      <div class="rutas-stats" aria-label="Estadísticas del camino">
+        <span class="rutas-stat">
+          <strong>{disponibles}</strong> disponibles
+        </span>
+        <span class="rutas-stat">
+          <strong>{proximamente}</strong> próximamente
+        </span>
+        <span class="rutas-stat">
+          <strong>{totalNiveles}</strong> niveles
+        </span>
+        <span class="rutas-stat">
+          <strong>{totalNodos}</strong> nodos totales
+        </span>
+      </div>
+
+      <div id="progreso-recorrido" class="rutas-progreso" aria-label="Progreso del recorrido" role="progressbar" aria-valuemin="0" aria-valuemax={totalNodos} aria-valuenow="0">
+        <div class="rutas-progreso__barra"></div>
+        <span class="rutas-progreso__texto">0 de {totalNodos} completadas</span>
+      </div>
+
+      <div class="rutas-hero__acciones">
+        <a class="boton--premium" href="#nivel-tronco">Empezar por Fundamentos</a>
+        <a class="boton--ghost" href="#lista-camino">Ver como lista</a>
+      </div>
+    </div>
+  </section>
+
+  <nav class="niveles" aria-label="Niveles del camino">
+    <ul class="niveles__lista" role="tablist">
+      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="true" href="#nivel-tronco">Fundamentos</a></li>
+      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-basico">Básico</a></li>
+      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-intermedio">Intermedio</a></li>
+      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-avanzado">Avanzado</a></li>
+      <li role="presentation"><a class="niveles__item" role="tab" aria-selected="false" href="#nivel-cierre">Especialización</a></li>
+    </ul>
+  </nav>
 
   <section class="seccion camino contenedor" aria-labelledby="rutas-titulo">
-    <div class="rutas-intro">
-      <p class="eyebrow">RUTA DE APRENDIZAJE</p>
-      <h1 id="rutas-titulo">El camino de leyendas</h1>
-      <p class="entradilla">
-        El viaje completo, de un vistazo: un tronco común de Fundamentos que se
-        bifurca en dos carriles —ofensiva RED y defensa BLUE—, se toca en los
-        nodos Purple y cierra en la especialización que está por venir. Cada
-        nodo está Disponible o Próximamente; nada más.
-      </p>
-    </div>
-
     <nav class="camino__progreso" id="mapa" aria-label="Mapa del camino">
       <p class="camino__progreso-titulo">Mapa del camino</p>
       <ol class="camino__progreso-lista">
@@ -64,6 +117,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     <ul class="camino__leyenda" aria-label="Leyenda de estados">
       <li><span class="camino__muestra camino__muestra--disponible" aria-hidden="true"></span>Disponible</li>
       <li><span class="camino__muestra camino__muestra--proximamente" aria-hidden="true"></span>Próximamente</li>
+      <li><span class="camino__muestra camino__muestra--pago" aria-hidden="true"></span>Premium</li>
     </ul>
 
     <div class="camino-tronco camino-anim" id="nivel-tronco">
@@ -135,7 +189,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       </ol>
     </div>
 
-    <details class="camino-lista">
+    <details id="lista-camino" class="camino-lista">
       <summary>Ver el camino como lista</summary>
       <ol>
         {nodos.map((nodo) => (
@@ -156,4 +210,5 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
 <script>
   import '../../scripts/camino.js';
+  import '../../scripts/rutas-hero.js';
 </script>
