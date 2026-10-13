@@ -1,71 +1,162 @@
 ---
 import Base from '../layouts/Base.astro';
-import Migas from '../components/Migas.astro';
+import Documento from '../components/Documento.astro';
 
 export const prerender = false;
 
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
+const secciones = [
+  { id: 'que-hago', titulo: 'Qué hago aquí' },
+  { id: 'como', titulo: 'Cómo trabajo' },
+  { id: 'red-blue', titulo: 'Por qué RED y BLUE' },
+  { id: 'material', titulo: 'Material y herramientas' },
+  { id: 'quien', titulo: 'Quién soy y contacto' },
+];
 ---
 
 <Base
-  title="Nosotros | JOANIX GUIDES"
-  description="Quiénes somos, qué forma parte de JOANIX GUIDES y cómo hacemos las guías de ciberseguridad RED y BLUE."
+  title="Sobre mí | JOANIX GUIDES"
+  description="Quién hace JOANIX GUIDES: guías, rutas y herramientas de ciberseguridad RED y BLUE escritas por una sola persona."
 >
-  <div class="contenedor">
-    <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Nosotros' }]} />
-
-    <article class="seccion">
-      <p class="eyebrow">Sobre el proyecto</p>
-      <h1>Nosotros</h1>
-
-      <p class="entradilla">
-        JOANIX GUIDES es un laboratorio de ciberseguridad en español: reunimos guías,
-        rutas de aprendizaje y herramientas para practicar lectura de redes y defensa
-        de sistemas.
-      </p>
-
-      <section aria-labelledby="proposito-titulo">
-        <h2 id="proposito-titulo">Qué queremos conseguir</h2>
+  <Documento
+    eyebrow="Sobre mí"
+    titulo="Un proyecto de una sola persona"
+    intro="Hago estas guías yo, a ratos, y las pruebo en mi propio laboratorio antes de publicarlas. Te cuento exactamente qué puedes esperar de ellas."
+    migas={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Sobre mí' }]}
+    secciones={secciones}
+    borrador
+    actualizado="[FECHA]"
+    banner={{
+      escritorio: `${base}nosotros/solo-yo.webp`,
+      movil: `${base}nosotros/solo-yo-movil.webp`,
+      alt: 'Una persona sentada frente a dos monitores: uno muestra un esquema de red en rojo y el otro, una defensa en azul.',
+      ancho: 1600,
+      alto: 678,
+    }}
+  >
+    <details class="doc-seccion" id="que-hago" open>
+      <summary>
+        <span class="doc-seccion__num">01</span>
+        <span class="doc-seccion__titulo">Qué hago aquí</span>
+      </summary>
+      <div class="doc-seccion__cuerpo">
         <p>
-          La seguridad ofensiva y la defensiva se aprenden mejor juntas. Por eso cada
-          escenario aparece con las dos lecturas: la RED, que busca el hueco, y la BLUE,
-          que lo cierra. Ninguna de las dos se entiende del todo sin la otra.
-        </p>
-      </section>
-
-      <section aria-labelledby="metodo-titulo">
-        <h2 id="metodo-titulo">Cómo hacemos las guías</h2>
-        <p>
-          Cada guía parte de un entorno controlado, explica el porqué de cada comando y
-          termina en una comprobación. El adelanto de cada lectura es público; el
-          recorrido completo, cuando es de pago, recoge los pasos que no caben en el
-          adelanto.
-        </p>
-      </section>
-
-      <section aria-labelledby="equipo-titulo">
-        <h2 id="equipo-titulo">Quién mantiene el proyecto</h2>
-        <p>
-          Responsable editorial: <strong>[NOMBRE]</strong>.
+          Soy <strong>[NOMBRE]</strong> y llevo este proyecto yo solo: escribo las guías,
+          dibujo las rutas de aprendizaje y mantengo el sitio. No hay equipo, ni
+          editoriales, ni revisores externos.
         </p>
         <p>
-          Contacto: <strong>[CORREO]</strong>.
+          Mi objetivo es sencillo: que alguien que se está metiendo en la seguridad
+          de redes tenga material en español, gratis y con pasos comprobados, no listas
+          de comandos sueltos.
         </p>
-        <p>
-          <em>
-            Pendiente de completar: este proyecto es un borrador editorial y los campos
-            anteriores deben rellenarse con los datos reales antes de publicar.
-          </em>
-        </p>
-      </section>
+      </div>
+    </details>
 
-      <section aria-labelledby="licencias-titulo">
-        <h2 id="licencias-titulo">Material y herramientas</h2>
+    <details class="doc-seccion" id="como" open>
+      <summary>
+        <span class="doc-seccion__num">02</span>
+        <span class="doc-seccion__titulo">Cómo trabajo</span>
+      </summary>
+      <div class="doc-seccion__cuerpo">
         <p>
-          Citamos las herramientas que aparecen en cada guía con su documentación
-          oficial. Las marcas y los logotipos pertenecen a sus respectivos titulares.
+          Escribo cada guía desde una máquina virtual desechable, ejecuto los pasos y
+          corrijo hasta que funcionan tal cual se leen. Nada se publica sin comprobarlo.
         </p>
-      </section>
-    </article>
-  </div>
+        <p>
+          Cuando una técnica es delicada, la dejo marcada y explico por qué no la
+          ejecuto contra sistemas ajenos. Es la línea que no cruzo.
+        </p>
+        <div class="doc-callout doc-callout--azul">
+          <p>
+            Todo lo que publico está pensado para prácticas con autorización: mi
+            laboratorio, máquinas propias o entornos con permiso escrito.
+          </p>
+        </div>
+      </div>
+    </details>
+
+    <details class="doc-seccion" id="red-blue" open>
+      <summary>
+        <span class="doc-seccion__num">03</span>
+        <span class="doc-seccion__titulo">Por qué RED y BLUE</span>
+      </summary>
+      <div class="doc-seccion__cuerpo">
+        <p>
+          Cada escenario que documento aparece dos veces: la lectura RED y la lectura
+          BLUE. Publico el mismo nodo en el centro, porque es donde se tocan.
+        </p>
+
+        <div class="doc-diagrama doc-diagrama--animar">
+          <svg
+            viewBox="0 0 680 200"
+            width="680"
+            height="200"
+            role="img"
+            aria-label="Diagrama: RED busca el hueco por un lado y BLUE lo cierra por el otro; en el centro, PURPLE los une."
+            fill="none"
+            stroke-linecap="round"
+          >
+            <path d="M156 70 H 246" stroke="#FF4D6D" stroke-width="7" opacity="0.14" />
+            <path d="M156 70 H 246" stroke="#FF4D6D" stroke-width="2" stroke-dasharray="6 5" />
+            <path d="M434 70 H 524" stroke="#3882F6" stroke-width="7" opacity="0.14" />
+            <path d="M434 70 H 524" stroke="#3882F6" stroke-width="2" stroke-dasharray="6 5" />
+
+            <circle cx="110" cy="70" r="44" stroke="#FF4D6D" stroke-width="2" fill="rgba(255,77,109,0.12)" />
+            <circle cx="340" cy="70" r="44" stroke="#C4B5FD" stroke-width="2" fill="rgba(196,181,253,0.14)" />
+            <circle cx="570" cy="70" r="44" stroke="#3882F6" stroke-width="2" fill="rgba(56,130,246,0.12)" />
+
+            <text x="110" y="77" text-anchor="middle" fill="#FF8FA3" font-family="monospace" font-size="18" font-weight="700">RED</text>
+            <text x="340" y="77" text-anchor="middle" fill="#C4B5FD" font-family="monospace" font-size="18" font-weight="700">PURPLE</text>
+            <text x="570" y="77" text-anchor="middle" fill="#8FADFF" font-family="monospace" font-size="18" font-weight="700">BLUE</text>
+
+            <text x="110" y="146" text-anchor="middle" fill="#C9CEEA" font-size="14">busca</text>
+            <text x="110" y="166" text-anchor="middle" fill="#C9CEEA" font-size="14">el hueco</text>
+            <text x="340" y="146" text-anchor="middle" fill="#C9CEEA" font-size="14">ataque</text>
+            <text x="340" y="166" text-anchor="middle" fill="#C9CEEA" font-size="14">y defensa</text>
+            <text x="570" y="146" text-anchor="middle" fill="#C9CEEA" font-size="14">cierra</text>
+            <text x="570" y="166" text-anchor="middle" fill="#C9CEEA" font-size="14">el hueco</text>
+          </svg>
+          <p class="doc-diagrama__pie">
+            Los nodos Purple son los que tocan los dos lados del mismo escenario.
+          </p>
+        </div>
+      </div>
+    </details>
+
+    <details class="doc-seccion" id="material" open>
+      <summary>
+        <span class="doc-seccion__num">04</span>
+        <span class="doc-seccion__titulo">Material y herramientas</span>
+      </summary>
+      <div class="doc-seccion__cuerpo">
+        <p>
+          Cito siempre la documentación oficial de la herramienta de la que hablo.
+          Las marcas, los logotipos y los manuales pertenecen a sus respectivos
+          titulares; este sitio solo enlaza y los explica.
+        </p>
+        <p>
+          [BIO]
+        </p>
+      </div>
+    </details>
+
+    <details class="doc-seccion" id="quien" open>
+      <summary>
+        <span class="doc-seccion__num">05</span>
+        <span class="doc-seccion__titulo">Quién soy y contacto</span>
+      </summary>
+      <div class="doc-seccion__cuerpo">
+        <p>Responsable: <strong>[NOMBRE]</strong>.</p>
+        <p>Contacto: <strong>[CORREO]</strong>.</p>
+        <div class="doc-callout doc-callout--rojo">
+          <p>
+            <strong>Pendiente de completar.</strong> Los campos entre corchetes deben
+            sustituirse por los datos reales antes de publicar este documento.
+          </p>
+        </div>
+      </div>
+    </details>
+  </Documento>
 </Base>

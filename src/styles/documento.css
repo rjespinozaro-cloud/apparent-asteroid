@@ -1,0 +1,565 @@
+/**
+ * Documentos de texto largo (/nosotros/, /etica/, /aviso-legal/).
+ *
+ * Plantilla de dos columnas: índice sticky + columna de lectura.
+ * Nada de estilos inline: aquí viven todos los diagramas y tarjetas.
+ */
+
+.doc {
+  --doc-borde: 1px solid var(--linea);
+  --doc-vidrio: rgb(13 15 26 / 0.7);
+}
+
+/* 1. Banner de cabecera --------------------------------------------------- */
+
+.doc-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.doc-banner__medio,
+.doc-banner__medio img {
+  display: block;
+  width: 100%;
+}
+
+.doc-banner__medio img {
+  height: clamp(14rem, 32vw, 22rem);
+  object-fit: cover;
+  object-position: center 40%;
+}
+
+/* Scrim lateral: el texto vive a la izquierda y necesita contraste AA. */
+.doc-banner__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(5 6 12 / 0.92) 0%, rgb(5 6 12 / 0.72) 45%, rgb(5 6 12 / 0.25) 78%, transparent 100%),
+    linear-gradient(rgb(5 6 12 / 0.35), transparent 55%);
+}
+
+.doc-banner__texto {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-block: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.doc-banner__eyebrow,
+.doc-cabecera__eyebrow {
+  margin: 0;
+  font-family: var(--fuente-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #C4B5FD;
+  text-shadow: 0 1px 12px rgb(5 6 12 / 0.95);
+}
+
+.doc-banner__titulo {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-shadow: 0 2px 18px rgb(5 6 12 / 0.9);
+}
+
+.doc-banner__intro {
+  margin: 0;
+  max-width: 46ch;
+  font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+  line-height: 1.6;
+  color: #C9CEEA;
+  text-shadow: 0 1px 14px rgb(5 6 12 / 0.95);
+}
+
+/* Fundido inferior hacia el fondo estelar del sitio. */
+.doc-banner::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 35%;
+  background: linear-gradient(rgb(5 6 12 / 0), rgb(8 10 20 / 0.96));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Cabecera sin banner */
+.doc-cabecera {
+  display: grid;
+  gap: 0.5rem;
+  padding-block: clamp(1.5rem, 5vw, 3rem) 0;
+}
+
+.doc-cabecera__titulo {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+.doc-cabecera__intro {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: #C9CEEA;
+}
+
+/* 2. Estado del documento ------------------------------------------------- */
+
+.doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 1rem;
+}
+
+.doc-chip {
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgb(255 77 109 / 0.55);
+  background: rgb(255 77 109 / 0.16);
+  color: #FFD5DE;
+  font-family: var(--fuente-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.doc-actualizado {
+  margin: 0;
+  color: var(--tinta-tenue);
+  font-family: var(--fuente-mono);
+  font-size: 0.8125rem;
+}
+
+.doc-migas {
+  padding-block-end: 1rem;
+}
+
+/* 3. Índice --------------------------------------------------------------- */
+
+.doc-layout {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+  padding-block-end: clamp(3rem, 8vw, 6rem);
+}
+
+.doc-indice {
+  position: sticky;
+  top: calc(var(--alto-cabecera, 4.5rem) + 1rem);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.doc-indice__titulo {
+  margin: 0;
+  font-family: var(--fuente-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinta-tenue);
+}
+
+.doc-indice__lista {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-indice__lista a {
+  display: block;
+  min-height: 44px;
+  padding: 0.5rem 0.8rem;
+  border-left: 2px solid #232842;
+  border-radius: 0;
+  color: #C9CEEA;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: color 160ms var(--curva), background-color 160ms var(--curva), border-color 160ms var(--curva);
+}
+
+.doc-indice__lista a:hover {
+  color: #fff;
+  background: rgb(139 92 246 / 0.08);
+}
+
+.doc-indice__lista a[aria-current='true'] {
+  color: #fff;
+  border-left-color: #A78BFA;
+  background: rgb(139 92 246 / 0.12);
+}
+
+.doc-indice__num {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: #C4B5FD;
+  margin-inline-end: 0.5rem;
+}
+
+.doc-todo {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tinta);
+  font-family: inherit;
+  font-size: var(--texto-sm);
+  cursor: pointer;
+}
+
+.doc-todo:hover {
+  border-color: var(--violet-500);
+}
+
+.doc-indice-movil {
+  display: none;
+}
+
+/* 4. Secciones plegables -------------------------------------------------- */
+
+.doc-cuerpo {
+  min-inline-size: 0;
+}
+
+.doc-seccion {
+  margin-bottom: 0.75rem;
+  border: 1px solid rgb(167 139 250 / 0.22);
+  border-radius: 14px;
+  background: rgb(13 15 26 / 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  scroll-margin-top: calc(var(--alto-cabecera, 4rem) + 1.5rem);
+}
+
+.doc-seccion > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 3.25rem;
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.doc-seccion > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron de CSS: dos bordes que rotan. Sin SVG ni estilos inline. */
+.doc-seccion > summary::after {
+  content: "";
+  margin-inline-start: auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid #A78BFA;
+  border-bottom: 2px solid #A78BFA;
+  transform: rotate(45deg);
+  transition: transform 0.2s var(--curva);
+  flex: none;
+}
+
+.doc-seccion[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+.doc-seccion__num {
+  font: 600 0.875rem ui-monospace, monospace;
+  color: #C4B5FD;
+  flex: none;
+}
+
+.doc-seccion__titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--tinta);
+}
+
+.doc-seccion__cuerpo {
+  padding: 0 1.25rem 1.25rem;
+  max-inline-size: 68ch;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: #DDE0F5;
+}
+
+.doc-seccion__cuerpo > *:first-child {
+  margin-top: 0;
+}
+
+.doc-seccion__cuerpo ul,
+.doc-seccion__cuerpo ol {
+  display: grid;
+  gap: 0.4rem;
+  padding-inline-start: 1.25rem;
+}
+
+.doc-seccion__cuerpo a {
+  color: var(--tinta);
+}
+
+/* 5. Callouts ------------------------------------------------------------- */
+
+.doc-callout {
+  margin-block: 1rem;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--violet-500);
+  border-radius: 0 var(--radio-s) var(--radio-s) 0;
+  background: rgb(139 92 246 / 0.1);
+  color: var(--tinta);
+}
+
+.doc-callout--rojo {
+  border-left-color: var(--red);
+  background: rgb(255 77 109 / 0.1);
+}
+
+.doc-callout--azul {
+  border-left-color: var(--blue);
+  background: rgb(77 124 255 / 0.1);
+}
+
+.doc-callout p {
+  margin: 0;
+}
+
+/* 6. Diagramas ----------------------------------------------------------- */
+
+.doc-diagrama {
+  margin-block: 1.25rem;
+  padding: 1rem;
+  border: var(--doc-borde);
+  border-radius: var(--radio-m);
+  background: rgb(5 6 12 / 0.45);
+}
+
+.doc-diagrama__pie {
+  margin: 0.75rem 0 0;
+  color: var(--tinta-tenue);
+  font-size: var(--texto-sm);
+}
+
+/* Entrada solo con transform y opacity (emil-design-eng). */
+@media (prefers-reduced-motion: no-preference) {
+  .doc-diagrama--animar {
+    animation: doc-entrada 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes doc-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Flujo de 4 pasos: tarjetas conectadas por una línea degradada.
+   En escritorio `auto-fit` las reparte; en móvil se apilan y el conector
+   se oculta (ver bloque responsive). */
+.flujo {
+  display: grid;
+  /* 9rem (144px) y no 10rem: con 10rem los cuatro pasos no caben en la
+     columna de 68ch y se parten 3+1, dejando el conector del paso 3 apuntando
+     al vacío. Con 9rem caben los cuatro en escritorio. */
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  counter-reset: paso;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flujo li {
+  position: relative;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #232842;
+  background: rgb(5 6 12 / 0.6);
+}
+
+.flujo li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -1rem;
+  width: 1rem;
+  height: 2px;
+  background: linear-gradient(90deg, #FF4D6D, #4D7CFF);
+}
+
+.flujo__titulo {
+  display: block;
+  margin-block-start: 0.55rem;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.flujo__nodo {
+  font: 600 0.75rem ui-monospace, monospace;
+  color: #C4B5FD;
+}
+
+.doc-redblue {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.doc-equipo {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border: 1px solid;
+  border-radius: var(--radio-m);
+  text-align: center;
+}
+
+.doc-equipo--red {
+  border-color: rgb(255 77 109 / 0.5);
+  background: rgb(255 77 109 / 0.1);
+}
+
+.doc-equipo--blue {
+  border-color: rgb(77 124 255 / 0.5);
+  background: rgb(77 124 255 / 0.1);
+}
+
+.doc-equipo__clave {
+  font-family: var(--fuente-mono);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.doc-equipo--red .doc-equipo__clave {
+  color: #FF8FA3;
+}
+
+.doc-equipo--blue .doc-equipo__clave {
+  color: #8FADFF;
+}
+
+.doc-equipo__texto {
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+}
+
+.doc-purple {
+  display: grid;
+  gap: 0.35rem;
+  text-align: center;
+  padding-inline: 0.5rem;
+}
+
+.doc-purple__clave {
+  font-family: var(--fuente-mono);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #C4B5FD;
+}
+
+.doc-purple__flechas {
+  color: var(--tinta-tenue);
+  font-family: var(--fuente-mono);
+}
+
+.doc-purple__texto {
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+}
+
+/* 7. Responsive ----------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  .doc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-indice {
+    position: static;
+    display: none;
+  }
+
+  .doc-indice-movil {
+    display: block;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-l);
+    background: rgb(13 15 26 / 0.7);
+    padding: 0.4rem 0.9rem;
+  }
+
+  .doc-indice-movil > summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-family: var(--fuente-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+  }
+
+  .doc-indice-movil[open] {
+    padding-block-end: 0.6rem;
+  }
+
+  /* Apilado: el conector horizontal ya no tiene sentido. */
+  .flujo li::after {
+    display: none;
+  }
+
+  .doc-redblue {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc-purple__flechas {
+    transform: rotate(90deg);
+    justify-self: center;
+  }
+
+  .doc-seccion > summary {
+    min-height: 3.25rem;
+  }
+
+  .doc-seccion__titulo {
+    font-size: 1.125rem;
+  }
+
+  .doc-seccion__cuerpo {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    padding-inline: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-diagrama--animar {
+    animation: none;
+  }
+
+  .doc-seccion > summary::after {
+    transition: none;
+  }
+}

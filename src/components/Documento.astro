@@ -1,0 +1,225 @@
+---
+/**
+ * Plantilla compartida de documento (/nosotros/, /etica/, /aviso-legal/).
+ *
+ * Aporta la estructura y el comportamiento; el contenido lo pone la página
+ * con <details class="doc-seccion"> y su lista `secciones`.
+ * - Índice sticky en escritorio (con scroll-spy y aria-current).
+ * - En móvil el índice es un <details> "Contenido".
+ * - "Expandir todo / Contraer todo" accesible.
+ * - Sin JS todas las secciones quedan abiertas e indexables.
+ */
+interface Seccion {
+  id: string;
+  titulo: string;
+}
+
+interface Props {
+  titulo: string;
+  eyebrow: string;
+  intro: string;
+  migas: { texto: string; href?: string }[];
+  secciones: Seccion[];
+  borrador?: boolean;
+  actualizado?: string;
+  /** Banner de cabecera (imagen con scrim). Opcional. */
+  banner?: {
+    escritorio: string;
+    movil: string;
+    alt: string;
+    ancho: number;
+    alto: number;
+  };
+}
+
+const { titulo, eyebrow, intro, migas, secciones, borrador = false, actualizado, banner } = Astro.props;
+const tituloId = `doc-titulo`;
+---
+
+<article class="doc" aria-labelledby={tituloId}>
+  {
+    banner && (
+      <header class="doc-banner">
+        <picture class="doc-banner__medio">
+          <source media="(max-width:47.99rem)" srcset={banner.movil} />
+          <img
+            src={banner.escritorio}
+            alt={banner.alt}
+            width={banner.ancho}
+            height={banner.alto}
+            fetchpriority="high"
+            decoding="async"
+          />
+        </picture>
+        <div class="doc-banner__scrim" />
+        <div class="doc-banner__texto contenedor">
+          <p class="doc-banner__eyebrow">{eyebrow}</p>
+          <h1 class="doc-banner__titulo" id={tituloId}>{titulo}</h1>
+          <p class="doc-banner__intro">{intro}</p>
+        </div>
+      </header>
+    )
+  }
+
+  {
+    !banner && (
+      <header class="doc-cabecera contenedor">
+        <p class="doc-cabecera__eyebrow">{eyebrow}</p>
+        <h1 class="doc-cabecera__titulo" id={tituloId}>{titulo}</h1>
+        <p class="doc-cabecera__intro">{intro}</p>
+      </header>
+    )
+  }
+
+  <div class="doc-meta contenedor">
+    {borrador && <p class="doc-chip">Documento en borrador</p>}
+    {actualizado && <p class="doc-actualizado">Última actualización: {actualizado}</p>}
+  </div>
+
+  <nav class="contenedor doc-migas" aria-label="Migas de pan">
+    <ol class="migas">
+      {migas.map((miga) => (
+        <li>
+          {miga.href ? <a href={miga.href}>{miga.texto}</a> : <span aria-current="page">{miga.texto}</span>}
+        </li>
+      ))}
+    </ol>
+  </nav>
+
+  <div class="doc-layout contenedor">
+    <!-- Índice: sticky en escritorio -->
+    <aside class="doc-indice" aria-label="Índice del documento">
+      <p class="doc-indice__titulo">Contenido</p>
+      <ol class="doc-indice__lista">
+        {secciones.map((seccion, i) => (
+          <li>
+            <a href={`#${seccion.id}`} data-doc-enlace={seccion.id}>
+              <span class="doc-indice__num">{String(i + 1).padStart(2, '0')}</span>
+              <span>{seccion.titulo}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <button type="button" class="doc-todo" data-doc-todo aria-expanded="false">
+        <span data-doc-todo-texto>Expandir todo</span>
+      </button>
+    </aside>
+
+    <!-- En móvil el mismo índice como <details> -->
+    <details class="doc-indice-movil">
+      <summary>Contenido</summary>
+      <ol class="doc-indice__lista">
+        {secciones.map((seccion, i) => (
+          <li>
+            <a href={`#${seccion.id}`} data-doc-enlace-movil={seccion.id}>
+              <span class="doc-indice__num">{String(i + 1).padStart(2, '0')}</span>
+              <span>{seccion.titulo}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </details>
+
+    <div class="doc-cuerpo">
+      <slot />
+    </div>
+  </div>
+</article>
+
+<script>
+  /**
+   * Secciones plegables + índice con scroll-spy.
+   * Sin JS los <details> nacen abiertos (atributo `open` en el HTML), así que
+   * el contenido siempre es legible e indexable.
+   */
+  const doc = document.querySelector('.doc');
+  if (doc instanceof HTMLElement) {
+    const secciones = [...doc.querySelectorAll<HTMLDetailsElement>('.doc-seccion')];
+    const enlaces = [...doc.querySelectorAll<HTMLAnchorElement>('[data-doc-enlace]')];
+    const botonTodo = doc.querySelector<HTMLButtonElement>('[data-doc-todo]');
+    const textoTodo = doc.querySelector<HTMLElement>('[data-doc-todo-texto]');
+    const navMovil = doc.querySelector('.doc-indice-movil');
+
+    const todosAbiertos = () => secciones.every((s) => s.open);
+
+    function pintarBoton() {
+      if (!botonTodo || !textoTodo) return;
+      const abiertos = todosAbiertos();
+      textoTodo.textContent = abiertos ? 'Contraer todo' : 'Expandir todo';
+      botonTodo.setAttribute('aria-expanded', String(abiertos));
+    }
+
+    // Con JS se pliegan; el usuario decide cuáles abrir.
+    secciones.forEach((seccion) => {
+      seccion.open = false;
+    });
+
+    // Un hash en la URL abre la sección que contiene y desplaza hasta ella.
+    function abrirPorHash() {
+      const id = decodeURIComponent(window.location.hash.replace('#', ''));
+      if (!id) return;
+      const destino = secciones.find((s) => s.id === id || s.querySelector(`#${CSS.escape(id)}`));
+      if (!destino) return;
+      destino.open = true;
+      window.setTimeout(() => {
+        destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 40);
+      pintarBoton();
+    }
+
+    if (window.location.hash) abrirPorHash();
+    window.addEventListener('hashchange', abrirPorHash);
+
+    botonTodo?.addEventListener('click', () => {
+      const abrir = !todosAbiertos();
+      secciones.forEach((seccion) => {
+        seccion.open = abrir;
+      });
+      pintarBoton();
+    });
+
+    // Un enlace del índice abre su sección antes de desplazarse.
+    const abrirDesdeIndice = (evento: MouseEvent) => {
+      const enlace = evento.currentTarget;
+      const id = enlace instanceof HTMLAnchorElement ? enlace.getAttribute('href')?.replace('#', '') : null;
+      if (!id) return;
+      const destino = secciones.find((s) => s.id === id || s.querySelector(`#${CSS.escape(id)}`));
+      if (destino) {
+        evento.preventDefault();
+        destino.open = true;
+        destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', `#${id}`);
+        pintarBoton();
+      }
+    };
+
+    enlaces.forEach((enlace) => enlace.addEventListener('click', abrirDesdeIndice));
+    doc.querySelectorAll('[data-doc-enlace-movil]').forEach((enlace) => {
+      enlace.addEventListener('click', () => {
+        if (navMovil instanceof HTMLDetailsElement) navMovil.open = false;
+      });
+    });
+
+    // Scroll-spy: marca la sección visible con aria-current.
+    if ('IntersectionObserver' in window) {
+      const observador = new IntersectionObserver(
+        (entradas) => {
+          entradas.forEach((entrada) => {
+            if (!entrada.isIntersecting) return;
+            enlaces.forEach((enlace) => {
+              const coincide = enlace.getAttribute('href') === `#${entrada.target.id}`;
+              if (coincide) enlace.setAttribute('aria-current', 'true');
+              else enlace.removeAttribute('aria-current');
+            });
+          });
+        },
+        { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
+      );
+      secciones.forEach((seccion) => {
+        if (seccion.id) observador.observe(seccion);
+      });
+    }
+
+    pintarBoton();
+  }
+</script>
