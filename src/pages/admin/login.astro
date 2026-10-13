@@ -1,5 +1,5 @@
 ---
-import AdminBase from '../../layouts/AdminBase.astro';
+import AdminAuth from '../../layouts/AdminAuth.astro';
 import { crearSesion, claveIntento, claveIntentoIp, cookieSesion, limpiarIntentos, loginBloqueado, registrarIntentoFallido, verificarCredenciales } from '../../lib/auth.js';
 import { getDatabase, obtenerUsuarioPorNombre, registrarAuditoria } from '../../lib/db.js';
 import { env } from 'cloudflare:workers';
@@ -58,13 +58,12 @@ if (Astro.request.method === 'POST') {
 }
 ---
 
-<AdminBase
+<AdminAuth
   title="Acceso | JOANIX GUIDES"
   description="Acceso privado a la oficina de administración de JOANIX GUIDES."
   pageTitle="Iniciar sesión"
-  crumbs={[{ label: 'Acceso' }]}
 >
-  <div class="admin-content admin-auth">
+  <div class="admin-auth">
     <article class="admin-auth__panel" aria-labelledby="login-titulo">
       <p class="admin-auth__marca">JOANIX GUIDES / ADMIN · Acceso privado</p>
       <h1 class="admin-auth__title" id="login-titulo">Iniciar sesión</h1>
@@ -88,7 +87,6 @@ if (Astro.request.method === 'POST') {
         </div>
       </form>
 
-      <a class="admin-boton admin-boton--plano admin-auth__volver" href="/inicio/">Volver al portal público</a>
     </article>
   </div>
-</AdminBase>
+</AdminAuth>

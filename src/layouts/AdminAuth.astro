@@ -1,0 +1,73 @@
+---
+/**
+ * Layout mínimo para las pantallas de administración sin sesión
+ * (/admin/login y /admin/instalar).
+ *
+ * A diferencia de AdminBase, aquí NO hay barra lateral, NI barra superior,
+ * NI enlaces a Resumen, Guías o Nueva guía: solo el logotipo, la tarjeta
+ * del formulario centrada y el regreso al portal público.
+ *
+ * Conserva lo imprescindible de las páginas privadas: `noindex` en el
+ * `<meta>` (el middleware añade además la cabecera `X-Robots-Tag: noindex`
+ * y `Cache-Control: no-store` a toda respuesta bajo /admin).
+ */
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '../styles/admin-tokens.css';
+import '../styles/admin.css';
+import '../styles/admin-auth.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  pageTitle?: string;
+  /** Texto del pie: enlace de vuelta al portal público. */
+  volverTexto?: string;
+  volverHref?: string;
+}
+
+const {
+  title = 'Acceso | JOANIX GUIDES',
+  description = 'Acceso privado a la oficina de administración de JOANIX GUIDES.',
+  pageTitle = '',
+  volverTexto = 'Volver al portal público',
+  volverHref = '/inicio/',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light" />
+    <title>{title}</title>
+  </head>
+  <body class="admin admin--auth">
+    <main class="admin-auth-shell" id="contenido">
+      <div class="admin-logo-chip">
+        <img
+          class="admin-logo-chip__img"
+          src="/logo.png"
+          alt="JOANIX GUIDES"
+          width="120"
+          height="60"
+          loading="eager"
+          decoding="async"
+        />
+      </div>
+
+      <div class="admin-auth-shell__card">
+        <slot />
+      </div>
+
+      {pageTitle && <p class="visualmente-oculto">{pageTitle}</p>}
+
+      <a class="admin-auth-shell__volver" href={volverHref}>{volverTexto}</a>
+    </main>
+  </body>
+</html>

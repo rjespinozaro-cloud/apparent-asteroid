@@ -1,0 +1,203 @@
+/**
+ * Pantallas de administración sin sesión (/admin/login, /admin/instalar).
+ *
+ * Layout mínimo: logotipo sobre pastilla oscura, tarjeta del formulario
+ * centrada y regreso al portal. Sin barra lateral ni barra superior.
+ *
+ * Paleta heredada del admin (blanco + amarillo). El fondo se mantiene
+ * claro para no romper los tokens existentes; la pastilla del logo es
+ * oscura porque el PNG lleva un halo que ensucia cualquier fondo claro.
+ */
+
+.admin--auth {
+  min-height: 100dvh;
+}
+
+/* Contenedor centrado en ambos ejes. */
+.admin-auth-shell {
+  align-content: center;
+  align-items: center;
+  display: grid;
+  gap: clamp(1.25rem, 4vh, 2rem);
+  justify-items: center;
+  min-height: 100dvh;
+  padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem);
+  /* Respeta la barra de direcciones del móvil sin saltos de layout. */
+  padding-block-end: max(clamp(1.5rem, 5vw, 3rem), env(safe-area-inset-bottom, 0px));
+}
+
+/* Pastilla oscura del logo: el PNG tiene halo y se ve sucio en claro. */
+.admin-logo-chip {
+  align-items: center;
+  background: #07080F;
+  border-radius: 14px;
+  display: inline-flex;
+  padding: 10px 14px;
+}
+
+.admin-logo-chip__img {
+  display: block;
+  block-size: auto;
+  inline-size: auto;
+  max-block-size: 56px;
+  max-inline-size: 220px;
+  object-fit: contain;
+}
+
+/* Tarjeta del formulario. */
+.admin-auth-shell__card {
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-radius-lg);
+  box-shadow: var(--adm-shadow-md);
+  inline-size: 100%;
+  max-inline-size: 28rem;
+  padding: clamp(1.25rem, 5vw, 2.25rem);
+}
+
+/* Envoltorio de contenido que ya usan las páginas.
+   La tarjeta (fondo, borde, sombra) la aporta `.admin-auth-shell__card`;
+   aquí solo se neutraliza la que definía admin.css para evitar un doble marco. */
+.admin-auth {
+  align-items: start;
+  display: grid;
+  gap: var(--adm-space-lg);
+  min-height: 0;
+  padding: 0;
+}
+
+.admin-auth__panel {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: grid;
+  gap: var(--adm-space-md);
+  margin: 0;
+  max-width: none;
+  padding: 0;
+  width: 100%;
+}
+
+.admin-auth__marca {
+  color: var(--adm-text-muted);
+  font-family: var(--adm-font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.admin-auth__title {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.admin-auth__intro {
+  color: var(--adm-text-muted);
+  margin: 0;
+}
+
+.admin-auth__volver {
+  display: none;
+}
+
+/* Aviso de bloqueo: role="alert", sin revelar nada sobre la cuenta. */
+.admin-alerta {
+  border-radius: var(--adm-radius-md);
+  font-size: var(--adm-text-sm, 0.875rem);
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+}
+
+.admin-alerta--error {
+  background: var(--adm-red-bg, #FFE4E6);
+  border: 1px solid #FCA5A5;
+  color: var(--adm-red-text, #B91C1C);
+}
+
+.admin-alerta--ok {
+  background: #DCFCE7;
+  border: 1px solid #86EFAC;
+  color: var(--adm-success-text, #15803D);
+}
+
+/* Enlace de vuelta: zona táctil cómoda y foco visible. */
+.admin-auth-shell__volver {
+  align-items: center;
+  color: var(--adm-text-muted);
+  display: inline-flex;
+  justify-content: center;
+  min-block-size: 44px;
+  padding: 0.5rem 0.75rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.admin-auth-shell__volver:hover {
+  color: var(--adm-text);
+}
+
+.admin-auth-shell__volver:focus-visible {
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 2px;
+  border-radius: var(--adm-radius-sm);
+}
+
+/* Campos y botones: tamaño táctil mínimo de 44px. */
+.admin-form__campo input,
+.admin-form input[type='text'],
+.admin-form input[type='password'] {
+  min-block-size: 44px;
+  inline-size: 100%;
+}
+
+.admin-form__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--adm-space-sm);
+}
+
+.admin-form__acciones .admin-boton {
+  min-block-size: 44px;
+}
+
+@media (max-width: 30rem) {
+  .admin-auth-shell {
+    justify-items: stretch;
+  }
+
+  /* La pastilla se mantiene centrada y no se estira con la tarjeta. */
+  .admin-logo-chip {
+    justify-self: center;
+  }
+
+  .admin-auth-shell__card {
+    max-inline-size: none;
+  }
+}
+
+/* ==========================================================================
+   Logo de la barra lateral del dashboard: mismo problema de halo, tamaño
+   mucho menor (antes ocupaba ~176px de ancho y se veía enorme).
+   ========================================================================== */
+
+.admin-sidebar__logo {
+  display: block;
+  block-size: auto;
+  inline-size: auto;
+  max-block-size: 40px;
+  max-inline-size: 150px;
+  object-fit: contain;
+}
+
+.admin-sidebar__header .admin-logo-chip {
+  padding: 6px 10px;
+}
+
+.admin-sidebar__header .admin-logo-chip__img {
+  max-block-size: 40px;
+  max-inline-size: 150px;
+}

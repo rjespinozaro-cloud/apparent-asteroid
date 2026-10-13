@@ -5,6 +5,7 @@ import '@fontsource/ibm-plex-sans/600.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '../styles/admin-tokens.css';
 import '../styles/admin.css';
+import '../styles/admin-auth.css';
 
 interface Crumb {
   href?: string;
@@ -74,8 +75,8 @@ function isActive(href: string, exact?: boolean) {
 
     <nav id="admin-sidebar" class="admin-sidebar" aria-label="Navegación principal del panel">
       <div class="admin-sidebar__header">
-        <a class="admin-sidebar__marca" href="/admin/">
-          <img class="admin-sidebar__logo" src="/logo.png" alt="JOANIX GUIDES" width="120" height="60" loading="lazy" decoding="async" />
+        <a class="admin-sidebar__marca admin-logo-chip" href="/admin/">
+          <img class="admin-logo-chip__img" src="/logo.png" alt="JOANIX GUIDES" width="120" height="60" loading="lazy" decoding="async" />
         </a>
       </div>
       <ul class="admin-sidebar__nav" role="list">
