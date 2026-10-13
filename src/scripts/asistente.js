@@ -36,6 +36,82 @@ const TIEMPO_MAXIMO_MS = 15_000;
 const CLAVE_VISTO_SESION = 'joanix-ai-visto';
 const CLAVE_DESCARTADO = 'joanix-ai-descartado';
 const CLAVE_ULTIMA = 'joanix-ai-ultima';
+const CLAVE_RECIENTES = 'joanix-ai-recientes';
+const CLAVE_VOTO = 'joanix-ai-voto';
+const MAX_RECIENTES = 4;
+
+/**
+ * Sugerencias según la página. El contexto se deduce de la ruta real, sin
+ * pedir nada al servidor: en guías RED se pregunta por detección, en BLUE por
+ * ataque y en rutas por dónde empezar.
+ */
+export function sugerenciasPorRuta(ruta) {
+  const camino = String(ruta ?? '');
+  if (/\/guias\/red(\/|$)/.test(camino)) {
+    return [
+      { texto: '¿Cómo se detecta esto?', tipo: 'texto' },
+      { texto: 'Herramientas de sniffing', tipo: 'buscar' },
+      { texto: '¿Qué hago si me descubren?', tipo: 'texto' },
+    ];
+  }
+  if (/\/guias\/blue(\/|$)/.test(camino)) {
+    return [
+      { texto: '¿Cómo se ataca esto?', tipo: 'buscar' },
+      { texto: 'Endurecer el servicio', tipo: 'texto' },
+      { texto: 'Detectar intrusiones', tipo: 'buscar' },
+    ];
+  }
+  if (/\/rutas(\/|$)/.test(camino)) {
+    return [
+      { texto: '¿Por dónde empiezo?', tipo: 'texto' },
+      { texto: 'Rutas de aprendizaje', tipo: 'sugerir' },
+      { texto: 'Fundamentos de redes', tipo: 'buscar' },
+    ];
+  }
+  return [
+    { texto: 'Dame una sugerencia', tipo: 'sugerir' },
+    { texto: 'Buscar en el catálogo', tipo: 'texto' },
+    { texto: 'Herramientas útiles', tipo: 'buscar' },
+  ];
+}
+
+/** Lee las búsquedas recientes de la sesión. Nunca lanza. */
+export function leerRecientes() {
+  try {
+    const datos = JSON.parse(sessionStorage.getItem(CLAVE_RECIENTES) || '[]');
+    if (!Array.isArray(datos)) return [];
+    return datos.filter((item) => typeof item === 'string' && item.trim() !== '').slice(0, MAX_RECIENTES);
+  } catch {
+    return [];
+  }
+}
+
+function guardarReciente(termino) {
+  try {
+    const actuales = leerRecientes().filter((item) => item.toLowerCase() !== termino.toLowerCase());
+    sessionStorage.setItem(CLAVE_RECIENTES, JSON.stringify([termino, ...actuales].slice(0, MAX_RECIENTES)));
+  } catch {
+    /* sin sessionStorage no hay recientes */
+  }
+}
+
+/**
+ * Voto de utilidad. Solo un contador anónimo en localStorage: no se guarda
+ * ni se envía ningún dato personal ni el contenido de la búsqueda.
+ */
+function sumarVoto(positivo) {
+  try {
+    let previo = 0;
+    try {
+      previo = Number(localStorage.getItem(CLAVE_VOTO) || '0') || 0;
+    } catch {
+      previo = 0;
+    }
+    localStorage.setItem(CLAVE_VOTO, String(previo + (positivo ? 1 : -1)));
+  } catch {
+    /* sin almacenamiento el voto no se guarda */
+  }
+}
 
 if (typeof document !== 'undefined') {
   const raiz = document.querySelector('[data-ai]');
@@ -52,8 +128,80 @@ if (typeof document !== 'undefined') {
     const boton = raiz.querySelector('[data-ai-boton]');
     const resultados = raiz.querySelector('[data-ai-resultados]');
     const mascota = raiz.querySelector('[data-mascota]');
+    const acciones = raiz.querySelector('[data-ai-acciones]');
+    const recientesLista = raiz.querySelector('[data-ai-recientes]');
+    const recientesBloque = raiz.querySelector('[data-ai-recientes-bloque]');
 
     let enCurso = false;
+
+    /** Icono del tipo de chip, para que la lista se lea sin depender del texto. */
+    const ICONO_CHIP = {
+      buscar: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>',
+      sugerir: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.6.6-1 1.3-1 2.1v.4h-6v-.4c0-.8-.4-1.5-1-2.1A6 6 0 0 1 12 3z"/></svg>',
+      texto: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    };
+
+    const chip = (texto, tipo, valor) => {
+      const item = document.createElement('li');
+      const botonChip = document.createElement('button');
+      botonChip.type = 'button';
+      botonChip.className = 'ai-chip';
+      botonChip.dataset.aiAccion = tipo;
+      if (valor) botonChip.dataset.aiValor = valor;
+      botonChip.innerHTML = ICONO_CHIP[tipo] ?? ICONO_CHIP.texto;
+      botonChip.append(texto);
+      item.append(botonChip);
+      return item;
+    };
+
+    const pintarAcciones = () => {
+      if (!(acciones instanceof HTMLElement)) return;
+      acciones.replaceChildren(...sugerenciasPorRuta(window.location.pathname).map((item) => chip(item.texto, item.tipo)));
+      if (!(recientesLista instanceof HTMLElement)) return;
+      const previas = leerRecientes();
+      recientesBloque?.removeAttribute('hidden');
+      recientesLista.replaceChildren(...previas.map((termino) => chip(termino, 'buscar', termino)));
+      if (previas.length === 0) recientesBloque?.setAttribute('hidden', '');
+    };
+
+    /** Anotación de la persona en el hilo (burbuja propia). */
+    const anotarPregunta = (texto) => {
+      const hilo = raiz.querySelector('[data-ai-hilo]');
+      if (!(hilo instanceof HTMLElement)) return;
+      const burbuja = document.createElement('p');
+      burbuja.className = 'ai-hilo__yo';
+      burbuja.textContent = texto;
+      hilo.prepend(burbuja);
+    };
+
+    /** Pregunta de utilidad al pie de los resultados (solo contador local). */
+    const anotarUtilidad = () => {
+      const bloque = document.createElement('div');
+      bloque.className = 'ai-utilidad';
+      const pregunta = document.createElement('span');
+      pregunta.textContent = '¿Te sirvió?';
+      const si = document.createElement('button');
+      si.type = 'button';
+      si.className = 'ai-utilidad__boton';
+      si.textContent = 'Sí';
+      const no = document.createElement('button');
+      no.type = 'button';
+      no.className = 'ai-utilidad__boton';
+      no.textContent = 'No';
+      const cerrar = () => {
+        bloque.remove();
+      };
+      si.addEventListener('click', () => {
+        sumarVoto(true);
+        cerrar();
+      });
+      no.addEventListener('click', () => {
+        sumarVoto(false);
+        cerrar();
+      });
+      bloque.append(pregunta, si, no);
+      resultados?.append(bloque);
+    };
 
     /** Cambia mascota + mensaje. El texto comunica el estado (la imagen no va sola). */
     const fijarEstado = (estado, texto) => {
@@ -77,6 +225,7 @@ if (typeof document !== 'undefined') {
     const abrirPanel = (foco = true) => {
       mostrar(aviso, false);
       mostrar(panel, true);
+      raiz.dataset.abierto = 'true';
       if (abrir instanceof HTMLButtonElement) abrir.setAttribute('aria-expanded', 'true');
       try {
         sessionStorage.setItem(CLAVE_VISTO_SESION, '1');
@@ -96,6 +245,7 @@ if (typeof document !== 'undefined') {
 
     const cerrarPanel = () => {
       mostrar(panel, false);
+      raiz.dataset.abierto = 'false';
       if (abrir instanceof HTMLButtonElement) {
         abrir.setAttribute('aria-expanded', 'false');
         abrir.focus({ preventScroll: true });
@@ -115,6 +265,7 @@ if (typeof document !== 'undefined') {
       verTodo.textContent = textoTodo;
       resultados?.append(verTodo);
       mostrar(resultados, true);
+      anotarUtilidad();
       return true;
     };
 
@@ -244,26 +395,37 @@ if (typeof document !== 'undefined') {
       } catch {
         /* sin almacenamiento no se recuerda la búsqueda */
       }
+      guardarReciente(termino);
+      anotarPregunta(termino);
+      pintarAcciones();
       void buscar(termino);
     });
 
-    raiz.querySelectorAll('[data-ai-accion]').forEach((accion) => {
-      accion.addEventListener('click', () => {
-        abrirPanel(false);
-        const tipo = accion.getAttribute('data-ai-accion');
-        if (tipo === 'sugerir') void sugerir();
-        else if (tipo === 'duda') {
-          mostrar(resultados, false);
-          fijarEstado(
-            'curious',
-            'De momento solo busco dentro del catálogo: dime dos o tres palabras clave.',
-          );
-          enfocarEntrada();
-        } else {
-          fijarEstado('curious', 'Hola, soy JOANIX AI. ¿Qué quieres aprender hoy?');
-          enfocarEntrada();
-        }
-      });
+    // Delegación: los chips se generan dinámicamente (sugerencias + recientes),
+// así que no pueden engancharse uno a uno en el momento de cargar.
+raiz.addEventListener('click', (evento) => {
+      const objetivo = evento.target;
+      if (!(objetivo instanceof Element)) return;
+      const accion = objetivo.closest('[data-ai-accion]');
+      if (!(accion instanceof HTMLElement)) return;
+
+      abrirPanel(false);
+      const tipo = accion.getAttribute('data-ai-accion');
+      const valor = accion.getAttribute('data-ai-valor') || '';
+      if (tipo === 'sugerir') {
+        void sugerir();
+      } else if (tipo === 'buscar' && valor.trim().length >= 2) {
+        if (campo instanceof HTMLInputElement) campo.value = valor;
+        anotarPregunta(valor);
+        void buscar(normalizarTermino(valor));
+      } else {
+        mostrar(resultados, false);
+        fijarEstado(
+          'curious',
+          'De momento solo busco dentro del catálogo: dime dos o tres palabras clave.',
+        );
+        enfocarEntrada();
+      }
     });
 
     // El globo contextual lo dispara el arranque diferido (`ai:mostrar-aviso`,
@@ -298,5 +460,10 @@ if (typeof document !== 'undefined') {
       if (descartado || !(aviso instanceof HTMLElement) || !(panel instanceof HTMLElement) || !panel.hidden) return;
       mostrar(aviso, true);
     });
+
+    // Las sugerencias dependen de la ruta y los recientes de la sesión:
+    // se pintan al cargar el módulo y al abrir el panel.
+    pintarAcciones();
+    abrir?.addEventListener('click', () => window.setTimeout(pintarAcciones, 0));
   }
 }

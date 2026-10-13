@@ -1,0 +1,75 @@
+---
+import Base from '../layouts/Base.astro';
+import Migas from '../components/Migas.astro';
+
+export const prerender = false;
+
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+---
+
+<Base
+  title="Ética y uso responsable | JOANIX GUIDES"
+  description="Uso autorizado, límites legales y responsabilidad del usuario en las guías de JOANIX GUIDES."
+>
+  <div class="contenedor">
+    <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Ética y uso responsable' }]} />
+
+    <article class="seccion">
+      <p class="eyebrow">Uso responsable</p>
+      <h1>Ética y uso responsable</h1>
+
+      <p class="entradilla">
+        Todo lo que publicamos sirve para practicar con autorización. Lo que no
+        permitimos es usarlo contra sistemas que no te pertenecen.
+      </p>
+
+      <section aria-labelledby="autorizado-titulo">
+        <h2 id="autorizado-titulo">Dónde sí se practica</h2>
+        <ul>
+          <li>Laboratorios propios y máquinas virtuales desechables.</li>
+          <li>Entornos de práctica declarados como vulnerables.</li>
+          <li>Equipos y redes sobre los que tengas autorización escrita.</li>
+          <li>Cursos, retos CTF y campañas con reglas de participación claras.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="prohibido-titulo">
+        <h2 id="prohibido-titulo">Dónde no</h2>
+        <ul>
+          <li>Equipos, redes o cuentas de terceros sin permiso explícito.</li>
+          <li>Servicios en producción o que afecten a terceros.</li>
+          <li>Obtener acceso, interceptar comunicaciones o publicar datos ajenos.</li>
+          <li>Cualquier prueba que degrade un servicio que no sea tuyo.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="legal-titulo">
+        <h2 id="legal-titulo">Marco legal</h2>
+        <p>
+          En España, la autorización previa es el eje del artículo 197 del Código
+          Penal: lo que no está autorizado puede constituir delito de acceso ilegal a
+          sistemas de información. La vía técnica no sustituye a la autorización
+          legal.
+        </p>
+        <p>
+          Puedes ampliar los límites en el <a href={`${base}aviso-legal/`}>aviso legal</a>.
+        </p>
+      </section>
+
+      <section aria-labelledby="danos-titulo">
+        <h2 id="danos-titulo">Si algo sale mal</h2>
+        <p>
+          Si una guía provoca un daño o un tercero se ve afectado, escríbenos y
+          revisamos el contenido. Responsable del proyecto: <strong>[NOMBRE]</strong>,
+          contacto: <strong>[CORREO]</strong>.
+        </p>
+        <p>
+          <em>
+            Pendiente de completar: este proyecto es un borrador editorial y los datos
+            de contacto deben sustituirse por los reales antes de publicar.
+          </em>
+        </p>
+      </section>
+    </article>
+  </div>
+</Base>

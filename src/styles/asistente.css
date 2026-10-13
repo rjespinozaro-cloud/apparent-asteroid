@@ -196,20 +196,49 @@
   flex-direction: column;
   gap: var(--espacio-s);
   height: min(36rem, 80dvh);
+  /* Nunca solapa la cabecera: el alto se recorta contra el espacio real que
+     deja la cabecera (--alto-cabecera) más los internos del panel. */
+  max-height: calc(100dvh - var(--alto-cabecera, 4rem) - 7rem);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--espacio-m);
   position: fixed;
   right: calc(var(--espacio-m) + env(safe-area-inset-right, 0px));
   width: min(26rem, calc(100vw - 2rem));
+  /* Anclado al lanzador: crece desde abajo a la derecha. */
+  transform-origin: bottom right;
+}
+
+.ai[data-ai][data-abierto='true'] .ai-panel {
+  animation: ai-abrir 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Con el panel abierto el lanzador se retira: en móvil la hoja inferior
+   ocupa todo el ancho y el botón se le solaparía encima. */
+.ai[data-abierto='true'] .ai-launcher {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes ai-abrir {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .ai-panel[hidden] {
   display: none;
 }
 
-/* Cabecera con fondo ambiental (respaldo en degradado: aún no hay
-   public/assistant/fondo-cascada.webp) y scrim oscuro para contraste. */
+/* Cabecera del panel.
+   El fondo de marca sería public/assistant/fondo-cascada.webp, que aún NO
+   existe en el repo: de momento se usa un degradado equivalente. Si se añade
+   el fichero basta con anteponerlo en `background-image`. */
 .ai-panel__cabecera {
   align-items: center;
   display: flex;
@@ -217,10 +246,11 @@
   margin: calc(-1 * var(--espacio-m)) calc(-1 * var(--espacio-m)) 0;
   padding: var(--espacio-m);
   border-radius: var(--radio-l) var(--radio-l) 0 0;
-  background:
+  background-image:
     linear-gradient(rgba(5, 6, 12, 0.78), rgba(5, 6, 12, 0.9)),
     linear-gradient(135deg, #3b1f66 0%, #1e2a63 60%, #12395b 100%);
   background-size: cover;
+  background-position: center;
 }
 
 .ai-panel__mascota {
@@ -243,15 +273,28 @@
   text-transform: uppercase;
 }
 
-.ai-panel__titulo p {
+/* Estado "En línea": texto con punto verde, sin caja ni borde. */
+.ai-panel__estado {
+  align-items: center;
   color: var(--tinta);
+  display: flex;
+  gap: 0.4rem;
   margin: 0;
   max-width: none;
-  background: rgb(255 255 255 / 0.07);
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-m);
-  padding: var(--espacio-2xs) var(--espacio-xs);
+  background: none;
+  border: 0;
+  padding: 0;
   font-size: var(--texto-sm);
+}
+
+.ai-panel__estado::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 0 3px rgb(52 211 153 / 0.18);
+  flex: none;
 }
 
 /* Indicador "buscando" animado (solo opacidad). */
@@ -299,6 +342,76 @@
   min-width: 0;
 }
 
+/* Botón de envío: icono, mismo tamaño que el campo. */
+.ai-enviar {
+  align-items: center;
+  background: var(--violet-500);
+  border: 1px solid transparent;
+  border-radius: var(--radio-m);
+  color: var(--ink-950);
+  cursor: pointer;
+  display: inline-flex;
+  flex: none;
+  justify-content: center;
+  min-height: var(--alto-control);
+  min-width: var(--alto-control);
+  touch-action: manipulation;
+  transition: filter 160ms var(--curva), transform 160ms var(--curva);
+}
+
+.ai-enviar:hover {
+  filter: brightness(1.1);
+}
+
+.ai-enviar:active {
+  transform: scale(0.96);
+}
+
+.ai-enviar:disabled {
+  cursor: progress;
+  filter: grayscale(0.6);
+  opacity: 0.7;
+}
+
+/* Hilo: burbujas de la persona + contenido del asistente. */
+.ai-hilo {
+  display: grid;
+  gap: var(--espacio-2xs);
+}
+
+.ai-hilo__yo {
+  background: var(--papel-contraste);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  color: var(--tinta);
+  justify-self: end;
+  margin: 0;
+  max-width: 85%;
+  padding: var(--espacio-2xs) var(--espacio-s);
+  font-size: var(--texto-sm);
+}
+
+/* Bloques "Prueba con" y "Recientes". */
+.ai-bloque {
+  display: grid;
+  gap: var(--espacio-2xs);
+}
+
+.ai-bloque[hidden] {
+  display: none;
+}
+
+.ai-bloque__titulo {
+  color: var(--tinta-tenue);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* Chips en frase normal: sin mayúsculas ni monoespaciada. */
 .ai-acciones {
   display: flex;
   flex-wrap: wrap;
@@ -308,10 +421,62 @@
   padding: 0;
 }
 
-.ai-acciones .chip {
+.ai-chip {
+  align-items: center;
+  background: var(--papel-contraste);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-full);
+  color: var(--tinta);
   cursor: pointer;
-  min-height: 2.75rem;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: var(--texto-sm);
+  font-weight: 500;
+  gap: 0.4rem;
+  letter-spacing: 0;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.8rem;
+  text-transform: none;
   touch-action: manipulation;
+  transition: border-color 160ms var(--curva), background-color 160ms var(--curva);
+}
+
+.ai-chip:hover {
+  background: var(--papel-hover);
+  border-color: var(--linea-fuerte);
+}
+
+.ai-chip svg {
+  color: var(--violet-500);
+  flex: none;
+}
+
+/* "¿Te sirvió?": solo contador local, sin datos personales. */
+.ai-utilidad {
+  align-items: center;
+  color: var(--tinta-suave);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--texto-sm);
+  gap: var(--espacio-2xs);
+  margin-top: var(--espacio-s);
+}
+
+.ai-utilidad__boton {
+  background: transparent;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-full);
+  color: var(--tinta);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--texto-sm);
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  touch-action: manipulation;
+}
+
+.ai-utilidad__boton:hover {
+  border-color: var(--violet-500);
 }
 
 .ai-resultados[hidden] {
@@ -345,7 +510,9 @@
 .ai-launcher:focus-visible,
 .ai-cerrar:focus-visible,
 .ai-aviso__cerrar:focus-visible,
-.ai-acciones .chip:focus-visible,
+.ai-chip:focus-visible,
+.ai-utilidad__boton:focus-visible,
+.ai-enviar:focus-visible,
 .ai-aviso__acciones .boton--ghost:focus-visible,
 .ai-resultados a:focus-visible {
   outline: 2px solid var(--borde-enfoque);
@@ -373,24 +540,30 @@
 }
 
 @media (max-width: 47.99rem) {
+  /* Móvil: hoja inferior pegada al borde, no una tarjeta flotante. */
   .ai-panel {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    bottom: 0;
     width: auto;
-    height: min(38rem, calc(100dvh - 5rem));
+    max-height: none;
+    height: min(85dvh, calc(100dvh - var(--alto-cabecera, 4rem)));
+    border-radius: var(--radio-l) var(--radio-l) 0 0;
+    padding-bottom: calc(var(--espacio-m) + env(safe-area-inset-bottom, 0px));
+    transform-origin: bottom center;
   }
 
   .ai-form {
-    flex-direction: column;
+    flex-direction: row;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ai-launcher,
   .ai-launcher::before,
-  .ai[data-estado="searching"] [data-ai-mensaje]::after,
-  .ai[data-estado="thinking"] [data-ai-mensaje]::after {
+  .ai[data-abierto='true'] .ai-panel,
+  .ai[data-estado='searching'] [data-ai-mensaje]::after,
+  .ai[data-estado='thinking'] [data-ai-mensaje]::after {
     animation: none;
   }
 }

@@ -11,6 +11,8 @@ const PAGINAS_ESTATICAS = [
   { ruta: '/guias/', prioridad: '0.9', frecuencia: 'weekly' },
   { ruta: '/rutas/', prioridad: '0.8', frecuencia: 'weekly' },
   { ruta: '/herramientas/', prioridad: '0.8', frecuencia: 'weekly' },
+  { ruta: '/nosotros/', prioridad: '0.5', frecuencia: 'monthly' },
+  { ruta: '/etica/', prioridad: '0.5', frecuencia: 'monthly' },
   { ruta: '/aviso-legal/', prioridad: '0.3', frecuencia: 'yearly' },
 ];
 

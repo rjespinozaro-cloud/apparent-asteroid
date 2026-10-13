@@ -1,0 +1,71 @@
+---
+import Base from '../layouts/Base.astro';
+import Migas from '../components/Migas.astro';
+
+export const prerender = false;
+
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+---
+
+<Base
+  title="Nosotros | JOANIX GUIDES"
+  description="Quiénes somos, qué forma parte de JOANIX GUIDES y cómo hacemos las guías de ciberseguridad RED y BLUE."
+>
+  <div class="contenedor">
+    <Migas items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Nosotros' }]} />
+
+    <article class="seccion">
+      <p class="eyebrow">Sobre el proyecto</p>
+      <h1>Nosotros</h1>
+
+      <p class="entradilla">
+        JOANIX GUIDES es un laboratorio de ciberseguridad en español: reunimos guías,
+        rutas de aprendizaje y herramientas para practicar lectura de redes y defensa
+        de sistemas.
+      </p>
+
+      <section aria-labelledby="proposito-titulo">
+        <h2 id="proposito-titulo">Qué queremos conseguir</h2>
+        <p>
+          La seguridad ofensiva y la defensiva se aprenden mejor juntas. Por eso cada
+          escenario aparece con las dos lecturas: la RED, que busca el hueco, y la BLUE,
+          que lo cierra. Ninguna de las dos se entiende del todo sin la otra.
+        </p>
+      </section>
+
+      <section aria-labelledby="metodo-titulo">
+        <h2 id="metodo-titulo">Cómo hacemos las guías</h2>
+        <p>
+          Cada guía parte de un entorno controlado, explica el porqué de cada comando y
+          termina en una comprobación. El adelanto de cada lectura es público; el
+          recorrido completo, cuando es de pago, recoge los pasos que no caben en el
+          adelanto.
+        </p>
+      </section>
+
+      <section aria-labelledby="equipo-titulo">
+        <h2 id="equipo-titulo">Quién mantiene el proyecto</h2>
+        <p>
+          Responsable editorial: <strong>[NOMBRE]</strong>.
+        </p>
+        <p>
+          Contacto: <strong>[CORREO]</strong>.
+        </p>
+        <p>
+          <em>
+            Pendiente de completar: este proyecto es un borrador editorial y los campos
+            anteriores deben rellenarse con los datos reales antes de publicar.
+          </em>
+        </p>
+      </section>
+
+      <section aria-labelledby="licencias-titulo">
+        <h2 id="licencias-titulo">Material y herramientas</h2>
+        <p>
+          Citamos las herramientas que aparecen en cada guía con su documentación
+          oficial. Las marcas y los logotipos pertenecen a sus respectivos titulares.
+        </p>
+      </section>
+    </article>
+  </div>
+</Base>

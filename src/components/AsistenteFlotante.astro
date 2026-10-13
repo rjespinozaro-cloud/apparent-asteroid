@@ -29,7 +29,7 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
     class="ai-panel"
     role="dialog"
     aria-modal="false"
-    aria-label="JOANIX AI: busca en el catálogo"
+    aria-labelledby="ai-titulo"
     data-ai-panel
     hidden
   >
@@ -37,13 +37,17 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
       <AssistantMascot estado="curious" clase="ai-panel__mascota" />
       <div class="ai-panel__titulo">
         <h2 id="ai-titulo">JOANIX AI</h2>
-        <p role="status" data-ai-mensaje>Busca en el catálogo</p>
+        <p class="ai-panel__estado" role="status" data-ai-mensaje>En línea · busca en el catálogo</p>
       </div>
       <button type="button" class="ai-cerrar" aria-label="Cerrar asistente" data-ai-cerrar>×</button>
     </div>
 
+    <div class="ai-hilo" data-ai-hilo>
+      <div class="ai-resultados" aria-live="polite" data-ai-resultados hidden></div>
+    </div>
+
     <form class="ai-form" method="get" action={`${base}buscar/`} role="search" data-ai-form>
-      <label class="visualmente-oculto" for="ai-q">Pregunta a JOANIX AI</label>
+      <label class="visualmente-oculto" for="ai-q">Escribe qué quieres aprender</label>
       <input
         id="ai-q"
         name="q"
@@ -51,19 +55,26 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
         maxlength="80"
         autocomplete="off"
         enterkeyhint="search"
-        placeholder="p. ej.: detectar escaneos nmap"
+        placeholder="nmap, logs, OSINT"
         data-ai-campo
       />
-      <button class="boton--premium" type="submit" data-ai-boton>Preguntar</button>
+      <button class="ai-enviar" type="submit" data-ai-boton aria-label="Buscar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="12" x2="20" y2="12" />
+          <polyline points="14 6 20 12 14 18" />
+        </svg>
+      </button>
     </form>
 
-    <ul class="ai-acciones" aria-label="Acciones rápidas">
-      <li><button type="button" class="chip" data-ai-accion="buscar">Buscar una guía</button></li>
-      <li><button type="button" class="chip" data-ai-accion="sugerir">Dame una sugerencia</button></li>
-      <li><button type="button" class="chip" data-ai-accion="duda">Tengo una duda</button></li>
-    </ul>
+    <section class="ai-bloque" aria-labelledby="ai-acciones-titulo">
+      <h3 class="ai-bloque__titulo" id="ai-acciones-titulo">Prueba con</h3>
+      <ul class="ai-acciones" data-ai-acciones></ul>
+    </section>
 
-    <div class="ai-resultados" aria-live="polite" data-ai-resultados hidden></div>
+    <section class="ai-bloque" aria-labelledby="ai-recientes-titulo" data-ai-recientes-bloque hidden>
+      <h3 class="ai-bloque__titulo" id="ai-recientes-titulo">Recientes</h3>
+      <ul class="ai-acciones" data-ai-recientes></ul>
+    </section>
   </section>
 
   <button
