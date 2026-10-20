@@ -6,6 +6,7 @@ import CabeceraCatalogo from '../../components/CabeceraCatalogo.astro';
 import Migas from '../../components/Migas.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { contarGuiasPublicadas, getDatabase, listarGuiasDestacadas, listarGuiasPublicadas, listarHerramientasPublicadas } from '../../lib/db.js';
+import { tiendaActiva } from '../../lib/tienda.js';
 import { opcion } from '../../lib/validar.js';
 import { plural } from '../../lib/utils/texto.js';
 import { nombreEquipo, nombreHerramienta, nombreNivel } from '../../lib/vocabulario.js';
@@ -33,7 +34,8 @@ const [resultado, herramientas, conteo, recientes] = await Promise.all([
 
 const { guias, total, pagina: paginaActual, paginas } = resultado;
 const hayFiltros = Boolean(equipo || nivel || herramienta || acceso);
-const premium = conteo.total - conteo.gratis;
+const tienda = tiendaActiva(env);
+const premium = tienda ? conteo.total - conteo.gratis : 0;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const estadisticas = !hayFiltros
   ? [
@@ -109,7 +111,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <li><a class="chip-filtro" data-equipo="red" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED <span class="chip-filtro__count">{conteo.red}</span></a></li>
       <li><a class="chip-filtro" data-equipo="blue" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE <span class="chip-filtro__count">{conteo.blue}</span></a></li>
       <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-current={acceso === 'gratis' ? 'true' : undefined}>Gratis <span class="chip-filtro__count">{conteo.gratis}</span></a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-current={acceso === 'pago' ? 'true' : undefined}>Premium <span class="chip-filtro__count">{premium}</span></a></li>
+      {tienda && <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-current={acceso === 'pago' ? 'true' : undefined}>Premium <span class="chip-filtro__count">{premium}</span></a></li>}
     </ul>
 
     <details class="filtros-detalle" open={Boolean(nivel || herramienta)}>

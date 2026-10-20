@@ -1,5 +1,6 @@
 ---
 import { contarGuiasPublicadas, getDatabase } from '../lib/db.js';
+import { tiendaActiva } from '../lib/tienda.js';
 import { env } from 'cloudflare:workers';
 
 interface Props {
@@ -14,12 +15,13 @@ const { ruta = '/' } = Astro.props;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 /**
- * Insignia "Premium": solo aparece si hay guías de pago publicadas de verdad.
- * Sin guías de pago no se enlaza a un filtro vacío.
+ * Insignia "Premium": solo aparece si hay guías de pago publicadas de verdad
+ * y la tienda está activa. Sin guías de pago no se enlaza a un filtro vacío;
+ * con la tienda apagada no se anuncia nada que no se pueda comprar.
  */
 const database = getDatabase(env);
 const { total: guiasDePago } = await contarGuiasPublicadas(database, { acceso: 'pago' });
-const hayPremium = guiasDePago > 0;
+const hayPremium = tiendaActiva(env) && guiasDePago > 0;
 
 const enlaces = [
   { href: `${base}guias/`, texto: 'Guías' },

@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Migas from '../../components/Migas.astro';
 import { getDatabase, listarSlugsGuiasPago, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { estadoCompra } from '../../lib/pago.js';
+import { queIncluye, tiendaActiva } from '../../lib/tienda.js';
 import { dividirPreview } from '../../lib/utils/texto.js';
 import { claseEquipo, nombreEquipo, nombreHerramienta, nombreNivel } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
@@ -16,6 +17,9 @@ export const prerender = false;
  * solicitada, sin listar todo el catálogo en memoria.
  */
 export async function getStaticPaths() {
+  // Con la tienda apagada no se genera ninguna página de compra: el espejo
+  // estático no debe publicar rutas que no existen.
+  if (!tiendaActiva(env)) return [];
   const database = getDatabase(env);
   const slugs = await listarSlugsGuiasPago(database);
   return slugs.map((slug) => ({ params: { slug } }));
@@ -25,8 +29,11 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const parametroSlug = Astro.params.slug ?? '';
 const slug = Array.isArray(parametroSlug) ? parametroSlug.join('/') : parametroSlug;
 const database = getDatabase(env);
+const tienda = tiendaActiva(env);
 const guia = slug ? await obtenerGuiaPorSlug(database, slug, { publicadas: true }) : null;
-const valida = Boolean(guia && guia.acceso === 'pago');
+// La tienda apagada significa que esta ruta no existe: 404 y sin contenido
+// que prometa cobro, entrega ni reembolso.
+const valida = Boolean(tienda && guia && guia.acceso === 'pago');
 
 if (!valida) Astro.response.status = 404;
 
@@ -37,19 +44,12 @@ const compra = valida && guia
       moneda: guia.moneda,
       pasarela: guia.pasarela,
       enlaceCompra: guia.enlace_compra,
-    }, base)
+    }, base, { activa: true })
   : null;
 
 /** Solo títulos de sección: el cuerpo bloqueado nunca llega a esta página. */
 const secciones = valida && guia ? dividirPreview(guia.cuerpo_md).resto : [];
-const incluye = secciones.length > 0
-  ? secciones
-  : [
-      'Procedimiento completo, paso a paso',
-      'Interpretación de resultados y comprobaciones',
-      'Correspondencia defensiva para el equipo BLUE',
-      'Material listo para tu laboratorio',
-    ];
+const incluye = queIncluye(secciones);
 
 const urlGuia = guia ? `${base}guias/${guia.slug}/` : `${base}guias/`;
 const descripcion = guia
@@ -70,11 +70,15 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <p class="compra__eyebrow">Compra</p>
         <h1 class="compra__titulo" id="compra-vacia-titulo">Compra no disponible</h1>
         <p class="compra__entradilla">
-          Esta guía no existe, no está publicada o todavía no tiene un checkout configurado.
+          {tienda
+            ? 'Esta guía no existe, no está publicada o todavía no tiene un checkout configurado.'
+            : 'Esta guía no está disponible para compra ahora mismo.'}
         </p>
         <p>
           <a class="boton" href={`${base}guias/`}>Ver todas las guías</a>
-          <a class="boton boton--secundario" href={`${base}aviso-legal/#pago`}>Condiciones de compra</a>
+          {tienda && (
+            <a class="boton boton--secundario" href={`${base}aviso-legal/#pago`}>Condiciones de compra</a>
+          )}
         </p>
       </section>
     </Base>

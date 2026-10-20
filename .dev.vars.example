@@ -1,3 +1,9 @@
 # Copia este archivo como .dev.vars para desarrollo local.
 MASTER_KEY=
 ADMIN_BOOTSTRAP_TOKEN=
+
+# Tienda: apagada por defecto. Con "false" el portal no muestra precios, ni
+# botones de comprar, ni textos que prometan entrega o reembolso.
+# En Cloudflare es una variable del Worker (runtime); en el build estático de
+# Pages se usa PUBLIC_TIENDA_ACTIVA en el entorno de compilación.
+TIENDA_ACTIVA=false

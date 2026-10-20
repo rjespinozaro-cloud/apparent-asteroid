@@ -7,6 +7,7 @@
  * que todos los puntos de entrada cuenten exactamente la misma historia.
  */
 import { formatearDinero } from './utils/texto.js';
+import { esEnlaceCheckout } from './tienda.js';
 
 /** Pasarelas admitidas por la validación del editor. */
 export const PASARELAS_PAGO = Object.freeze({
@@ -54,9 +55,13 @@ export function urlCheckout(base, slug) {
 /**
  * Estado de compra listo para plantillas.
  *
- * `disponible` solo es true si hay un enlace HTTPS validado por el editor.
- * El enlace se abre en una pestaña nueva; la página interna nunca incrusta
- * el checkout ni recibe datos de pago.
+ * `disponible` solo es true si la tienda está activa y el enlace es el
+ * checkout de verdad de la pasarela indicada. El enlace se abre en una
+ * pestaña nueva; la página interna nunca incrusta el checkout ni recibe
+ * datos de pago.
+ *
+ * Con la tienda apagada (`activa: false`) no hay precio, ni enlace, ni
+ * botón: la respuesta es siempre «no disponible».
  *
  * @param {{
  *   slug?: string,
@@ -66,14 +71,15 @@ export function urlCheckout(base, slug) {
  *   enlaceCompra?: string|null,
  * }} guia
  * @param {string} base
+ * @param {{ activa?: boolean }} [opciones]
  */
-export function estadoCompra(guia, base = '/') {
-  const enlace = typeof guia?.enlaceCompra === 'string' && /^https:\/\//i.test(guia.enlaceCompra.trim())
-    ? guia.enlaceCompra.trim()
-    : null;
+export function estadoCompra(guia, base = '/', { activa = false } = {}) {
+  const bruto = typeof guia?.enlaceCompra === 'string' ? guia.enlaceCompra.trim() : '';
+  const enlace = activa && esEnlaceCheckout(bruto, guia?.pasarela) ? bruto : null;
 
   return {
-    precio: precioGuia(guia?.precioCentimos, guia?.moneda || 'EUR'),
+    activa,
+    precio: activa ? precioGuia(guia?.precioCentimos, guia?.moneda || 'EUR') : null,
     moneda: guia?.moneda || 'EUR',
     manual: esPagoManual(guia?.pasarela),
     proveedor: nombrePasarela(guia?.pasarela),

@@ -5,6 +5,7 @@ import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { getDatabase, guiasRelacionadas, guiasVecinas, listarGuiasPublicadas, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
 import { urlCheckout } from '../../lib/pago.js';
+import { tiendaActiva } from '../../lib/tienda.js';
 import { descripcionDesdeMarkdown, dividirPreview, tiempoLectura } from '../../lib/utils/texto.js';
 import { nombreHerramienta } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
@@ -64,7 +65,7 @@ const jsonLd = guia
     }
   : undefined;
 
-const jsonLdProducto = guia && guia.acceso === 'pago' && Number(guia.precio_centimos) > 0 && guia.enlace_compra
+const jsonLdProducto = tiendaActiva(env) && guia && guia.acceso === 'pago' && Number(guia.precio_centimos) > 0 && guia.enlace_compra
   ? {
       '@context': 'https://schema.org',
       '@type': 'Product',

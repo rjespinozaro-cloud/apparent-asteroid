@@ -128,11 +128,13 @@ const pasarela = guia?.pasarela ?? '';
       </div>
       <div class="admin-form__campo admin-form__campo--ancho">
         <p class="admin-form__nota">
-          El enlace debe ser un checkout HTTPS de la pasarela. La ficha y el catálogo
-          enlazan primero a la página de compra de JOANIX, que muestra el resumen y
-          después abre este checkout; el cobro y la entrega del PDF se gestionan ahí.
-          JOANIX no almacena datos de tarjeta. Si no indicas precio, la ficha mostrará
-          «Precio en la tienda».
+          El enlace debe ser el checkout HTTPS de la pasarela (Stripe: buy.stripe.com).
+          La ficha y el catálogo enlazan primero a la página de compra de JOANIX, que
+          muestra el resumen y después abre ese checkout; el cobro y la entrega se
+          gestionan allí. JOANIX no almacena datos de tarjeta. Si no indicas precio,
+          la ficha no muestra importe y la página de compra indica «Precio en la
+          tienda». Mientras la tienda esté apagada (TIENDA_ACTIVA), nada de esto se
+          muestra en el portal.
         </p>
       </div>
       <div class="admin-form__campo">

@@ -13,6 +13,8 @@ command -v python3 >/dev/null || { echo 'ERROR: falta python3' >&2; exit 1; }
 TMP="$(mktemp -d)"; WT="$TMP/gh-pages"; MIR="$TMP/mirror"; SRV=""
 limpiar() { [ -n "$SRV" ] && kill "$SRV" 2>/dev/null || true; git worktree remove --force "$WT" 2>/dev/null || true; rm -rf "$TMP"; git worktree prune 2>/dev/null || true; }
 trap limpiar EXIT
+# La tienda se publica solo si la bandera está encendida en el entorno.
+PUBLIC_TIENDA_ACTIVA="${PUBLIC_TIENDA_ACTIVA:-false}" \
 PAGES_BUILD=1 CLOUDFLARE_REMOTE=true npm run build
 ESTATICO="$RAIZ/dist/client"
 RUTA="/apparent-asteroid/"

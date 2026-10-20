@@ -5,12 +5,14 @@ import Migas from '../../components/Migas.astro';
 import NodoCamino from '../../components/NodoCamino.astro';
 import { getDatabase, listarGuiasCamino } from '../../lib/db.js';
 import { construirCamino } from '../../data/camino.js';
+import { tiendaActiva } from '../../lib/tienda.js';
 import { EQUIPOS, nombreNivel } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
 const database = getDatabase(env);
+const tienda = tiendaActiva(env);
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const guias = await listarGuiasCamino(database);
 const { nodos } = construirCamino(guias, base);
@@ -129,7 +131,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     <ul class="leyenda" aria-label="Leyenda de estados">
       <li><span class="leyenda__icono leyenda__icono--disponible" aria-hidden="true"></span>Disponible</li>
       <li><span class="leyenda__icono leyenda__icono--proximamente" aria-hidden="true"></span>Próximamente</li>
-      <li><span class="leyenda__icono leyenda__icono--pago" aria-hidden="true"></span>Premium</li>
+      {tienda && <li><span class="leyenda__icono leyenda__icono--pago" aria-hidden="true"></span>Premium</li>}
     </ul>
 
     <div class="camino-tronco camino-anim" id="nivel-tronco">

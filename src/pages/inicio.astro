@@ -12,6 +12,7 @@ import {
   listarUltimasGuias,
 } from '../lib/db.js';
 import { construirCamino } from '../data/camino.js';
+import { tiendaActiva } from '../lib/tienda.js';
 import { plural } from '../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
 import bricolage600 from '@fontsource/bricolage-grotesque/files/bricolage-grotesque-latin-600-normal.woff2?url';
@@ -25,6 +26,7 @@ const fuentesHero = [bricolage600, plex400, plex500, plex600, mono400];
 export const prerender = false;
 
 const database = getDatabase(env);
+const tienda = tiendaActiva(env);
 const [ultimas, herramientasDestacadas, rutasConTipologia, guiasDestacadas, guiasCamino] = await Promise.all([
   listarUltimasGuias(database, 6),
   listarHerramientasDestacadas(database),
@@ -307,7 +309,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
         <h3 class="equipo__titulo">Ofensiva</h3>
         <p>
           Reconocimiento, enumeración y explotación con autorización explícita. El adelanto de cada guía
-          es público; el recorrido completo va en PDF.
+          es público{tienda ? '; el recorrido completo va en PDF' : ''}.
         </p>
         <a class="boton--ghost chip--red chip--pulse" href={`${base}guias/?equipo=red`}>Ver guías RED</a>
       </article>

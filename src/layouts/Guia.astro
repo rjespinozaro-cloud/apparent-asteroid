@@ -3,6 +3,8 @@ import Base from './Base.astro';
 import Candado from '../components/Candado.astro';
 import Migas from '../components/Migas.astro';
 import { precioGuia } from '../lib/pago.js';
+import { tiendaActiva } from '../lib/tienda.js';
+import { env } from 'cloudflare:workers';
 import '../styles/guia.css';
 
 interface Props {
@@ -56,7 +58,9 @@ const {
   noindex = false,
 } = Astro.props;
 
-const precio = precioGuia(precioCentimos, moneda);
+/** Con la tienda apagada la ficha no anuncia precio ni producto comprable. */
+const compraVisible = tiendaActiva(env);
+const precio = compraVisible ? precioGuia(precioCentimos, moneda) : null;
 ---
 
 <Base
@@ -89,7 +93,9 @@ const precio = precioGuia(precioCentimos, moneda);
         <span aria-hidden="true"> · </span>
         <span>
           {acceso === 'pago'
-            ? `Premium · PDF de pago${precio ? ` · ${precio}` : ''}`
+            ? (compraVisible
+              ? `Premium · PDF de pago${precio ? ` · ${precio}` : ''}`
+              : 'Vista previa · versión completa no disponible')
             : 'Gratis · Lectura completa'}
         </span>
       </p>
@@ -102,7 +108,7 @@ const precio = precioGuia(precioCentimos, moneda);
         <li><span class="etiqueta etiqueta--neutro">{nivel}</span></li>
         <li><span class="etiqueta etiqueta--neutro">{herramienta}</span></li>
         {fecha && <li><time class="etiqueta etiqueta--neutro" datetime={fecha}>{fecha}</time></li>}
-        {tiempoLectura && <li><span class="etiqueta etiqueta--neutro">{acceso === 'pago' ? `Vista previa · PDF completo, ~${tiempoLectura} min` : `${tiempoLectura} min de lectura`}</span></li>}
+        {tiempoLectura && <li><span class="etiqueta etiqueta--neutro">{acceso === 'pago' ? (compraVisible ? `Vista previa · PDF completo, ~${tiempoLectura} min` : `Vista previa · ~${tiempoLectura} min`) : `${tiempoLectura} min de lectura`}</span></li>}
       </ul>
 
       <p class="guia__aviso">

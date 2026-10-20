@@ -10,5 +10,11 @@
       "database_id": "a595720c-b498-423e-8c6b-21e6b07d5d72",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "vars": {
+    // Tienda apagada por defecto: el portal no muestra precios, ni botones de
+    // comprar, ni textos que prometan entrega o reembolso. Para encenderla,
+    // pon TIENDA_ACTIVA=true y vuelve a desplegar.
+    "TIENDA_ACTIVA": "false"
+  }
 }

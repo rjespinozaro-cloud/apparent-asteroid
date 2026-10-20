@@ -1,17 +1,26 @@
 ---
 import Base from '../layouts/Base.astro';
 import Documento from '../components/Documento.astro';
+import { tiendaActiva } from '../lib/tienda.js';
+import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
+/**
+ * Con la tienda apagada no se publica la sección de contenido de pago: no hay
+ * cobro, ni entrega, ni reembolso que explicar, y el texto contiene datos
+ * pendientes de completar.
+ */
+const tienda = tiendaActiva(env);
 
 const secciones = [
   { id: 'finalidad', titulo: 'Finalidad educativa y uso autorizado' },
   { id: 'responsabilidad', titulo: 'Responsabilidad del usuario' },
   { id: 'limitacion', titulo: 'Limitación de responsabilidad' },
   { id: 'propiedad', titulo: 'Propiedad intelectual' },
-  { id: 'pago', titulo: 'Contenido de pago: entrega y reembolsos' },
+  ...(tienda ? [{ id: 'pago', titulo: 'Contenido de pago: entrega y reembolsos' }] : []),
   { id: 'privacidad', titulo: 'Privacidad y almacenamiento local' },
   { id: 'contacto', titulo: 'Contacto y ley aplicable' },
 ];
@@ -85,6 +94,8 @@ const secciones = [
       </div>
     </details>
 
+    {tienda && (
+    <>
     <details class="doc-seccion" id="pago" open>
       <summary>
         <span class="doc-seccion__num">05</span>
@@ -122,6 +133,8 @@ const secciones = [
         </p>
       </div>
     </details>
+    </>
+    )}
 
     <details class="doc-seccion" id="privacidad" open>
       <summary>

@@ -1,6 +1,8 @@
 ---
 import AssistantMascot from './AssistantMascot.astro';
 import { estadoCompra } from '../lib/pago.js';
+import { queIncluye, tiendaActiva } from '../lib/tienda.js';
+import { env } from 'cloudflare:workers';
 
 interface Props {
   /** Slug de la guía: destino del resumen de compra. */
@@ -30,20 +32,25 @@ const {
 } = Astro.props;
 
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const tienda = tiendaActiva(env);
 const compra = estadoCompra({
   slug,
   precioCentimos,
   moneda,
   pasarela,
   enlaceCompra,
-}, base);
+}, base, { activa: tienda });
 const { precio, proveedor, manual: esManual, disponible: puedeComprar, url: urlCompra } = compra;
+/** Con la tienda apagada no hay precio, ni botón, ni promesa de entrega. */
+const conTienda = compra.activa;
+/** "Qué incluye" sale de una sola fuente: los títulos reales o la lista base. */
+const contenido = queIncluye(incluye);
 ---
 
 <aside class:list={['candado', `candado--${equipo}`]} aria-labelledby="candado-titulo">
   <div class="candado__cabecera">
-    <p class="candado__estado">Contenido premium</p>
-    {precio && (
+    <p class="candado__estado">{conTienda ? 'Contenido premium' : 'Vista previa'}</p>
+    {conTienda && precio && (
       <p class="candado__precio">
         {precio}
         <span>Pago único</span>
@@ -51,27 +58,36 @@ const { precio, proveedor, manual: esManual, disponible: puedeComprar, url: urlC
     )}
   </div>
 
-  <h2 id="candado-titulo">La guía continúa en el PDF completo</h2>
-  <p>
-    Has leído el adelanto público: el laboratorio, el primer procedimiento y sus
-    comprobaciones. El documento completo desarrolla el resto paso a paso, con
-    interpretación de resultados y su correspondencia defensiva.
-  </p>
+  <h2 id="candado-titulo">
+    {conTienda
+      ? 'La guía continúa en el PDF completo'
+      : 'La versión completa de esta guía todavía no está disponible'}
+  </h2>
+  {conTienda ? (
+    <p>
+      Has leído el adelanto público: el laboratorio, el primer procedimiento y sus
+      comprobaciones. El documento completo desarrolla el resto paso a paso, con
+      interpretación de resultados y su correspondencia defensiva.
+    </p>
+  ) : (
+    <p>
+      Has leído el adelanto público: el laboratorio, el primer procedimiento y sus
+      comprobaciones. Por ahora es todo lo que hay disponible de esta guía.
+    </p>
+  )}
 
-  {incluye.length > 0 ? (
+  {conTienda && (
     <>
       <div class="candado__recomienda">
         <AssistantMascot estado="suggestion" decorativa />
         <p class="candado__incluye-titulo">El PDF continúa con:</p>
       </div>
       <ul class="candado__incluye">
-        {incluye.map((seccion) => (
+        {contenido.map((seccion) => (
           <li>{seccion}</li>
         ))}
       </ul>
     </>
-  ) : (
-    <p>El PDF incluye el procedimiento completo, interpretación de resultados y comprobaciones defensivas.</p>
   )}
 
   {puedeComprar ? (
@@ -99,7 +115,7 @@ const { precio, proveedor, manual: esManual, disponible: puedeComprar, url: urlC
           : 'La pasarela gestiona el cobro y la entrega del PDF.'}
       </p>
     </div>
-  ) : (
+  ) : conTienda ? (
     <p class="candado__aviso">La compra de este PDF aún no está habilitada. Vuelve pronto.</p>
-  )}
+  ) : null}
 </aside>
