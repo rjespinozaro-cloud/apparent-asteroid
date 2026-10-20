@@ -144,7 +144,7 @@ export async function listarRutasConTipologia(database, { destacadas = false, pu
 export async function listarGuiasDestacadas(database, limite = 3) {
   const total = Math.min(Math.max(Number(limite) || 3, 1), 12);
   const resultado = await database.prepare(
-    `SELECT id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en, destacada, lectura_min, precio_centimos, moneda, pasarela
+    `SELECT id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en, destacada, lectura_min, precio_centimos, moneda, pasarela, enlace_compra
      FROM guias WHERE publicada = 1 AND destacada = 1
      ORDER BY fecha DESC, id DESC
      LIMIT ?`,

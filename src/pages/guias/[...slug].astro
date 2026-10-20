@@ -4,6 +4,7 @@ import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { getDatabase, guiasRelacionadas, guiasVecinas, listarGuiasPublicadas, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
+import { urlCheckout } from '../../lib/pago.js';
 import { descripcionDesdeMarkdown, dividirPreview, tiempoLectura } from '../../lib/utils/texto.js';
 import { nombreHerramienta } from '../../lib/vocabulario.js';
 import { env } from 'cloudflare:workers';
@@ -72,7 +73,7 @@ const jsonLdProducto = guia && guia.acceso === 'pago' && Number(guia.precio_cent
       brand: { '@type': 'Brand', name: 'JOANIX' },
       offers: {
         '@type': 'Offer',
-        url: guia.enlace_compra,
+        url: new URL(urlCheckout(import.meta.env.BASE_URL, guia.slug), origen).href,
         price: (Number(guia.precio_centimos) / 100).toFixed(2),
         priceCurrency: guia.moneda || 'EUR',
         availability: 'https://schema.org/InStock',
@@ -86,6 +87,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
 {
   guia ? (
     <Guia
+      slug={guia.slug}
       titulo={guia.titulo}
       herramienta={nombreHerramienta(guia.herramienta)}
       herramientaSlug={guia.herramienta}

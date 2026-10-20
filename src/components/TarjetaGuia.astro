@@ -1,5 +1,6 @@
 ---
-import { descripcionDesdeMarkdown, formatearDinero } from '../lib/utils/texto.js';
+import { descripcionDesdeMarkdown } from '../lib/utils/texto.js';
+import { estadoCompra } from '../lib/pago.js';
 import { claseEquipo, nombreEquipo, nombreHerramienta, nombreNivel } from '../lib/vocabulario.js';
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
     /** Precio en céntimos y moneda ISO 4217 (solo guías de pago). */
     precio_centimos?: number | null;
     moneda?: string | null;
+    pasarela?: 'stripe' | 'lemonsqueezy' | 'polar' | 'manual' | null;
+    enlace_compra?: string | null;
     /** Solo si viene del detalle; en listados se resume desde el meta. */
     resumen?: string | null;
   };
@@ -30,9 +33,21 @@ const equipo = claseEquipo(guia.equipo);
 const resumen = descripcion ?? guia.resumen ?? null;
 const destino = `${base}guias/${guia.slug}/`;
 const esPremium = guia.acceso === 'pago';
-const precio = esPremium && Number(guia.precio_centimos) > 0
-  ? formatearDinero(Number(guia.precio_centimos) / 100, guia.moneda ?? 'EUR')
+const compra = esPremium
+  ? estadoCompra({
+      slug: guia.slug,
+      precioCentimos: guia.precio_centimos,
+      moneda: guia.moneda,
+      pasarela: guia.pasarela,
+      enlaceCompra: guia.enlace_compra,
+    }, base)
   : null;
+const precio = compra?.precio ?? null;
+const puedeComprar = Boolean(esPremium && compra?.disponible);
+const ctaTexto = esPremium ? (puedeComprar ? 'Comprar PDF' : 'Ver detalles') : 'Ver guía';
+const ctaEtiqueta = puedeComprar
+  ? `Comprar el PDF de ${guia.titulo}`
+  : `Ver la guía ${guia.titulo}`;
 
 /** Puntos de nivel: refuerzo visual del texto (los lectores de pantalla usan el nombre). */
 const puntosNivel = guia.nivel === 'basico' ? '●○○' : guia.nivel === 'intermedio' ? '●●○' : guia.nivel === 'avanzado' ? '●●●' : null;
@@ -58,5 +73,15 @@ const puntosNivel = guia.nivel === 'basico' ? '●○○' : guia.nivel === 'inte
     {nombreHerramienta(guia.herramienta)}{mostrarNivel && (<> · {nombreNivel(guia.nivel)}{puntosNivel && (<> <span aria-hidden="true">{puntosNivel}</span></>)}</>)}{guia.lectura_min ? ` · ${guia.lectura_min} min` : ''}{precio && (<> · <strong class="tarjeta__precio">{precio}</strong></>)}
   </p>
 
-  <span class="tarjeta__accion" aria-hidden="true">{esPremium ? (precio ? 'Comprar PDF →' : 'Desbloquear →') : 'Ver guía →'}</span>
+  {puedeComprar ? (
+    <a
+      class="tarjeta__accion tarjeta__accion--compra"
+      href={compra?.url ?? destino}
+      aria-label={ctaEtiqueta}
+    >
+      {ctaTexto} <span aria-hidden="true">→</span>
+    </a>
+  ) : (
+    <span class="tarjeta__accion" aria-hidden="true">{ctaTexto} →</span>
+  )}
 </article>

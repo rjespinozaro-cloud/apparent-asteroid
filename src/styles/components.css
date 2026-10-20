@@ -248,15 +248,35 @@ a.tarjeta:hover {
 }
 
 .tarjeta__accion {
+  align-items: center;
   color: var(--tinta);
+  display: inline-flex;
   font-size: var(--texto-sm);
   font-weight: 600;
+  gap: 0.35rem;
   margin-top: auto;
+  min-height: 2.75rem;
   padding-top: var(--espacio-2xs);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.tarjeta__accion--compra {
+  color: var(--oro-texto);
+  position: relative;
+  z-index: 2;
+}
+
+.tarjeta__accion:hover {
+  color: var(--violet-300);
 }
 
 .tarjeta-premium:hover .tarjeta__accion {
   color: var(--violet-300);
+}
+
+.tarjeta-premium:hover .tarjeta__accion--compra {
+  color: var(--oro-texto);
 }
 
 .tarjeta__precio {
@@ -938,7 +958,7 @@ a.tarjeta:hover .tarjeta__titulo {
 }
 
 .tarjeta-premium.tarjeta--pago:hover .tarjeta__accion {
-  color: var(--oro);
+  color: var(--oro-texto);
 }
 
 /* Etiqueta "RED · PREMIUM": pastilla ámbar que no se parte en varias líneas. */
@@ -947,7 +967,7 @@ a.tarjeta:hover .tarjeta__titulo {
   align-self: flex-start;
   background: var(--premium-badge-fondo);
   border-radius: var(--radio-full);
-  color: var(--oro);
+  color: var(--oro-texto);
   display: inline-flex;
   gap: 0.3em;
   max-width: 100%;

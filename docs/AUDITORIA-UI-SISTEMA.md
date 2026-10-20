@@ -76,12 +76,24 @@ visuales:
 - El editor del panel permite fijar precio, moneda y pasarela, y explica que el
   checkout es externo.
 - La tarjeta del catálogo muestra el precio y cambia la llamada a la acción a
-  «Comprar PDF».
+  «Comprar PDF» cuando hay checkout; si falta, mantiene «Ver detalles».
 - El bloque premium muestra precio, condiciones, botón grande, pasarela y
   aviso de que JOANIX no almacena datos de tarjeta.
-- Las guías de pago con precio generan JSON-LD `Product` + `Offer`.
+- La tarjeta y el bloque premium enlazan primero a `/comprar/<slug>/`, una
+  página interna con resumen, qué incluye, proceso y precio. Esa página es la
+  única que abre el checkout alojado, en pestaña nueva y con
+  `rel="nofollow noopener noreferrer"`.
+- El flujo se comparte desde `src/lib/pago.js`: normaliza base, precio, nombre
+  de pasarela, enlace HTTPS y URL interna. Las tarjetas, el bloque premium y
+  la página de compra no duplican reglas.
+- La página de compra es `noindex`, no entra en el sitemap y no renderiza el
+  cuerpo bloqueado: solo títulos de sección de la vista previa.
+- Las guías de pago con precio generan JSON-LD `Product` + `Offer`; la oferta
+  apunta al resumen interno, no al checkout externo.
 - El enlace sigue siendo un checkout alojado: no se manejan tarjetas en el
-  Worker ni se inventan claves de proveedor.
+  Worker ni se inventan claves de proveedor. Si no hay precio, se muestra
+  «Precio en la tienda»; si no hay enlace HTTPS, la compra aparece como no
+  disponible.
 
 ## 5. Pago: lo que falta para cobrar de verdad
 

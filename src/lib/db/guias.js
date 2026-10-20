@@ -7,9 +7,9 @@ import { dividirPreview } from '../utils/texto.js';
 /** @typedef {{ id: number, slug: string, titulo: string, herramienta: string, equipo: 'blue'|'red', nivel: string, acceso: 'gratis'|'pago', enlace_compra: string|null, precio_centimos: number, moneda: string, pasarela: 'stripe'|'lemonsqueezy'|'polar'|'manual'|null, guia_pareja: string|null, fecha: string, cuerpo_md: string, publicada: number, destacada: number, lectura_min: number|null, actualizado_en: string, actualizado_por: number|null }} GuiaFila */
 
 /** Columnas ligeras para listados: nunca se trae `cuerpo_md` si no se va a renderizar. */
-const COLUMNAS_LISTADO = 'id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en, destacada, lectura_min, precio_centimos, moneda, pasarela';
+const COLUMNAS_LISTADO = 'id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en, destacada, lectura_min, precio_centimos, moneda, pasarela, enlace_compra';
 
-/** @typedef {Omit<GuiaFila, 'cuerpo_md' | 'enlace_compra' | 'guia_pareja' | 'actualizado_por'>} GuiaResumen */
+/** @typedef {Omit<GuiaFila, 'cuerpo_md' | 'guia_pareja' | 'actualizado_por'>} GuiaResumen */
 
 /** @param {string[]} condiciones */
 function donde(condiciones) {
@@ -116,6 +116,16 @@ const ORDENES = {
   titulo: 'titulo ASC',
   actualizado: 'actualizado_en DESC, id DESC',
 };
+
+/** @param {D1Database} database @returns {Promise<string[]>} */
+export async function listarSlugsGuiasPago(database) {
+  const resultado = await database.prepare(
+    `SELECT slug FROM guias
+     WHERE publicada = 1 AND acceso = 'pago'
+     ORDER BY fecha DESC, id DESC`,
+  ).all();
+  return (resultado.results ?? []).map((fila) => String(fila.slug));
+}
 
 /**
  * Listado público paginado y filtrable. Todos los filtros viajan por parámetros

@@ -1,8 +1,10 @@
 ---
 import AssistantMascot from './AssistantMascot.astro';
-import { formatearDinero } from '../lib/utils/texto.js';
+import { estadoCompra } from '../lib/pago.js';
 
 interface Props {
+  /** Slug de la guía: destino del resumen de compra. */
+  slug: string;
   /** URL externa de compra (checkout alojado). Puede ser null si no hay. */
   enlaceCompra?: string | null;
   /** Títulos reales de las secciones que continúan tras el corte. Nunca inventados. */
@@ -18,6 +20,7 @@ interface Props {
 }
 
 const {
+  slug,
   enlaceCompra,
   incluye = [],
   equipo = 'blue',
@@ -26,18 +29,15 @@ const {
   pasarela = null,
 } = Astro.props;
 
-const precio = Number(precioCentimos) > 0
-  ? formatearDinero(Number(precioCentimos) / 100, moneda)
-  : null;
-
-const PROVEEDORES: Record<string, string> = {
-  stripe: 'Stripe',
-  lemonsqueezy: 'Lemon Squeezy',
-  polar: 'Polar',
-  manual: 'pago manual',
-};
-const proveedor = pasarela ? (PROVEEDORES[pasarela] ?? 'la tienda externa') : 'la tienda externa';
-const esManual = pasarela === 'manual';
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const compra = estadoCompra({
+  slug,
+  precioCentimos,
+  moneda,
+  pasarela,
+  enlaceCompra,
+}, base);
+const { precio, proveedor, manual: esManual, disponible: puedeComprar, url: urlCompra } = compra;
 ---
 
 <aside class:list={['candado', `candado--${equipo}`]} aria-labelledby="candado-titulo">
@@ -74,9 +74,9 @@ const esManual = pasarela === 'manual';
     <p>El PDF incluye el procedimiento completo, interpretación de resultados y comprobaciones defensivas.</p>
   )}
 
-  {enlaceCompra ? (
+  {puedeComprar ? (
     <div class="candado__compra">
-      <a class="boton--premium candado__cta" href={enlaceCompra} rel="nofollow noopener noreferrer" target="_blank">
+      <a class="boton--premium candado__cta" href={urlCompra}>
         <span>Comprar PDF</span>
         <span class="candado__cta-flecha" aria-hidden="true">→</span>
       </a>
@@ -89,15 +89,17 @@ const esManual = pasarela === 'manual';
 
       <p class="candado__pago-nota">
         {esManual
-          ? 'La compra se gestiona de forma manual. El vendedor te indicará cómo completar el pago y recibir el PDF.'
-          : `Pago seguro en ${proveedor}. JOANIX no almacena los datos de tu tarjeta.`}
+          ? 'La compra se gestiona de forma manual. En el siguiente paso verás cómo completar el pago y recibir el PDF.'
+          : `Revisarás el resumen y continuarás al checkout seguro de ${proveedor}. JOANIX no almacena los datos de tu tarjeta.`}
       </p>
       <p class="candado__pago-nota candado__pago-nota--suave">
-        {precio ? `Precio final: ${precio}. ` : 'Consulta el precio final en la tienda. '}
-        La tienda gestiona el cobro y la entrega del PDF.
+        {precio ? `Precio final: ${precio}. ` : 'El precio final se confirma en la tienda. '}
+        {esManual
+          ? 'El pago y la entrega se coordinan de forma manual.'
+          : 'La pasarela gestiona el cobro y la entrega del PDF.'}
       </p>
     </div>
   ) : (
-    <p class="candado__aviso">Este PDF todavía no está a la venta. Vuelve pronto.</p>
+    <p class="candado__aviso">La compra de este PDF aún no está habilitada. Vuelve pronto.</p>
   )}
 </aside>

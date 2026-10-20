@@ -1,0 +1,235 @@
+---
+import Base from '../../layouts/Base.astro';
+import Migas from '../../components/Migas.astro';
+import { getDatabase, listarSlugsGuiasPago, obtenerGuiaPorSlug } from '../../lib/db.js';
+import { estadoCompra } from '../../lib/pago.js';
+import { dividirPreview } from '../../lib/utils/texto.js';
+import { claseEquipo, nombreEquipo, nombreHerramienta, nombreNivel } from '../../lib/vocabulario.js';
+import { env } from 'cloudflare:workers';
+import '../../styles/compra.css';
+
+export const prerender = false;
+
+/**
+ * En el build estático de Pages se genera una página por cada guía de pago
+ * publicada. En Cloudflare la ruta es dinámica y solo se renderiza la guía
+ * solicitada, sin listar todo el catálogo en memoria.
+ */
+export async function getStaticPaths() {
+  const database = getDatabase(env);
+  const slugs = await listarSlugsGuiasPago(database);
+  return slugs.map((slug) => ({ params: { slug } }));
+}
+
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const parametroSlug = Astro.params.slug ?? '';
+const slug = Array.isArray(parametroSlug) ? parametroSlug.join('/') : parametroSlug;
+const database = getDatabase(env);
+const guia = slug ? await obtenerGuiaPorSlug(database, slug, { publicadas: true }) : null;
+const valida = Boolean(guia && guia.acceso === 'pago');
+
+if (!valida) Astro.response.status = 404;
+
+const compra = valida && guia
+  ? estadoCompra({
+      slug: guia.slug,
+      precioCentimos: guia.precio_centimos,
+      moneda: guia.moneda,
+      pasarela: guia.pasarela,
+      enlaceCompra: guia.enlace_compra,
+    }, base)
+  : null;
+
+/** Solo títulos de sección: el cuerpo bloqueado nunca llega a esta página. */
+const secciones = valida && guia ? dividirPreview(guia.cuerpo_md).resto : [];
+const incluye = secciones.length > 0
+  ? secciones
+  : [
+      'Procedimiento completo, paso a paso',
+      'Interpretación de resultados y comprobaciones',
+      'Correspondencia defensiva para el equipo BLUE',
+      'Material listo para tu laboratorio',
+    ];
+
+const urlGuia = guia ? `${base}guias/${guia.slug}/` : `${base}guias/`;
+const descripcion = guia
+  ? `Compra el PDF completo de ${guia.titulo}, una guía ${nombreEquipo(guia.equipo)} de ${nombreHerramienta(guia.herramienta)}.`
+  : 'La compra solicitada no está disponible.';
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+---
+
+{
+  !valida || !guia || !compra ? (
+    <Base
+      title="Compra no disponible | JOANIX"
+      description="La guía solicitada no existe, no está publicada o no tiene una compra disponible."
+      noindex
+    >
+      <section class="compra compra--vacia contenedor" aria-labelledby="compra-vacia-titulo">
+        <p class="compra__eyebrow">Compra</p>
+        <h1 class="compra__titulo" id="compra-vacia-titulo">Compra no disponible</h1>
+        <p class="compra__entradilla">
+          Esta guía no existe, no está publicada o todavía no tiene un checkout configurado.
+        </p>
+        <p>
+          <a class="boton" href={`${base}guias/`}>Ver todas las guías</a>
+          <a class="boton boton--secundario" href={`${base}aviso-legal/#pago`}>Condiciones de compra</a>
+        </p>
+      </section>
+    </Base>
+  ) : (
+    <Base
+      title={`Comprar ${guia.titulo} | JOANIX`}
+      description={descripcion}
+      ogType="product"
+      noindex
+    >
+      <section class="compra contenedor" aria-labelledby="compra-titulo">
+        <Migas
+          clase=""
+          items={[
+            { texto: 'Inicio', href: `${base}inicio/` },
+            { texto: 'Guías', href: `${base}guias/` },
+            { texto: guia.titulo, href: urlGuia },
+            { texto: 'Comprar' },
+          ]}
+        />
+
+        <header class="compra__cabecera">
+          <p class="compra__eyebrow">Compra segura · PDF</p>
+          <h1 class="compra__titulo" id="compra-titulo">Acceso al PDF completo</h1>
+          <p class="compra__entradilla">{guia.titulo}</p>
+          <p class="compra__meta">
+            <span class:list={['etiqueta', `etiqueta--${claseEquipo(guia.equipo)}`]}>{nombreEquipo(guia.equipo)}</span>
+            <span class="etiqueta etiqueta--neutro">{nombreHerramienta(guia.herramienta)}</span>
+            <span class="etiqueta etiqueta--neutro">{nombreNivel(guia.nivel)}</span>
+            {guia.lectura_min && <span class="etiqueta etiqueta--neutro">PDF · ~{guia.lectura_min} min</span>}
+          </p>
+        </header>
+
+        <div class="compra__rejilla">
+          <div class="compra__contenido">
+            <section class="compra__bloque" aria-labelledby="compra-incluye">
+              <h2 id="compra-incluye">Qué incluye el PDF</h2>
+              <ul class="compra__lista">
+                {incluye.map((seccion) => <li>{seccion}</li>)}
+              </ul>
+              <p class="compra__nota">
+                Ya has leído la vista previa pública. El PDF continúa desde donde termina
+                la muestra, con el desarrollo completo y las comprobaciones que no aparecen
+                en la web.
+              </p>
+            </section>
+
+            <section class="compra__bloque" aria-labelledby="compra-proceso">
+              <h2 id="compra-proceso">Cómo funciona</h2>
+              <ol class="compra__pasos">
+                <li class="compra__paso">
+                  <span class="compra__paso-num" aria-hidden="true">1</span>
+                  <div>
+                    <strong>Revisa el resumen</strong>
+                    <p>Comprueba que es la guía que buscas y que el precio es el esperado.</p>
+                  </div>
+                </li>
+                <li class="compra__paso">
+                  <span class="compra__paso-num" aria-hidden="true">2</span>
+                  <div>
+                    <strong>{compra.manual ? 'Completa el pago' : `Paga en ${compra.proveedor}`}</strong>
+                    <p>
+                      {compra.manual
+                        ? 'Se abrirá la página de instrucciones en una pestaña nueva. JOANIX no recibe ni almacena los datos de tu tarjeta.'
+                        : 'El checkout se abre en una pestaña nueva. JOANIX no recibe ni almacena los datos de tu tarjeta.'}
+                    </p>
+                  </div>
+                </li>
+                <li class="compra__paso">
+                  <span class="compra__paso-num" aria-hidden="true">3</span>
+                  <div>
+                    <strong>Recibe el PDF</strong>
+                    <p>
+                      Recibirás la confirmación y las instrucciones de entrega. Conserva el
+                      comprobante por si necesitas soporte.
+                    </p>
+                  </div>
+                </li>
+              </ol>
+            </section>
+
+            <section class="compra__bloque" aria-labelledby="compra-entrega">
+              <h2 id="compra-entrega">Pago y entrega</h2>
+              {compra.manual ? (
+                <p>
+                  El pago se gestiona de forma manual. El importe final, la moneda y los
+                  impuestos aplicables se muestran antes de confirmar el pago.
+                </p>
+              ) : (
+                <p>
+                  El cobro se completa en <strong>{compra.proveedor}</strong>. El importe
+                  final, la moneda y los impuestos aplicables se muestran antes de confirmar
+                  el pago.
+                </p>
+              )}
+              <p>
+                Si el documento no llega o presenta un problema, guarda el comprobante y
+                consulta las condiciones de compra. El soporte y los reembolsos se gestionan
+                según la pasarela utilizada.
+              </p>
+              <p>
+                <a class="compra__enlace" href={`${base}aviso-legal/#pago`}>
+                  Leer condiciones de compra y reembolsos
+                </a>
+              </p>
+            </section>
+          </div>
+
+          <aside class="compra__resumen" aria-labelledby="compra-resumen">
+            <p class="compra__resumen-etiqueta">Tu compra</p>
+            <h2 class="compra__resumen-titulo" id="compra-resumen">{guia.titulo}</h2>
+
+            <p class="compra__precio">
+              {compra.precio ?? (compra.disponible ? 'Precio en la tienda' : 'Precio pendiente')}
+            </p>
+            <p class="compra__precio-nota">
+              {compra.disponible
+                ? `${compra.precio ? 'Pago único' : 'El importe se confirma en el checkout'} · ${compra.moneda}`
+                : 'La compra todavía no está habilitada'}
+            </p>
+
+            <ul class="compra__sellos" aria-label="Condiciones de la compra">
+              <li>PDF completo</li>
+              <li>Entrega digital</li>
+              <li>Sin suscripción</li>
+            </ul>
+
+            {compra.disponible ? (
+              <>
+                <a
+                  class="boton--premium compra__cta"
+                  href={compra.enlace}
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                >
+                  <span>{compra.manual ? 'Abrir instrucciones de pago' : 'Continuar al pago seguro'}</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+                <p class="compra__nota">
+                  {compra.manual
+                    ? 'Se abrirá la página de instrucciones en una pestaña nueva.'
+                    : `Se abrirá ${compra.proveedor} en una pestaña nueva. El cobro y la entrega se completan allí.`}
+                </p>
+              </>
+            ) : (
+              <p class="compra__aviso" role="status">
+                Esta guía todavía no tiene un checkout configurado. Vuelve a la guía o
+                consulta las condiciones de compra.
+              </p>
+            )}
+
+            <a class="compra__volver" href={urlGuia}>← Volver a la guía</a>
+          </aside>
+        </div>
+      </section>
+    </Base>
+  )
+}

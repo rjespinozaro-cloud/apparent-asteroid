@@ -1,7 +1,7 @@
 ---
 import AdminBase from '../../../layouts/AdminBase.astro';
 import { getDatabase, listarGuiasAdmin, listarHerramientasAdmin } from '../../../lib/db.js';
-import { formatearDinero } from '../../../lib/utils/texto.js';
+import { precioGuia } from '../../../lib/pago.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -136,7 +136,7 @@ const enlacePagina = (pagina: number) => {
                     : (
                       <span class="admin-badge admin-badge--pago">
                         {Number(fila.precio_centimos) > 0
-                          ? `De pago · ${formatearDinero(Number(fila.precio_centimos) / 100, fila.moneda)}`
+                          ? `De pago · ${precioGuia(fila.precio_centimos, fila.moneda)}`
                           : 'De pago · precio pendiente'}
                       </span>
                     )}

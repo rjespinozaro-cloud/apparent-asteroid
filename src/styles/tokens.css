@@ -39,6 +39,9 @@
   /* Premium (guías de pago): oro cálido sobre superficie oscura.
      Se mantiene oscuro también en tema claro para conservar el contraste. */
   --oro: #F5B942;
+  /* Texto premium: en oscuro usa el oro de marca; en claro se oscurece para
+     mantener contraste AA sobre blanco. Los bordes y fondos siguen con --oro. */
+  --oro-texto: var(--oro);
   --premium-fondo-inicio: #1A1408;
   --premium-texto: #E8EAF6;
   --premium-texto-suave: #A6ACC9;
@@ -162,6 +165,7 @@
     --aviso: #8a6100;
     --aviso-tenue: #fdf1d8;
     --exito: #17784c;
+    --oro-texto: #8a5a00;
 
     --fuchsia: #A21CAF;
     --fuchsia-active: #C026D3;

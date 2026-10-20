@@ -27,6 +27,7 @@ import {
   listarGuiasAdmin,
   listarGuiasPublicadas,
   listarHerramientasPublicadas,
+  listarSlugsGuiasPago,
   listarUltimasGuias,
   obtenerGuiaPorSlug,
 } from '../src/lib/db/guias.js';
@@ -107,6 +108,23 @@ test('precio, moneda y pasarela se guardan y viajan en el listado', async () => 
   const fila = listado.guias.find((item) => item.slug === GUIA_RED.slug);
   assert.equal(fila.precio_centimos, 990, 'el listado ligero incluye el precio');
   assert.equal(fila.moneda, 'EUR');
+  assert.equal(fila.enlace_compra, 'https://pago.example.com/nmap-basico', 'la tarjeta puede enlazar al resumen de compra');
+});
+
+test('el build estático solo genera compras de guías pagadas publicadas', async () => {
+  const db = crearBase();
+  await crearGuia(db, { ...GUIA_RED, acceso: 'pago', enlaceCompra: 'https://pago.example.com/nmap-basico' });
+  await crearGuia(db, GUIA_BLUE);
+  await crearGuia(db, {
+    ...GUIA_BLUE,
+    slug: 'blue/borrador-pago',
+    titulo: 'Borrador de pago',
+    acceso: 'pago',
+    enlaceCompra: 'https://pago.example.com/borrador',
+    publicada: 0,
+  });
+
+  assert.deepEqual(await listarSlugsGuiasPago(db), [GUIA_RED.slug]);
 });
 
 test('un borrador no aparece en el catálogo público', async () => {
