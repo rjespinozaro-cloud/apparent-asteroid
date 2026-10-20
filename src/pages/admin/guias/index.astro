@@ -1,6 +1,7 @@
 ---
 import AdminBase from '../../../layouts/AdminBase.astro';
 import { getDatabase, listarGuiasAdmin, listarHerramientasAdmin } from '../../../lib/db.js';
+import { permisoGuia } from '../../../lib/admin-api.js';
 import { precioGuia } from '../../../lib/pago.js';
 import { env } from 'cloudflare:workers';
 
@@ -114,6 +115,7 @@ const enlacePagina = (pagina: number) => {
 
     {filas.length > 0 ? (
       <div class="admin-table-wrap" data-destacadas data-csrf={sesion?.csrf ?? ''}>
+        <p class="admin-aviso-linea" data-destacadas-mensaje role="alert" hidden></p>
         <table class="admin-table admin-table--guias">
           <caption class="visualmente-oculto">Guías del catálogo. Cada fila incluye una acción para editar.</caption>
           <thead>
@@ -130,10 +132,17 @@ const enlacePagina = (pagina: number) => {
             </tr>
           </thead>
           <tbody>
-            {filas.map((fila: (typeof filas)[number]) => (
+            {filas.map((fila: (typeof filas)[number]) => {
+              // Un editor solo puede tocar guías BLUE gratuitas: mostrarle un
+              // "Editar" que el backend va a rechazar es pe Worse que no
+              // mostrarlo. ADMIN ve y edita todo.
+              const editable = permisoGuia(sesion, fila);
+              return (
               <tr>
                 <td class="admin-table__titulo">
-                  <a href={`/admin/guias/${fila.id}/`} title={`Editar ${fila.titulo}`}>{fila.titulo}</a>
+                  {editable
+                    ? <a href={`/admin/guias/${fila.id}/`} title={`Editar ${fila.titulo}`}>{fila.titulo}</a>
+                    : <span class="admin-table__titulo-texto" title="Tu rol no puede editar esta guía">{fila.titulo}</span>}
                 </td>
                 <td class="admin-table__slug">
                   <code title={fila.slug}>{fila.slug}</code>
@@ -157,19 +166,24 @@ const enlacePagina = (pagina: number) => {
                     )}
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    class="admin-boton admin-boton--plano"
-                    data-destacada={fila.id}
-                    data-activa={fila.destacada ? '1' : '0'}
-                    aria-pressed={fila.destacada ? 'true' : 'false'}
-                    aria-label={fila.destacada ? `Quitar destacada a ${fila.titulo}` : `Marcar ${fila.titulo} como destacada`}
-                  >
-                    {fila.destacada ? '★' : '☆'}
-                  </button>
+                  {editable ? (
+                    <button
+                      type="button"
+                      class="admin-boton admin-boton--plano"
+                      data-destacada={fila.id}
+                      data-activa={fila.destacada ? '1' : '0'}
+                      aria-pressed={fila.destacada ? 'true' : 'false'}
+                      aria-label={fila.destacada ? `Quitar destacada a ${fila.titulo}` : `Marcar ${fila.titulo} como destacada`}
+                    >
+                      {fila.destacada ? '★' : '☆'}
+                    </button>
+                  ) : (
+                    <span class="admin-table__vacio" aria-label="No editable con tu rol">—</span>
+                  )}
                 </td>
                 <td><time datetime={fila.fecha}>{fila.fecha}</time></td>
                 <td class="admin-table__actions">
+                  {editable && (
                   <a
                     class="admin-boton admin-boton--plano"
                     href={`/admin/guias/${fila.id}/`}
@@ -181,9 +195,11 @@ const enlacePagina = (pagina: number) => {
                     </svg>
                     Editar
                   </a>
+                  )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

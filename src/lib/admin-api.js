@@ -45,7 +45,10 @@ export function idValido(id) {
  * Completa una edición con los valores que no controla el formulario.
  *
  * La publicación se cambia con su propio botón, así que guardar una
- * corrección no debe despublicar la guía por omisión.
+ * corrección no debe despublicar la guía por omisión. Lo mismo con los datos
+ * comerciales: si el cliente no los envía, se conservan los que ya estaban
+ * guardados (un campo presente, aunque vacío, manda). Sin esto, una llamada
+ * con el cuerpo incompleto borraría precio, pasarela y enlace de compra.
  *
  * @param {Record<string, any>} entrada cuerpo recibido de la petición
  * @param {Record<string, any>} guía guía ya guardada (fila de D1)
@@ -58,6 +61,15 @@ export function completarEntradaGuia(entrada, guía) {
     publicada: entrada.publicada === undefined ? guía.publicada : entrada.publicada,
   };
 
+  if (entrada.precio === undefined) {
+    const centimos = Number(guía.precio_centimos ?? guía.precioCentimos ?? 0);
+    editable.precio = centimos > 0 ? (centimos / 100).toFixed(2) : '';
+  }
+  if (entrada.moneda === undefined) editable.moneda = guía.moneda ?? 'EUR';
+  if (entrada.pasarela === undefined) editable.pasarela = guía.pasarela ?? '';
+  if (entrada.enlaceCompra === undefined) {
+    editable.enlaceCompra = guía.enlace_compra ?? guía.enlaceCompra ?? '';
+  }
   return editable;
 }
 

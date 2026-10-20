@@ -1185,6 +1185,28 @@
   white-space: nowrap;
 }
 
+/* Título que el rol actual no puede editar: se lee, pero no se enlaza. */
+.admin-table__titulo-texto {
+  color: var(--adm-text-muted);
+  font-weight: var(--adm-type-weight-medium);
+}
+
+.admin-table__vacio {
+  color: var(--adm-text-subtle);
+}
+
+/* Aviso en línea dentro de un panel (error de una acción puntual). */
+.admin-aviso-linea {
+  color: var(--adm-danger-text);
+  font-size: var(--adm-type-meta-size);
+  margin: 0;
+  padding: 0.75rem 1.125rem;
+}
+
+.admin-aviso-linea[hidden] {
+  display: none;
+}
+
 /* Auditoría: los detalles largos se leen sin romper la retícula. */
 .admin-table--auditoria .admin-table__detalle {
   overflow-wrap: anywhere;

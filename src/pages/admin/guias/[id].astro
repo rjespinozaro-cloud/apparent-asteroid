@@ -2,7 +2,7 @@
 import AdminBase from '../../../layouts/AdminBase.astro';
 import EditorGuia from '../../../components/admin/EditorGuia.astro';
 import { getDatabase, listarHerramientasAdmin, obtenerGuiaPorId } from '../../../lib/db.js';
-import { idValido } from '../../../lib/admin-api.js';
+import { idValido, permisoGuia } from '../../../lib/admin-api.js';
 import { esAdmin } from '../../../lib/roles.js';
 import { env } from 'cloudflare:workers';
 
@@ -19,6 +19,13 @@ const guia = await obtenerGuiaPorId(database, id);
 if (!guia) {
   return Astro.redirect('/admin/guias/', 302);
 }
+// La página entrega el cuerpo completo en el textarea: leer una guía RED o de
+// pago es tan sensible como editarla. Si el rol no puede editarla, tampoco
+// puede abrirla.
+if (!permisoGuia(sesion, guia)) {
+  return Astro.redirect('/admin/guias/', 302);
+}
+
 const herramientas = await listarHerramientasAdmin(database);
 ---
 

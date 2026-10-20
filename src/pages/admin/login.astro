@@ -49,6 +49,14 @@ if (Astro.request.method === 'POST') {
     } else {
       await limpiarIntentos(database, clave, claveIp);
       const sesion = await crearSesion(database, cuenta);
+      // El acceso correcto también queda en el log: si el panel se abre sin
+      // que nadie haya iniciado sesión, hay que poder verlo.
+      await registrarAuditoria(database, {
+        usuarioId: cuenta?.id ?? null,
+        accion: 'login',
+        objeto: `usuario:${cuenta?.usuario ?? 'desconocido'}`,
+        detalle: 'Acceso correcto',
+      });
       return new Response(null, {
         status: 303,
         headers: { Location: '/admin/', 'Set-Cookie': cookieSesion(sesion.token) },

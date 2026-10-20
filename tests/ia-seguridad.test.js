@@ -185,6 +185,28 @@ test('guardar una edición no despublica la guía: se conserva el estado actual'
   assert.equal(explícita.publicada, 0, 'si el campo viene, manda el cliente');
 });
 
+test('un guardado parcial no borra precio, pasarela ni enlace de compra', () => {
+  const guardada = {
+    equipo: 'red',
+    acceso: 'pago',
+    publicada: 1,
+    precio_centimos: 1990,
+    moneda: 'EUR',
+    pasarela: 'stripe',
+    enlace_compra: 'https://buy.stripe.com/test',
+  };
+  const fusionada = completarEntradaGuia({ titulo: 'Otro título' }, guardada);
+  assert.equal(fusionada.precio, '19.90');
+  assert.equal(fusionada.moneda, 'EUR');
+  assert.equal(fusionada.pasarela, 'stripe');
+  assert.equal(fusionada.enlaceCompra, 'https://buy.stripe.com/test');
+
+  // Si el cliente envía el campo, manda el cliente: se puede vaciar a propósito.
+  const vaciada = completarEntradaGuia({ enlaceCompra: '', precio: '' }, guardada);
+  assert.equal(vaciada.enlaceCompra, '');
+  assert.equal(vaciada.precio, '');
+});
+
 test('permisos de guia: el contenido de pago RED queda fuera sin sesión', () => {
   const pagoRed = { equipo: 'red', acceso: 'pago' };
   assert.equal(permisoGuia(null, pagoRed), false, 'sin sesión no se entra');
