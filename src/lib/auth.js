@@ -159,7 +159,8 @@ export async function obtenerSesion(database, request) {
   const id = await sha256(token);
   const ahora = new Date().toISOString();
   const sesion = await database.prepare(
-    `SELECT sesiones.usuario_id, sesiones.expira_en, usuarios.usuario, usuarios.rol, usuarios.activo
+    `SELECT sesiones.usuario_id, sesiones.expira_en, usuarios.usuario,
+            LOWER(TRIM(usuarios.rol)) AS rol, usuarios.activo
      FROM sesiones JOIN usuarios ON usuarios.id = sesiones.usuario_id
      WHERE sesiones.id = ? AND sesiones.expira_en > ? AND usuarios.activo = 1`,
   ).bind(id, ahora).first();

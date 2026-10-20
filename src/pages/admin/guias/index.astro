@@ -114,15 +114,30 @@ const enlacePagina = (pagina: number) => {
 
     {filas.length > 0 ? (
       <div class="admin-table-wrap" data-destacadas data-csrf={sesion?.csrf ?? ''}>
-        <table class="admin-table">
+        <table class="admin-table admin-table--guias">
+          <caption class="visualmente-oculto">Guías del catálogo. Cada fila incluye una acción para editar.</caption>
           <thead>
-            <tr><th>Producto / Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado catálogo</th><th>Acceso tienda</th><th>Destacada</th><th>Fecha</th></tr>
+            <tr>
+              <th scope="col">Producto / Título</th>
+              <th scope="col">Slug</th>
+              <th scope="col">Equipo</th>
+              <th scope="col">Herramienta</th>
+              <th scope="col">Estado catálogo</th>
+              <th scope="col">Acceso tienda</th>
+              <th scope="col">Destacada</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Acciones</th>
+            </tr>
           </thead>
           <tbody>
             {filas.map((fila: (typeof filas)[number]) => (
               <tr>
-                <td><a href={`/admin/guias/${fila.id}/`}>{fila.titulo}</a></td>
-                <td><code>{fila.slug}</code></td>
+                <td class="admin-table__titulo">
+                  <a href={`/admin/guias/${fila.id}/`} title={`Editar ${fila.titulo}`}>{fila.titulo}</a>
+                </td>
+                <td class="admin-table__slug">
+                  <code title={fila.slug}>{fila.slug}</code>
+                </td>
                 <td><span class={`admin-badge admin-badge--${fila.equipo}`}>{fila.equipo.toUpperCase()}</span></td>
                 <td>{fila.herramienta}</td>
                 <td>
@@ -153,7 +168,20 @@ const enlacePagina = (pagina: number) => {
                     {fila.destacada ? '★' : '☆'}
                   </button>
                 </td>
-                <td><time>{fila.fecha}</time></td>
+                <td><time datetime={fila.fecha}>{fila.fecha}</time></td>
+                <td class="admin-table__actions">
+                  <a
+                    class="admin-boton admin-boton--plano"
+                    href={`/admin/guias/${fila.id}/`}
+                    aria-label={`Editar ${fila.titulo}`}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    Editar
+                  </a>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -21,7 +21,8 @@
   /* Typography Colors (WCAG AA compliant) */
   --adm-text:         #F1F5F9;
   --adm-text-muted:   #94A3B8;
-  --adm-text-subtle:  #475569;
+  /* 5.6:1 sobre --adm-bg y 5.0:1 sobre --adm-surface-2: AA en todo el panel. */
+  --adm-text-subtle:  #7C8AA0;
 
   /* Brand accent – eléctrico violeta/índigo */
   --adm-accent:        #7C6EF5;
@@ -85,6 +86,32 @@
   /* Typography */
   --adm-font-ui:   'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --adm-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', monospace;
+
+  /* Escala tipográfica por rol: un único lugar para todo el panel. */
+  --adm-type-body-size:        1rem;
+  --adm-type-body-leading:     1.6;
+  --adm-type-prose-size:       0.9375rem;
+  --adm-type-prose-leading:    1.65;
+  --adm-type-title-size:       clamp(1.5rem, 2.4vw, 1.75rem);
+  --adm-type-title-leading:    1.2;
+  --adm-type-panel-size:       1.0625rem;
+  --adm-type-panel-leading:    1.35;
+  --adm-type-table-size:       0.875rem;
+  --adm-type-table-head-size:  0.8125rem;
+  --adm-type-label-size:       0.8125rem;
+  --adm-type-meta-size:        0.8125rem;
+  --adm-type-caption-size:     0.75rem;
+  --adm-type-micro-size:       0.6875rem;
+  --adm-type-code-size:        0.8125rem;
+  --adm-type-kpi-size:         1.875rem;
+  --adm-type-display-size:     clamp(1.625rem, 4vw, 2rem);
+  --adm-type-weight-regular:   400;
+  --adm-type-weight-medium:    500;
+  --adm-type-weight-semibold:  600;
+  --adm-type-weight-bold:      700;
+  --adm-type-tracking-tight:   -0.01em;
+  --adm-type-tracking-label:   0.04em;
+  --adm-type-measure:          70ch;
 
   /* Spacing */
   --adm-space-xs:  0.25rem;

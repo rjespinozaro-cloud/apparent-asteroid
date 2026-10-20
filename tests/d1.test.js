@@ -38,10 +38,10 @@ import {
   obtenerRutaPorSlug,
 } from '../src/lib/db/rutas.js';
 import { hashPassword, crearSesion, destruirSesion, obtenerSesion, claveIntento, claveIntentoIp, loginBloqueado, limpiarIntentos, registrarIntentoFallido, cookieSesion, csrfValido } from '../src/lib/auth.js';
-import { crearUsuario, eliminarUsuario, listarUsuarios, purgarSesionesCaducadas } from '../src/lib/db/usuarios.js';
+import { contarAdminsActivos, crearUsuario, eliminarUsuario, listarUsuarios, purgarSesionesCaducadas } from '../src/lib/db/usuarios.js';
 import { registrarAuditoria, listarAuditoria, listarFacetasAuditoria, ultimasAcciones } from '../src/lib/db/auditoria.js';
 
-const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql', '0005_catalogo.sql', '0007_pago_guias.sql']
+const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql', '0005_catalogo.sql', '0007_pago_guias.sql', '0008_normalizar_roles.sql']
   .map((nombre) => fs.readFileSync(path.join(import.meta.dirname, '..', 'migrations', nombre), 'utf8'))
   .join('\n');
 
@@ -377,6 +377,32 @@ test('sesiones: se crea, se resuelve con la cookie y se destruye', async () => {
   assert.equal(await obtenerSesion(db, peticion), null, 'la sesión ya no vale');
 });
 
+test('roles heredados: sesión, conteo y migración usan el valor canónico', async () => {
+  const db = crearBase();
+  const credenciales = await hashPassword('contrasena-larga-1');
+  // Simula una fila heredada anterior al CHECK actual. La aplicación debe
+  // seguir tratándola como admin, aunque el valor guardado no sea canónico.
+  await db.exec('PRAGMA ignore_check_constraints = ON');
+  await db.prepare(
+    'INSERT INTO usuarios (usuario, hash, sal, rol, activo) VALUES (?, ?, ?, ?, 1)',
+  ).bind('legacy', credenciales.hash, credenciales.sal, 'ADMIN').run();
+
+  assert.equal(await contarAdminsActivos(db), 1);
+  const sesion = await crearSesion(db, { id: 1, usuario: 'legacy' });
+  const peticion = new Request('https://joanix.test/admin/', {
+    headers: { Cookie: cookieSesion(sesion.token) },
+  });
+  assert.equal((await obtenerSesion(db, peticion)).usuario.rol, 'admin');
+
+  const migracion = fs.readFileSync(
+    path.join(import.meta.dirname, '..', 'migrations', '0008_normalizar_roles.sql'),
+    'utf8',
+  );
+  await db.exec(migracion);
+  const fila = await db.prepare('SELECT rol FROM usuarios WHERE usuario = ?').bind('legacy').first();
+  assert.equal(fila.rol, 'admin');
+});
+
 test('sesiones: una cookie manipulada no abre sesión', async () => {
   const db = crearBase();
   const credenciales = await hashPassword('contrasena-larga-1');
@@ -477,7 +503,6 @@ test('eliminar un usuario conserva la auditoría con su nombre', async () => {
   await crearUsuario(db, { usuario: 'ana', rol: 'admin', ...credenciales });
   await crearUsuario(db, { usuario: 'bruno', rol: 'editor', ...credenciales });
   await crearGuia(db, GUIA_BLUE);
-  const guia = await obtenerGuiaPorSlug(db, GUIA_BLUE.slug);
   await db.prepare('UPDATE guias SET actualizado_por = (SELECT id FROM usuarios WHERE usuario = ?)').bind('bruno').run();
   await crearSesion(db, { id: 2, usuario: 'bruno' });
   await registrarAuditoria(db, { usuarioId: 2, accion: 'editar', objeto: 'guia', detalle: 'Un cambio' });

@@ -2,12 +2,13 @@
 import AdminBase from '../../layouts/AdminBase.astro';
 import { env } from 'cloudflare:workers';
 import { getDatabase, metricasVentasAdmin, obtenerEstadisticasAdmin, obtenerResumenMetricas } from '../../lib/db.js';
+import { esAdmin as esAdminSesion } from '../../lib/roles.js';
 import { formatearDinero, formatearFechaHora } from '../../lib/utils/texto.js';
 
 export const prerender = false;
 
 const sesion = Astro.locals.admin;
-const esAdmin = sesion?.usuario.rol === 'admin';
+const esAdmin = esAdminSesion(sesion);
 const database = getDatabase(env);
 // Los datos de usuarios, IA y auditoría solo se consultan con rol admin.
 const [stats, visitas, ventas] = await Promise.all([

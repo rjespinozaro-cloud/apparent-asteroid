@@ -1,4 +1,7 @@
 import { csrfValido } from './auth.js';
+import { esAdmin } from './roles.js';
+
+export { esAdmin, normalizarRol, rolEsAdmin } from './roles.js';
 
 const METODOS_SEGUROS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -38,20 +41,40 @@ export function idValido(id) {
   return /^\d+$/.test(String(id)) && Number(id) > 0;
 }
 
+/**
+ * Completa una edición con los valores que no controla el formulario.
+ *
+ * La publicación se cambia con su propio botón, así que guardar una
+ * corrección no debe despublicar la guía por omisión.
+ *
+ * @param {Record<string, any>} entrada cuerpo recibido de la petición
+ * @param {Record<string, any>} guía guía ya guardada (fila de D1)
+ */
+export function completarEntradaGuia(entrada, guía) {
+  const editable = {
+    ...entrada,
+    equipo: entrada.equipo ?? guía.equipo,
+    acceso: entrada.acceso ?? guía.acceso,
+    publicada: entrada.publicada === undefined ? guía.publicada : entrada.publicada,
+  };
+
+  return editable;
+}
+
 export function permisoGuia(sesion, guia) {
   if (!sesion || !guia) return false;
-  return sesion.usuario.rol === 'admin' || (guia.equipo === 'blue' && guia.acceso === 'gratis');
+  if (esAdmin(sesion)) return true;
+  const equipo = String(guia.equipo ?? '').trim().toLowerCase();
+  const acceso = String(guia.acceso ?? '').trim().toLowerCase();
+  return equipo === 'blue' && acceso === 'gratis';
 }
 
 export function permisoEntradaGuia(sesion, datos) {
   if (!sesion || !datos) return false;
+  if (esAdmin(sesion)) return true;
   const equipo = String(datos.equipo ?? '').trim().toLowerCase();
   const acceso = String(datos.acceso ?? '').trim().toLowerCase();
-  return sesion.usuario.rol === 'admin' || (equipo === 'blue' && acceso === 'gratis');
-}
-
-export function esAdmin(sesion) {
-  return sesion?.usuario?.rol === 'admin';
+  return equipo === 'blue' && acceso === 'gratis';
 }
 
 /**

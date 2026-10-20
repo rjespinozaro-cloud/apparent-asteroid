@@ -449,8 +449,8 @@ export async function obtenerEstadisticasAdmin(database, { admin = false } = {})
     database.prepare(
       `SELECT COUNT(*) AS total,
               COALESCE(SUM(CASE WHEN activo = 1 THEN 1 ELSE 0 END), 0) AS activos,
-              COALESCE(SUM(CASE WHEN rol = 'admin' AND activo = 1 THEN 1 ELSE 0 END), 0) AS admins,
-              COALESCE(SUM(CASE WHEN rol = 'editor' AND activo = 1 THEN 1 ELSE 0 END), 0) AS editores
+              COALESCE(SUM(CASE WHEN LOWER(TRIM(rol)) = 'admin' AND activo = 1 THEN 1 ELSE 0 END), 0) AS admins,
+              COALESCE(SUM(CASE WHEN LOWER(TRIM(rol)) = 'editor' AND activo = 1 THEN 1 ELSE 0 END), 0) AS editores
        FROM usuarios`,
     ),
     database.prepare(

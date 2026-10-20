@@ -17,6 +17,7 @@ import {
   respuestaJson,
   validarPeticionAdmin,
 } from '../../../../lib/admin-api.js';
+import { normalizarRol, rolEsAdmin } from '../../../../lib/roles.js';
 import { validarPasswordEntrada } from '../../../../lib/validar.js';
 import { hashPassword } from '../../../../lib/auth.js';
 
@@ -26,7 +27,7 @@ const ROLES = new Set(['admin', 'editor']);
 
 /** Impide quedarse sin ningún administrador activo. */
 async function protegidoUltimoAdmin(database, objetivo, cambio) {
-  const esAdminActivo = objetivo.rol === 'admin' && Boolean(objetivo.activo);
+  const esAdminActivo = rolEsAdmin(objetivo.rol) && Boolean(objetivo.activo);
   if (!esAdminActivo) return null;
   if (await contarAdminsActivos(database) > 1) return null;
   return respuestaJson(
@@ -49,10 +50,11 @@ export async function PUT({ request, locals, params }) {
   const yoMismo = String(objetivo.id) === String(locals.admin.usuario.usuario_id);
 
   if (accion === 'rol') {
-    const rol = String(entrada.rol ?? '').trim().toLowerCase();
+    const rol = normalizarRol(entrada.rol);
     if (!ROLES.has(rol)) return respuestaJson({ error: 'El rol debe ser admin o editor.' }, 422);
-    if (rol === objetivo.rol) return respuestaJson({ ok: true, sinCambios: true });
-    if (objetivo.rol === 'admin' && rol !== 'admin') {
+    const rolActual = normalizarRol(objetivo.rol);
+    if (rol === rolActual) return respuestaJson({ ok: true, sinCambios: true });
+    if (rolEsAdmin(rolActual) && rol !== 'admin') {
       const protegido = await protegidoUltimoAdmin(database, objetivo, 'degradar');
       if (protegido) return protegido;
     }
@@ -64,7 +66,7 @@ export async function PUT({ request, locals, params }) {
       usuarioId: locals.admin.usuario.usuario_id,
       accion: 'cambiar_rol',
       objeto: 'usuario',
-      detalle: `${objetivo.usuario}: ${objetivo.rol} → ${rol}`,
+      detalle: `${objetivo.usuario}: ${rolActual} → ${rol}`,
     });
     return respuestaJson({ ok: true });
   }
@@ -128,7 +130,7 @@ export async function DELETE({ request, locals, params }) {
     usuarioId: locals.admin.usuario.usuario_id,
     accion: 'eliminar',
     objeto: 'usuario',
-    detalle: `${objetivo.usuario} (${objetivo.rol})`,
+    detalle: `${objetivo.usuario} (${normalizarRol(objetivo.rol)})`,
   });
 
   return respuestaJson({ ok: true });

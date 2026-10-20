@@ -76,15 +76,16 @@
 .admin-auth__marca {
   color: var(--adm-text-muted);
   font-family: var(--adm-font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--adm-type-micro-size);
+  font-weight: var(--adm-type-weight-semibold);
   letter-spacing: 0.08em;
   margin: 0;
   text-transform: uppercase;
 }
 
 .admin-auth__title {
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  line-height: 1.15;
+  font-size: var(--adm-type-display-size);
+  line-height: var(--adm-type-title-leading);
   margin: 0;
 }
 
@@ -100,7 +101,7 @@
 /* Aviso de bloqueo: role="alert", sin revelar nada sobre la cuenta. */
 .admin-alerta {
   border-radius: var(--adm-radius-md);
-  font-size: var(--adm-text-sm, 0.875rem);
+  font-size: var(--adm-type-table-size);
   line-height: 1.5;
   margin: 0;
   padding: 0.7rem 0.9rem;
@@ -123,7 +124,7 @@
   align-items: center;
   color: var(--adm-text-subtle);
   display: inline-flex;
-  font-size: 0.8125rem;
+  font-size: var(--adm-type-meta-size);
   justify-content: center;
   min-block-size: 44px;
   padding: 0.5rem 0.75rem;

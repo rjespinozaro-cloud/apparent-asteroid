@@ -1,8 +1,11 @@
 /**
  * Consultas de `usuarios`, `sesiones` e `intentos_login`.
  */
+import { normalizarRol } from '../roles.js';
 
 /** @typedef {{ id: number, usuario: string, hash: string, sal: string, rol: 'admin'|'editor', activo: number, creado_en: string }} UsuarioFila */
+
+const COLUMNAS_USUARIO = 'id, usuario, hash, sal, LOWER(TRIM(rol)) AS rol, activo, creado_en';
 
 export async function contarUsuarios(database) {
   const fila = await database.prepare('SELECT COUNT(*) AS total FROM usuarios').first();
@@ -11,31 +14,31 @@ export async function contarUsuarios(database) {
 
 /** @returns {Promise<UsuarioFila|null>} */
 export async function obtenerUsuarioPorNombre(database, usuario) {
-  return database.prepare('SELECT * FROM usuarios WHERE usuario = ?').bind(usuario).first();
+  return database.prepare(`SELECT ${COLUMNAS_USUARIO} FROM usuarios WHERE usuario = ?`).bind(usuario).first();
 }
 
 /** @returns {Promise<UsuarioFila|null>} */
 export async function obtenerUsuarioPorId(database, id) {
-  return database.prepare('SELECT * FROM usuarios WHERE id = ?').bind(id).first();
+  return database.prepare(`SELECT ${COLUMNAS_USUARIO} FROM usuarios WHERE id = ?`).bind(id).first();
 }
 
 export async function crearUsuario(database, datos) {
   return database.prepare(
     'INSERT INTO usuarios (usuario, hash, sal, rol, activo) VALUES (?, ?, ?, ?, 1)',
-  ).bind(datos.usuario, datos.hash, datos.sal, datos.rol).run();
+  ).bind(datos.usuario, datos.hash, datos.sal, normalizarRol(datos.rol)).run();
 }
 
 /** @returns {Promise<Array<{id: number, usuario: string, rol: string, activo: number, creado_en: string}>>} */
 export async function listarUsuarios(database) {
   const resultado = await database.prepare(
-    'SELECT id, usuario, rol, activo, creado_en FROM usuarios ORDER BY usuario',
+    'SELECT id, usuario, LOWER(TRIM(rol)) AS rol, activo, creado_en FROM usuarios ORDER BY usuario',
   ).all();
   return resultado.results;
 }
 
 export async function contarAdminsActivos(database) {
   const fila = await database.prepare(
-    "SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'admin' AND activo = 1",
+    "SELECT COUNT(*) AS total FROM usuarios WHERE LOWER(TRIM(rol)) = 'admin' AND activo = 1",
   ).first();
   return Number(fila?.total ?? 0);
 }
@@ -46,7 +49,7 @@ export async function contarUsuariosActivos(database) {
 }
 
 export async function cambiarRolUsuario(database, id, rol) {
-  return database.prepare('UPDATE usuarios SET rol = ? WHERE id = ?').bind(rol, id).run();
+  return database.prepare('UPDATE usuarios SET rol = ? WHERE id = ?').bind(normalizarRol(rol), id).run();
 }
 
 export async function cambiarEstadoUsuario(database, id, activo) {

@@ -43,6 +43,7 @@ const ESQUEMA = [
   '0005_catalogo.sql',
   '0006_expansion_plataforma.sql',
   '0007_pago_guias.sql',
+  '0008_normalizar_roles.sql',
 ]
   .map((nombre) => fs.readFileSync(path.join(import.meta.dirname, '..', 'migrations', nombre), 'utf8'))
   .join('\n');

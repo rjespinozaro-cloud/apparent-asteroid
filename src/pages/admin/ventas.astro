@@ -1,7 +1,7 @@
 ---
 import AdminBase from '../../layouts/AdminBase.astro';
 import { getDatabase, listarComprasAdmin, metricasVentasAdmin } from '../../lib/db.js';
-import { esAdmin } from '../../lib/admin-api.js';
+import { esAdmin } from '../../lib/roles.js';
 import { formatearDinero, formatearFechaHora } from '../../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
 

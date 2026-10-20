@@ -1,7 +1,7 @@
 ---
 import AdminBase from '../../layouts/AdminBase.astro';
 import { getDatabase, listarUsuarios } from '../../lib/db.js';
-import { esAdmin } from '../../lib/admin-api.js';
+import { esAdmin, rolEsAdmin } from '../../lib/roles.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -15,7 +15,7 @@ if (!esAdmin(sesion)) {
 const database = getDatabase(env);
 const usuarios = await listarUsuarios(database);
 const miId = sesion?.usuario.usuario_id;
-const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length;
+const totalAdmins = usuarios.filter((u) => rolEsAdmin(u.rol) && u.activo).length;
 ---
 
 <AdminBase
@@ -74,9 +74,9 @@ const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length
         <h2 class="admin-panel__titulo">Cuentas existentes</h2>
       </header>
       <div class="admin-panel__body admin-table-wrap">
-        <table class="admin-tabla" data-tabla-usuarios>
+        <table class="admin-table" data-tabla-usuarios>
           <thead>
-            <tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Creada</th><th>Acciones</th></tr>
+            <tr><th scope="col">Usuario</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Creada</th><th scope="col">Acciones</th></tr>
           </thead>
           <tbody>
             {usuarios.map((fila) => (
@@ -91,9 +91,9 @@ const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length
                     class="admin-boton admin-boton--plano"
                     data-accion="rol"
                     data-id={fila.id}
-                    data-rol={fila.rol === 'admin' ? 'editor' : 'admin'}
+                    data-rol={rolEsAdmin(fila.rol) ? 'editor' : 'admin'}
                   >
-                    {fila.rol === 'admin' ? 'admin' : 'editor'} →
+                    {rolEsAdmin(fila.rol) ? 'admin' : 'editor'} →
                   </button>
                 </td>
                 <td>
@@ -110,7 +110,7 @@ const totalAdmins = usuarios.filter((u) => u.rol === 'admin' && u.activo).length
                 <td>{fila.creado_en}</td>
                 <td class="admin-table__actions">
                   <button type="button" class="admin-boton admin-boton--plano" data-accion="password" data-id={fila.id}>Resetear contraseña</button>
-                  {fila.id !== miId && !(fila.rol === 'admin' && fila.activo && totalAdmins <= 1) && (
+                  {fila.id !== miId && !(rolEsAdmin(fila.rol) && fila.activo && totalAdmins <= 1) && (
                     <button type="button" class="admin-boton admin-boton--danger" data-accion="eliminar" data-id={fila.id}>Eliminar</button>
                   )}
                 </td>

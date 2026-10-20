@@ -71,7 +71,7 @@ export function contarPasos(markdown) {
  * Valida y normaliza el cuerpo de una guía (crear o editar).
  * Reglas de negocio: una guía RED solo guarda el adelanto público; el resto va en el PDF.
  */
-export function validarGuiaEntrada(entrada, { existenteId = null } = {}) {
+export function validarGuiaEntrada(entrada, { existenteId = null, permitirPagoSinEnlace = false } = {}) {
   const datos = {
     titulo: limpiarTexto(entrada?.titulo, 160),
     slug: texto(entrada?.slug).toLowerCase().slice(0, 160),
@@ -112,7 +112,9 @@ export function validarGuiaEntrada(entrada, { existenteId = null } = {}) {
   if (datos.enlaceCompra && !/^https:\/\//i.test(datos.enlaceCompra)) {
     errores.push(error('enlaceCompra', 'El enlace de compra debe ser una URL HTTPS.'));
   }
-  if (datos.acceso === 'pago' && !datos.enlaceCompra) {
+  // Una guía heredada puede seguir sin checkout mientras se completa su ficha.
+  // Las altas nuevas y las guías que ya tenían enlace siguen exigiéndolo.
+  if (datos.acceso === 'pago' && !datos.enlaceCompra && !permitirPagoSinEnlace) {
     errores.push(error('enlaceCompra', 'Una guía de pago necesita un enlace de compra.'));
   }
   if (!precio.ok) {

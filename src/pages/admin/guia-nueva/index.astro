@@ -2,6 +2,7 @@
 import AdminBase from '../../../layouts/AdminBase.astro';
 import EditorGuia from '../../../components/admin/EditorGuia.astro';
 import { getDatabase, listarHerramientasAdmin } from '../../../lib/db.js';
+import { esAdmin } from '../../../lib/roles.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -30,7 +31,7 @@ const today = new Date().toISOString().slice(0, 10);
       csrf={sesion?.csrf ?? ''}
       endpoint="/api/admin/guias"
       metodo="POST"
-      esAdmin={sesion?.usuario.rol === 'admin'}
+      esAdmin={esAdmin(sesion)}
       herramientas={herramientas}
       today={today}
       asistente={true}

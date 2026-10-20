@@ -13,7 +13,15 @@ import {
   urlPorProveedor,
   validarUrlBase,
 } from '../src/lib/ia.js';
-import { leerEntrada, permisoEntradaGuia, permisoGuia } from '../src/lib/admin-api.js';
+import {
+  completarEntradaGuia,
+  esAdmin,
+  leerEntrada,
+  normalizarRol,
+  permisoEntradaGuia,
+  permisoGuia,
+  rolEsAdmin,
+} from '../src/lib/admin-api.js';
 
 const ok = (url) => validarUrlBase(url).ok === true;
 
@@ -154,6 +162,29 @@ test('leerEntrada: los formularios siguen funcionando', async () => {
 /* Autorización de contenido (sin red ni D1)                                    */
 /* -------------------------------------------------------------------------- */
 
+test('el rol se normaliza antes de decidir: ADMIN conserva acceso total', () => {
+  assert.equal(normalizarRol(' ADMIN '), 'admin');
+  assert.equal(normalizarRol('Editor'), 'editor');
+  assert.equal(normalizarRol('administrador'), '');
+  assert.equal(rolEsAdmin('Admin'), true);
+  assert.equal(rolEsAdmin('editor'), false);
+  assert.equal(esAdmin({ usuario: { rol: 'ADMIN' } }), true);
+  assert.equal(esAdmin({ usuario: { rol: 'editor' } }), false);
+  assert.equal(esAdmin(null), false);
+});
+
+test('guardar una edición no despublica la guía: se conserva el estado actual', () => {
+  const guardada = { equipo: 'red', acceso: 'pago', publicada: 1 };
+  const fusionada = completarEntradaGuia({ titulo: 'Título corregido' }, guardada);
+  assert.equal(fusionada.titulo, 'Título corregido');
+  assert.equal(fusionada.equipo, 'red');
+  assert.equal(fusionada.acceso, 'pago');
+  assert.equal(fusionada.publicada, 1, 'sin el campo, la publicación se conserva');
+
+  const explícita = completarEntradaGuia({ publicada: 0 }, guardada);
+  assert.equal(explícita.publicada, 0, 'si el campo viene, manda el cliente');
+});
+
 test('permisos de guia: el contenido de pago RED queda fuera sin sesión', () => {
   const pagoRed = { equipo: 'red', acceso: 'pago' };
   assert.equal(permisoGuia(null, pagoRed), false, 'sin sesión no se entra');
@@ -162,12 +193,16 @@ test('permisos de guia: el contenido de pago RED queda fuera sin sesión', () =>
   const gratisBlue = { equipo: 'blue', acceso: 'gratis' };
   assert.equal(permisoGuia({ usuario: { rol: 'editor' } }, gratisBlue), true);
   assert.equal(permisoGuia({ usuario: { rol: 'admin' } }, pagoRed), true);
+  assert.equal(permisoGuia({ usuario: { rol: 'ADMIN' } }, pagoRed), true, 'ADMIN en mayúsculas también');
+  assert.equal(permisoGuia({ usuario: { rol: 'editor' } }, { equipo: 'BLUE', acceso: 'GRATIS' }), true);
 });
 
 test('permisos de entrada: un editor no puede crear contenido de pago', () => {
   const editor = { usuario: { rol: 'editor' } };
+  const admin = { usuario: { rol: 'Admin' } };
   assert.equal(permisoEntradaGuia(editor, { equipo: 'blue', acceso: 'gratis' }), true);
   assert.equal(permisoEntradaGuia(editor, { equipo: 'blue', acceso: 'pago' }), false);
   assert.equal(permisoEntradaGuia(editor, { equipo: 'red', acceso: 'gratis' }), false);
+  assert.equal(permisoEntradaGuia(admin, { equipo: 'red', acceso: 'pago' }), true);
   assert.equal(permisoEntradaGuia(null, { equipo: 'blue', acceso: 'gratis' }), false);
 });

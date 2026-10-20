@@ -7,6 +7,7 @@ import {
   registrarAuditoria,
 } from '../../../../lib/db.js';
 import {
+  completarEntradaGuia,
   idValido,
   leerEntrada,
   metodoNoPermitido,
@@ -15,6 +16,7 @@ import {
   respuestaJson,
   validarPeticionAdmin,
 } from '../../../../lib/admin-api.js';
+import { esAdmin } from '../../../../lib/roles.js';
 import { validarGuia } from '../../../../lib/validar.js';
 
 export const prerender = false;
@@ -32,12 +34,21 @@ export async function PUT({ request, locals, params }) {
   }
 
   const entrada = await leerEntrada(request);
-  const editable = { ...entrada, equipo: entrada.equipo ?? guia.equipo, acceso: entrada.acceso ?? guia.acceso };
+  // El formulario principal no controla la publicación: la cambia su propio
+  // botón. Si el cuerpo no envía el campo, se conserva el estado actual para
+  // que guardar una corrección no despublica la guía.
+  const editable = completarEntradaGuia(entrada, guia);
   if (!permisoEntradaGuia(locals.admin, editable)) {
-    return respuestaJson({ error: 'Solo un administrador puede editar guías RED o de pago.' }, 403);
+    return respuestaJson({ error: 'No tienes permiso para editar esta guía.' }, 403);
   }
 
-  const { valido, errores, datos } = await validarGuia(database, editable, { existenteId: guia.id });
+  const { valido, errores, datos } = await validarGuia(database, editable, {
+    existenteId: guia.id,
+    // Permite corregir una ficha heredada de pago que aún no tiene checkout.
+    // Si ya tenía enlace, sigue siendo obligatorio; publicar sin enlace se
+    // bloquea en su endpoint específico.
+    permitirPagoSinEnlace: guia.acceso === 'pago' && !guia.enlace_compra,
+  });
   if (!valido) return respuestaJson({ error: 'Revisa los datos del formulario.', errores }, 422);
 
   await actualizarGuia(database, guia.id, { ...datos, actualizadoPor: locals.admin.usuario.usuario_id });
@@ -59,7 +70,7 @@ export async function DELETE({ request, locals, params }) {
   const database = getDatabase(env);
   const guia = await obtenerGuiaPorId(database, params.id);
   if (!guia) return respuestaJson({ error: 'Guía no encontrada.' }, 404);
-  if (locals.admin.usuario.rol !== 'admin') {
+  if (!esAdmin(locals.admin)) {
     return respuestaJson({ error: 'Solo un administrador puede eliminar guías.' }, 403);
   }
 
