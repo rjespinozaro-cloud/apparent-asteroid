@@ -282,4 +282,21 @@ export function recortar(texto, limite) {
   return `${(ultimoEspacio > limite * 0.6 ? corte.slice(0, ultimoEspacio) : corte).trimEnd()}…`;
 }
 
+/**
+ * Formatea un importe con la moneda indicada (por defecto EUR).
+ * Si el código de moneda no es válido, cae a un formato simple.
+ * @param {number} monto
+ * @param {string} moneda
+ * @returns {string}
+ */
+export function formatearDinero(monto, moneda = 'EUR') {
+  const valor = Number(monto ?? 0);
+  const codigo = moneda || 'EUR';
+  try {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: codigo }).format(valor);
+  } catch {
+    return `${valor.toFixed(2)} ${codigo}`;
+  }
+}
+
 export const LIMITE_DESCRIPCION = 155;

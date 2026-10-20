@@ -50,7 +50,16 @@ function envolver(base) {
 
   return {
     prepare: preparar,
-    batch: async (sentencias) => Promise.all(sentencias.map((sentencia) => sentencia.run())),
+    // D1 real devuelve `{ results }` para las lecturas y `{ meta }` para las
+    // escrituras. El mock reproduce esa forma para poder probar agregaciones.
+    batch: async (sentencias) => {
+      const resultados = [];
+      for (const sentencia of sentencias) {
+        const esLectura = /^\s*(select|with|pragma)\b/i.test(sentencia.sql);
+        resultados.push(esLectura ? await sentencia.all() : await sentencia.run());
+      }
+      return resultados;
+    },
     exec: async (sql) => base.exec(sql),
     dump: async () => JSON.stringify([]),
     close: () => base.close(),

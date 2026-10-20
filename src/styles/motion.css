@@ -125,6 +125,8 @@
     --glow-red: transparent;
     --glow-blue: transparent;
     --glow-fuchsia-strong: transparent;
+    --premium-glow: transparent;
+    --premium-glow-fuerte: transparent;
   }
   
   .boton--premium::before,

@@ -53,7 +53,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 {
   existe ? (
     <Base
-      title={`Guías de ${titulo} | JOANIX GUIDES`}
+      title={`Guías de ${titulo} | JOANIX`}
       description={`Guías de ${titulo} para equipos RED y BLUE: ${plural(guias.length, 'guía', 'guías')} sobre ${titulo}.`}
       clase="catalogo-shell"
     >
@@ -122,7 +122,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
       <AsistenteFlotante />
     </Base>
   ) : (
-    <Base title="Herramienta no encontrada | JOANIX GUIDES" noindex>
+    <Base title="Herramienta no encontrada | JOANIX" noindex>
       <article class="pagina-error contenedor">
         <AssistantMascot estado="sad" tamano="lg" decorativa />
         <p class="eyebrow">Error 404</p>

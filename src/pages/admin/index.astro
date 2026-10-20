@@ -1,8 +1,8 @@
 ---
 import AdminBase from '../../layouts/AdminBase.astro';
 import { env } from 'cloudflare:workers';
-import { getDatabase, obtenerEstadisticasAdmin } from '../../lib/db.js';
-import { formatearFechaHora } from '../../lib/utils/texto.js';
+import { getDatabase, metricasVentasAdmin, obtenerEstadisticasAdmin, obtenerResumenMetricas } from '../../lib/db.js';
+import { formatearDinero, formatearFechaHora } from '../../lib/utils/texto.js';
 
 export const prerender = false;
 
@@ -10,7 +10,13 @@ const sesion = Astro.locals.admin;
 const esAdmin = sesion?.usuario.rol === 'admin';
 const database = getDatabase(env);
 // Los datos de usuarios, IA y auditoría solo se consultan con rol admin.
-const stats = await obtenerEstadisticasAdmin(database, { admin: esAdmin });
+const [stats, visitas, ventas] = await Promise.all([
+  obtenerEstadisticasAdmin(database, { admin: esAdmin }),
+  obtenerResumenMetricas(database, 30),
+  esAdmin
+    ? metricasVentasAdmin(database)
+    : Promise.resolve({ totalVentas: 0, ingresosTotales: 0, completadas: 0, reembolsadas: 0 }),
+]);
 
 const { guias, usuarios, ia, auditoria, graficas } = stats;
 
@@ -26,115 +32,192 @@ const maxUltimos30 = Math.max(...graficas.ultimos_30_dias.map((d) => d.total), 1
 const DONUT_C = 2 * Math.PI * 70;
 const blueLen = (bluePct / 100) * DONUT_C;
 const redLen = (redPct / 100) * DONUT_C;
+
+// Visitas: serie completa de 30 días (incluye los días sin tráfico) y niveles
+// discretos para dibujar las barras con clases CSS, sin estilos inline (CSP).
+const conteoPorFecha = new Map(visitas.porFecha.map((dia) => [dia.fecha, dia.total]));
+const serieVisitas = Array.from({ length: 30 }, (_, indice) => {
+  const fecha = new Date(Date.now() - (29 - indice) * 86_400_000).toISOString().slice(0, 10);
+  return { fecha, total: conteoPorFecha.get(fecha) ?? 0 };
+});
+const maxVisitasDia = Math.max(...serieVisitas.map((dia) => dia.total), 1);
+const nivelVisita = (total: number): number => (
+  total === 0 ? 0 : Math.max(1, Math.ceil((total / maxVisitasDia) * 10))
+);
+
+const NOMBRES_TIPO_VISITA: Record<string, string> = {
+  portada: 'Portada',
+  catalogo: 'Catálogo',
+  guia: 'Guías',
+  ruta: 'Rutas',
+  herramienta: 'Herramientas',
+  buscar: 'Búsqueda',
+};
 ---
 
 <AdminBase
-  title="Resumen | JOANIX GUIDES"
+  title="Resumen | JOANIX"
   pageTitle="Resumen"
   crumbs={[{ href: '/admin/', label: 'Resumen' }]}
 >
   <div class="admin-content">
     <h1 class="visualmente-oculto">Resumen</h1>
 
-    <!-- KPI Cards -->
-    <section class="admin-kpi-grid" aria-label="Indicadores clave">
+    <!-- KPI Cards (Stripe / Shopify style) -->
+    <section class="admin-kpi-grid" aria-label="Indicadores de catálogo y tienda">
       <article class="admin-kpi">
         <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Catálogo total</span>
           <span class="admin-kpi__icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
             </svg>
           </span>
         </header>
         <p class="admin-kpi__value">{guias.total}</p>
-        <p class="admin-kpi__label">Guías totales</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--green">Activo</span>
+          <span>Productos registrados</span>
+        </p>
       </article>
 
       <article class="admin-kpi">
         <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Publicadas</span>
           <span class="admin-kpi__icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </span>
         </header>
         <p class="admin-kpi__value">{guias.publicadas}</p>
-        <p class="admin-kpi__label">Publicadas</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--green">Visibles</span>
+          <span>En portal público</span>
+        </p>
       </article>
 
       <article class="admin-kpi">
         <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Borradores</span>
           <span class="admin-kpi__icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <line x1="12" y1="8" x2="12" y2="16" />
-              <line x1="8" y1="12" x2="16" y2="12" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
             </svg>
           </span>
         </header>
         <p class="admin-kpi__value">{guias.borradores}</p>
-        <p class="admin-kpi__label">Borradores</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--yellow">En edición</span>
+          <span>Sin publicar</span>
+        </p>
       </article>
 
       <article class="admin-kpi">
         <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Tienda / De pago</span>
           <span class="admin-kpi__icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <line x1="2" y1="10" x2="22" y2="10" />
             </svg>
           </span>
         </header>
-        <p class="admin-kpi__value">{guias.red}</p>
-        <p class="admin-kpi__label">Equipo RED ({redPct}%)</p>
+        <p class="admin-kpi__value">{guias.pago}</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--pago">PDF Comercial</span>
+          <span>Paywall activo</span>
+        </p>
+      </article>
+
+      {esAdmin && (
+        <article class="admin-kpi">
+          <header class="admin-kpi__header">
+            <span class="admin-kpi__label">Ingresos tienda</span>
+            <span class="admin-kpi__icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+            </span>
+          </header>
+          <p class="admin-kpi__value">{formatearDinero(ventas.ingresosTotales)}</p>
+          <p class="admin-kpi__subtext">
+            <span class="admin-badge admin-badge--green">{ventas.completadas} venta{ventas.completadas === 1 ? '' : 's'}</span>
+            <span>Completadas</span>
+          </p>
+        </article>
+      )}
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Acceso libre</span>
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{guias.gratis}</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--gratis">Gratis</span>
+          <span>Abiertas</span>
+        </p>
       </article>
 
       <article class="admin-kpi">
         <header class="admin-kpi__header">
+          <span class="admin-kpi__label">RED vs BLUE</span>
           <span class="admin-kpi__icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
+              <path d="M12 2a10 10 0 0 0 0 20z" />
             </svg>
           </span>
         </header>
-        <p class="admin-kpi__value">{guias.blue}</p>
-        <p class="admin-kpi__label">Equipo BLUE ({bluePct}%)</p>
+        <p class="admin-kpi__value">{guias.red} <span class="admin-kpi__separador">/</span> {guias.blue}</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--red">{redPct}% RED</span>
+          <span class="admin-badge admin-badge--blue">{bluePct}% BLUE</span>
+        </p>
       </article>
 
       {esAdmin && (
         <>
           <article class="admin-kpi">
             <header class="admin-kpi__header">
+              <span class="admin-kpi__label">Equipo de gestión</span>
               <span class="admin-kpi__icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
                 </svg>
               </span>
             </header>
             <p class="admin-kpi__value">{usuarios.total}</p>
-            <p class="admin-kpi__label">Usuarios ({usuarios.activos} activos)</p>
+            <p class="admin-kpi__subtext">
+              <span class="admin-badge admin-badge--green">{usuarios.activos} activos</span>
+              <span>{usuarios.admins} admins</span>
+            </p>
           </article>
 
           <article class="admin-kpi">
             <header class="admin-kpi__header">
+              <span class="admin-kpi__label">Consumo IA</span>
               <span class="admin-kpi__icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 6v6l4 2" />
                 </svg>
               </span>
             </header>
             <p class="admin-kpi__value">{ia.llamadas}</p>
-            <p class="admin-kpi__label">
-              IA: {ia.llamadas} llamadas este mes
-              {ia.tope_mensual > 0 && ` / tope ${ia.tope_mensual.toLocaleString('es-ES')} tokens`}
+            <p class="admin-kpi__subtext">
+              <span class="admin-badge admin-badge--pago">Llamadas mes</span>
+              <span>{ia.tope_mensual > 0 ? `Tope: ${ia.tope_mensual.toLocaleString('es-ES')}` : 'Sin tope'}</span>
             </p>
           </article>
         </>
@@ -149,41 +232,56 @@ const redLen = (redPct / 100) * DONUT_C;
           <span class="admin-chart__period">Últimos 6 meses</span>
         </header>
         {graficas.por_mes.length > 0 ? (
-          <svg class="admin-chart__svg admin-bar-chart" viewBox="0 0 500 200" role="img" aria-label={`Gráfico de barras: guías creadas por mes. ${graficas.por_mes.map((m) => `${m.mes}: ${m.total} guías (${m.red} RED, ${m.blue} BLUE)`).join(', ')}`}>
-            <desc>Barras agrupadas por mes. Eje X: mes. Eje Y: número de guías. Barras azules = equipo BLUE, barras rojas = equipo RED.</desc>
+          <svg class="admin-chart__svg admin-bar-chart" viewBox="0 0 520 220" role="img" aria-label={`Gráfico de barras: guías creadas por mes. ${graficas.por_mes.map((m) => `${m.mes}: ${m.total} guías (${m.red} RED, ${m.blue} BLUE)`).join(', ')}`}>
+            <defs>
+              <linearGradient id="grad-blue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--adm-blue)" />
+                <stop offset="100%" stop-color="var(--adm-accent)" stop-opacity="0.7" />
+              </linearGradient>
+              <linearGradient id="grad-red" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--adm-red)" />
+                <stop offset="100%" stop-color="var(--adm-red)" stop-opacity="0.6" />
+              </linearGradient>
+            </defs>
+            <desc>Barras agrupadas por mes. Eje X: mes. Eje Y: número de guías.</desc>
+            {/* Grid lines */}
+            {[0.25, 0.5, 0.75, 1].map((t) => (
+              <line class="admin-bar-chart__grid" x1="52" y1={180 - t * 145} x2="510" y2={180 - t * 145} />
+            ))}
+            {/* Y axis */}
+            <line class="admin-bar-chart__axis" x1="52" y1="35" x2="52" y2="183" />
+            <text class="admin-bar-chart__label" x="46" y="36" text-anchor="end" dominant-baseline="middle">{maxPorMes}</text>
+            <text class="admin-bar-chart__label" x="46" y="107" text-anchor="end" dominant-baseline="middle">{Math.round(maxPorMes / 2)}</text>
+            <text class="admin-bar-chart__label" x="46" y="180" text-anchor="end" dominant-baseline="middle">0</text>
+            {/* Bars */}
             <g>
               {graficas.por_mes.map((m, i) => {
-                const x = 60 + i * 70;
-                const barWidth = 28;
-                const redH = (m.red / maxPorMes) * 140;
-                const blueH = (m.blue / maxPorMes) * 140;
+                const x = 70 + i * 75;
+                const barWidth = 26;
+                const redH  = maxPorMes > 0 ? (m.red  / maxPorMes) * 145 : 0;
+                const blueH = maxPorMes > 0 ? (m.blue / maxPorMes) * 145 : 0;
                 const yBase = 180;
                 return (
                   <g>
-                    <rect class="admin-bar-chart__bar" x={x} y={yBase - blueH} width={barWidth} height={blueH} fill="var(--adm-blue)" rx="2" />
-                    <text class="admin-bar-chart__value" x={x + barWidth / 2} y={yBase - blueH - 4} text-anchor="middle">{m.blue > 0 ? m.blue : ''}</text>
-                    <rect class="admin-bar-chart__bar" x={x + barWidth + 2} y={yBase - redH} width={barWidth} height={redH} fill="var(--adm-red)" rx="2" />
-                    <text class="admin-bar-chart__value" x={x + barWidth + 2 + barWidth / 2} y={yBase - redH - 4} text-anchor="middle">{m.red > 0 ? m.red : ''}</text>
-                    <text class="admin-bar-chart__label" x={x + barWidth + 1} y={yBase + 18} text-anchor="middle">{m.mes.slice(5)}</text>
+                    <rect class="admin-bar-chart__bar" x={x} y={yBase - blueH} width={barWidth} height={Math.max(blueH,2)} fill="url(#grad-blue)" rx="3" />
+                    {m.blue > 0 && <text class="admin-bar-chart__value" x={x + barWidth / 2} y={yBase - blueH - 5}>{m.blue}</text>}
+                    <rect class="admin-bar-chart__bar" x={x + barWidth + 3} y={yBase - redH}  width={barWidth} height={Math.max(redH,2)}  fill="url(#grad-red)"  rx="3" />
+                    {m.red > 0 && <text class="admin-bar-chart__value" x={x + barWidth + 3 + barWidth / 2} y={yBase - redH - 5}>{m.red}</text>}
+                    <text class="admin-bar-chart__label" x={x + barWidth + 1} y={yBase + 14} text-anchor="middle">{m.mes.slice(5)}</text>
                   </g>
                 );
               })}
             </g>
-            {/* Y axis */}
-            <line x1="50" y1="40" x2="50" y2="180" stroke="var(--adm-border)" />
-            <text class="admin-bar-chart__label" x="20" y="45" text-anchor="end" dominant-baseline="middle">{maxPorMes}</text>
-            <text class="admin-bar-chart__label" x="20" y="110" text-anchor="end" dominant-baseline="middle">{Math.round(maxPorMes / 2)}</text>
-            <text class="admin-bar-chart__label" x="20" y="175" text-anchor="end" dominant-baseline="middle">0</text>
             {/* Legend */}
-            <g transform="translate(50, 15)">
-              <rect width="12" height="12" rx="2" fill="var(--adm-blue)" />
-              <text x="16" y="10.5" font-size="11" fill="var(--adm-text)">BLUE</text>
-              <rect x="64" width="12" height="12" rx="2" fill="var(--adm-red)" />
-              <text x="80" y="10.5" font-size="11" fill="var(--adm-text)">RED</text>
+            <g transform="translate(60, 12)">
+              <rect width="10" height="10" rx="2" fill="url(#grad-blue)" />
+              <text x="14" y="9" font-size="10" fill="var(--adm-text-muted)">BLUE</text>
+              <rect x="58" width="10" height="10" rx="2" fill="url(#grad-red)" />
+              <text x="72" y="9" font-size="10" fill="var(--adm-text-muted)">RED</text>
             </g>
           </svg>
         ) : (
-          <p class="admin-chart__empty">No hay datos de guías por mes.</p>
+          <p class="admin-chart__empty"><span class="admin-chart__empty-icon">📊</span>No hay datos de guías por mes.</p>
         )}
       </section>
 
@@ -192,46 +290,58 @@ const redLen = (redPct / 100) * DONUT_C;
           <h2 id="chart-redblue-title" class="admin-chart__title">Reparto RED / BLUE</h2>
         </header>
         {guias.total > 0 ? (
-          <svg class="admin-chart__svg admin-donut-chart" viewBox="0 0 200 200" role="img" aria-label={`Gráfico de dona: ${bluePct}% BLUE (${guias.blue} guías), ${redPct}% RED (${guias.red} guías)`}>
-            <desc>Dona con dos segmentos. Azul = equipo BLUE, rojo = equipo RED. Centro muestra total de guías.</desc>
-            <circle
-              cx="100" cy="100" r="70"
-              stroke="var(--adm-blue)"
-              stroke-width="35"
-              fill="none"
-              stroke-dasharray={`${blueLen} ${DONUT_C}`}
-              stroke-linecap="round"
-              transform="rotate(-90 100 100)"
-              class="admin-donut-chart__slice"
-            />
-            <circle
-              cx="100" cy="100" r="70"
-              stroke="var(--adm-red)"
-              stroke-width="35"
-              fill="none"
-              stroke-dasharray={`${redLen} ${DONUT_C}`}
-              stroke-dashoffset={-blueLen}
-              stroke-linecap="round"
-              transform="rotate(-90 100 100)"
-              class="admin-donut-chart__slice"
-            />
-            <g class="admin-donut-chart__center">
-              <text class="admin-donut-chart__total" x="100" y="92">{guias.total}</text>
-              <text class="admin-donut-chart__total-label" x="100" y="114">guías totales</text>
-            </g>
-          </svg>
-          <div class="admin-chart__legend">
-            <span class="admin-chart__legend-item">
-              <span class="admin-chart__legend-color admin-chart__legend-color--blue"></span>
-              BLUE: {guias.blue} ({bluePct}%)
-            </span>
-            <span class="admin-chart__legend-item">
-              <span class="admin-chart__legend-color admin-chart__legend-color--red"></span>
-              RED: {guias.red} ({redPct}%)
-            </span>
-          </div>
+          <>
+            <svg class="admin-chart__svg admin-donut-chart" viewBox="0 0 200 200" role="img" aria-label={`Gráfico de dona: ${bluePct}% BLUE (${guias.blue} guías), ${redPct}% RED (${guias.red} guías)`}>
+              <defs>
+                <linearGradient id="grad-donut-blue" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="var(--adm-blue)" />
+                  <stop offset="100%" stop-color="var(--adm-accent)" />
+                </linearGradient>
+              </defs>
+              <desc>Dona con dos segmentos. Azul = equipo BLUE, rojo = equipo RED.</desc>
+              {/* Track */}
+              <circle class="admin-donut-chart__track" cx="100" cy="100" r="70" stroke-width="28" />
+              {/* BLUE slice */}
+              <circle
+                cx="100" cy="100" r="70"
+                stroke="url(#grad-donut-blue)"
+                stroke-width="30"
+                fill="none"
+                stroke-dasharray={`${blueLen} ${DONUT_C}`}
+                stroke-linecap="round"
+                transform="rotate(-90 100 100)"
+                class="admin-donut-chart__slice"
+              />
+              {/* RED slice */}
+              <circle
+                cx="100" cy="100" r="70"
+                stroke="var(--adm-red)"
+                stroke-width="30"
+                fill="none"
+                stroke-dasharray={`${redLen} ${DONUT_C}`}
+                stroke-dashoffset={-blueLen}
+                stroke-linecap="round"
+                transform="rotate(-90 100 100)"
+                class="admin-donut-chart__slice"
+              />
+              <g class="admin-donut-chart__center">
+                <text class="admin-donut-chart__total" x="100" y="93">{guias.total}</text>
+                <text class="admin-donut-chart__total-label" x="100" y="115">guías totales</text>
+              </g>
+            </svg>
+            <div class="admin-chart__legend">
+              <span class="admin-chart__legend-item">
+                <span class="admin-chart__legend-color admin-chart__legend-color--blue"></span>
+                BLUE: {guias.blue} ({bluePct}%)
+              </span>
+              <span class="admin-chart__legend-item">
+                <span class="admin-chart__legend-color admin-chart__legend-color--red"></span>
+                RED: {guias.red} ({redPct}%)
+              </span>
+            </div>
+          </>
         ) : (
-          <p class="admin-chart__empty">No hay guías para mostrar el reparto.</p>
+          <p class="admin-chart__empty"><span class="admin-chart__empty-icon">🍩</span>No hay guías para mostrar el reparto.</p>
         )}
       </section>
     </div>
@@ -240,79 +350,93 @@ const redLen = (redPct / 100) * DONUT_C;
     <div class="admin-grid admin-grid--2">
       <section class="admin-chart admin-panel" aria-labelledby="chart-herramientas-title">
         <header class="admin-chart__header">
-          <h2 id="chart-herramientas-title" class="admin-chart__title">Top 5 herramientas</h2>
+          <h2 id="chart-herramientas-title" class="admin-chart__title">Top herramientas</h2>
+          <span class="admin-chart__period">Por nº de guías</span>
         </header>
         {graficas.por_herramienta.length > 0 ? (
-          <svg class="admin-chart__svg admin-hbar-chart" viewBox="0 0 500 200" role="img" aria-label={`Barras horizontales: ${graficas.por_herramienta.map((h) => `${h.herramienta}: ${h.total}`).join(', ')}`}>
-            <desc>Barras horizontales. Eje Y: herramienta. Eje X: número de guías. Ordenadas de mayor a menor.</desc>
+          <svg class="admin-chart__svg admin-hbar-chart" viewBox="0 0 480 200" role="img" aria-label={`Barras horizontales: ${graficas.por_herramienta.map((h) => `${h.herramienta}: ${h.total}`).join(', ')}`}>
+            <defs>
+              <linearGradient id="grad-hbar" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="var(--adm-accent)" />
+                <stop offset="100%" stop-color="var(--adm-blue)" stop-opacity="0.7" />
+              </linearGradient>
+            </defs>
+            <desc>Barras horizontales ordenadas de mayor a menor.</desc>
             <g>
               {graficas.por_herramienta.map((h, i) => {
-                const y = 30 + i * 30;
-                const w = (h.total / maxPorHerramienta) * 380;
+                const y = 20 + i * 35;
+                const trackW = 340;
+                const barW = maxPorHerramienta > 0 ? (h.total / maxPorHerramienta) * trackW : 2;
                 return (
                   <g>
-                    <rect class="admin-hbar-chart__bar" x={40} y={y} width={w} height={20} fill="var(--adm-blue)" rx="2" />
-                    <text class="admin-hbar-chart__label" x={36} y={y + 14} text-anchor="end">{h.herramienta.length > 18 ? h.herramienta.slice(0, 18) + '…' : h.herramienta}</text>
-                    <text class="admin-hbar-chart__value" x={40 + w + 8} y={y + 14} text-anchor="start">{h.total}</text>
+                    <rect class="admin-hbar-chart__track" x={128} y={y} width={trackW} height={22} rx="4" />
+                    <rect class="admin-hbar-chart__bar" x={128} y={y} width={Math.max(barW, 4)} height={22} fill="url(#grad-hbar)" rx="4" />
+                    <text class="admin-hbar-chart__label" x={122} y={y + 14}>{h.herramienta.length > 16 ? h.herramienta.slice(0, 16) + '…' : h.herramienta}</text>
+                    <text class="admin-hbar-chart__value" x={128 + Math.max(barW, 4) + 8} y={y + 14}>{h.total}</text>
                   </g>
                 );
               })}
             </g>
           </svg>
         ) : (
-          <p class="admin-chart__empty">No hay herramientas con guías.</p>
+          <p class="admin-chart__empty"><span class="admin-chart__empty-icon">🔧</span>No hay herramientas con guías.</p>
         )}
       </section>
 
       {esAdmin && (
         <section class="admin-chart admin-panel" aria-labelledby="chart-auditoria-title">
           <header class="admin-chart__header">
-            <h2 id="chart-auditoria-title" class="admin-chart__title">Actividad de auditoría (30 días)</h2>
+            <h2 id="chart-auditoria-title" class="admin-chart__title">Actividad auditoría</h2>
+            <span class="admin-chart__period">Últimos 30 días</span>
           </header>
           {graficas.ultimos_30_dias.length > 0 ? (
-            <svg class="admin-chart__svg admin-line-chart" viewBox="0 0 500 100" role="img" aria-label={`Línea de actividad: ${graficas.ultimos_30_dias.map((d) => `${d.dia}: ${d.total}`).join(', ')}`}>
-              <desc>Gráfico de línea temporal. Eje X: día. Eje Y: número de acciones. Puntos interactivos.</desc>
+            <svg class="admin-chart__svg admin-line-chart" viewBox="0 0 520 120" role="img" aria-label={`Línea de actividad: ${graficas.ultimos_30_dias.map((d) => `${d.dia}: ${d.total}`).join(', ')}`}>
               <defs>
-                <linearGradient id="line-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="var(--adm-blue)" stop-opacity="0.3" />
-                  <stop offset="100%" stop-color="var(--adm-blue)" stop-opacity="0" />
+                <linearGradient id="grad-area" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--adm-accent)" stop-opacity="0.5" />
+                  <stop offset="100%" stop-color="var(--adm-accent)" stop-opacity="0" />
                 </linearGradient>
               </defs>
-              <g>
-                {/* Area */}
-                <path
-                  class="admin-line-chart__line"
-                  stroke="url(#line-gradient)"
-                  stroke-width="0"
-                  fill="url(#line-gradient)"
-                  d={`M${40},${80 - (graficas.ultimos_30_dias[0]?.total / maxUltimos30) * 60 || 80} ${graficas.ultimos_30_dias.map((d, i) => {
-                    const x = 40 + i * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1));
-                    const y = 80 - (d.total / maxUltimos30) * 60;
-                    return `L${x},${y}`;
-                  }).join(' ')} L${40 + (graficas.ultimos_30_dias.length - 1) * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1))},80 Z`}
-                />
-                {/* Line */}
-                <path
-                  class="admin-line-chart__line"
-                  stroke="var(--adm-blue)"
-                  d={`M${40},${80 - (graficas.ultimos_30_dias[0]?.total / maxUltimos30) * 60 || 80} ${graficas.ultimos_30_dias.map((d, i) => {
-                    const x = 40 + i * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1));
-                    const y = 80 - (d.total / maxUltimos30) * 60;
-                    return `L${x},${y}`;
-                  }).join(' ')}`}
-                />
-                {/* Points */}
-                {graficas.ultimos_30_dias.map((d, i) => {
-                  const x = 40 + i * (420 / Math.max(graficas.ultimos_30_dias.length - 1, 1));
-                  const y = 80 - (d.total / maxUltimos30) * 60;
-                  return (
-                    <circle class="admin-line-chart__point" cx={x} cy={y} fill="var(--adm-blue)" />
-                  );
-                })}
-              </g>
+              <desc>Gráfico de área temporal. Eje X: día. Eje Y: número de acciones.</desc>
+              {/* Grid */}
+              {[0.25, 0.5, 0.75].map((t) => (
+                <line class="admin-line-chart__grid" x1="40" y1={90 - t * 70} x2="510" y2={90 - t * 70} />
+              ))}
+              {/* Area fill */}
+              <path
+                class="admin-line-chart__area"
+                fill="url(#grad-area)"
+                d={(() => {
+                  const pts = graficas.ultimos_30_dias;
+                  const n   = Math.max(pts.length - 1, 1);
+                  const xs  = pts.map((_, i) => 40 + i * (470 / n));
+                  const ys  = pts.map((d) => 90 - (maxUltimos30 > 0 ? d.total / maxUltimos30 : 0) * 70);
+                  return `M${xs[0]},${ys[0]} ${xs.map((x, i) => `L${x},${ys[i]}`).join(' ')} L${xs[pts.length-1]},90 L${xs[0]},90 Z`;
+                })()}
+              />
+              {/* Line */}
+              <path
+                class="admin-line-chart__line"
+                stroke="var(--adm-accent)"
+                d={(() => {
+                  const pts = graficas.ultimos_30_dias;
+                  const n   = Math.max(pts.length - 1, 1);
+                  return `M${pts.map((d, i) => `${40 + i * (470/n)},${90 - (maxUltimos30>0?d.total/maxUltimos30:0)*70}`).join(' L')}`;
+                })()}
+              />
+              {/* Points */}
+              {graficas.ultimos_30_dias.map((d, i) => {
+                const n = Math.max(graficas.ultimos_30_dias.length - 1, 1);
+                const x = 40 + i * (470 / n);
+                const y = 90 - (maxUltimos30 > 0 ? d.total / maxUltimos30 : 0) * 70;
+                return <circle class="admin-line-chart__point" cx={x} cy={y} fill="var(--adm-accent)" />;
+              })}
+              {/* Y labels */}
+              <text class="admin-bar-chart__label" x="36" y="22" text-anchor="end">{maxUltimos30}</text>
+              <text class="admin-bar-chart__label" x="36" y="90" text-anchor="end">0</text>
             </svg>
           ) : (
-            <p class="admin-chart__empty">No hay actividad en los últimos 30 días.</p>
+            <p class="admin-chart__empty"><span class="admin-chart__empty-icon">📈</span>No hay actividad en los últimos 30 días.</p>
           )}
         </section>
       )}
@@ -320,10 +444,63 @@ const redLen = (redPct / 100) * DONUT_C;
 
     <section class="admin-panel" aria-labelledby="visitas-title">
       <header class="admin-panel__header">
-        <h2 id="visitas-title" class="admin-panel__titulo">Visitas</h2>
+        <h2 id="visitas-title" class="admin-panel__titulo">Visitas · últimos 30 días</h2>
+        <span class="admin-badge admin-badge--green">{visitas.totalVisitas.toLocaleString('es-ES')} visitas</span>
       </header>
       <div class="admin-panel__body">
-        <p class="admin-panel__nota">Sin datos reales conectados. Conecta Cloudflare Web Analytics para ver visitas; no se muestran cifras inventadas.</p>
+        {visitas.totalVisitas > 0 ? (
+          <>
+            <div class="admin-visitas">
+              <div class="admin-visitas__columna">
+                <h3 class="admin-visitas__subtitulo">Por sección</h3>
+                <ul class="admin-visitas__lista">
+                  {visitas.porTipo.map((tipo) => (
+                    <li class="admin-visitas__fila">
+                      <span>{NOMBRES_TIPO_VISITA[tipo.ruta_tipo] ?? tipo.ruta_tipo}</span>
+                      <strong>{tipo.total.toLocaleString('es-ES')}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div class="admin-visitas__columna">
+                <h3 class="admin-visitas__subtitulo">Guías más leídas</h3>
+                {visitas.topGuias.length > 0 ? (
+                  <ol class="admin-visitas__lista admin-visitas__lista--ordenada">
+                    {visitas.topGuias.map((guia) => (
+                      <li class="admin-visitas__fila">
+                        <span class="admin-visitas__slug">{guia.slug}</span>
+                        <strong>{guia.total.toLocaleString('es-ES')}</strong>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p class="admin-visitas__vacio">Todavía no hay lecturas registradas.</p>
+                )}
+              </div>
+            </div>
+
+            <div
+              class="admin-visitas__grafico"
+              role="img"
+              aria-label={`Visitas por día de los últimos 30 días; máximo ${maxVisitasDia} en un día`}
+            >
+              {serieVisitas.map((dia) => (
+                <span
+                  class="admin-visitas__barra"
+                  data-nivel={nivelVisita(dia.total)}
+                  title={`${dia.fecha}: ${dia.total} visita${dia.total === 1 ? '' : 's'}`}
+                />
+              ))}
+            </div>
+            <p class="admin-panel__nota">
+              Conteo anónimo y agregado por día: no se guardan IPs, cookies ni identificadores personales.
+            </p>
+          </>
+        ) : (
+          <p class="admin-panel__nota">
+            Aún no hay visitas registradas. El contador es anónimo y agregado por día: no guarda IPs ni cookies.
+          </p>
+        )}
       </div>
     </section>
 

@@ -100,6 +100,9 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
   const raizAi = document.querySelector('[data-ai]');
   if (raizAi instanceof HTMLElement) {
     const rutaAi = window.location.pathname || '';
+    // En la lectura de una guía el aviso flotante puede tapar el bloque de
+    // compra. El lanzador sigue disponible, pero no se programa el globo.
+    const globoDesactivado = /^\/guias\/[^/]+\//.test(rutaAi);
     if (/^\/(admin|buscar)(\/|$)/.test(rutaAi)) {
       raizAi.hidden = true;
     } else {
@@ -156,7 +159,7 @@ const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
       };
       const rearmarGlobo = () => {
         window.clearTimeout(temporizadorAi);
-        if (globoVisto || movimiento) return;
+        if (globoVisto || movimiento || globoDesactivado) return;
         temporizadorAi = window.setTimeout(mostrarGlobo, 8000);
       };
       const rearmarPasivo = () => rearmarGlobo();

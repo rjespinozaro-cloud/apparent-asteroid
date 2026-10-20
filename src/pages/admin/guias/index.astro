@@ -1,6 +1,7 @@
 ---
 import AdminBase from '../../../layouts/AdminBase.astro';
 import { getDatabase, listarGuiasAdmin, listarHerramientasAdmin } from '../../../lib/db.js';
+import { formatearDinero } from '../../../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -10,6 +11,7 @@ const filtros = {
   equipo: parametros.get('equipo') ?? '',
   herramienta: parametros.get('herramienta') ?? '',
   estado: parametros.get('estado') ?? '',
+  acceso: parametros.get('acceso') ?? '',
   busqueda: (parametros.get('q') ?? '').trim().slice(0, 80),
   orden: parametros.get('orden') ?? 'fecha',
   pagina: Math.max(Number(parametros.get('pagina')) || 1, 1),
@@ -40,16 +42,16 @@ const enlacePagina = (pagina: number) => {
 ---
 
 <AdminBase
-  title="Guías | JOANIX GUIDES"
+  title="Guías | JOANIX"
   pageTitle="Guías"
   crumbs={[{ href: '/admin/', label: 'Resumen' }, { label: 'Guías' }]}
 >
   <div class="admin-content">
     <header class="admin-section__header">
       <div>
-        <p class="admin-section__eyebrow">Biblioteca</p>
-        <h1 class="admin-section__title">Guías</h1>
-        <p class="admin-section__nota">{total} guía{total === 1 ? '' : 's'} en la base de datos.</p>
+        <p class="admin-section__eyebrow">Catálogo & Tienda</p>
+        <h1 class="admin-section__title">Guías y Productos</h1>
+        <p class="admin-section__nota">{total} ítem{total === 1 ? '' : 's'} en el catálogo comercial y público.</p>
       </div>
       <a class="admin-boton admin-boton--primary" href="/admin/guia-nueva/">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -60,10 +62,10 @@ const enlacePagina = (pagina: number) => {
       </a>
     </header>
 
-    <form class="admin-filtros admin-panel__body--compact" method="get" action="/admin/guias/">
+    <form class="admin-filtros" method="get" action="/admin/guias/">
       <div class="admin-form__campo">
         <label for="q">Buscar</label>
-        <input id="q" name="q" type="search" value={filtros.busqueda} placeholder="Título o slug" />
+        <input id="q" name="q" type="search" value={filtros.busqueda} placeholder="Título o slug…" />
       </div>
       <div class="admin-form__campo">
         <label for="equipo">Equipo</label>
@@ -81,11 +83,19 @@ const enlacePagina = (pagina: number) => {
         </select>
       </div>
       <div class="admin-form__campo">
-        <label for="estado">Estado</label>
+        <label for="estado">Estado catálogo</label>
         <select id="estado" name="estado">
           <option value="">Todos</option>
           <option value="publicada" selected={filtros.estado === 'publicada'}>Publicadas</option>
           <option value="borrador" selected={filtros.estado === 'borrador'}>Borradores</option>
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="acceso">Acceso tienda</label>
+        <select id="acceso" name="acceso">
+          <option value="">Todos</option>
+          <option value="gratis" selected={filtros.acceso === 'gratis'}>Gratis (Open)</option>
+          <option value="pago" selected={filtros.acceso === 'pago'}>De pago (Tienda)</option>
         </select>
       </div>
       <div class="admin-form__campo">
@@ -106,7 +116,7 @@ const enlacePagina = (pagina: number) => {
       <div class="admin-table-wrap" data-destacadas data-csrf={sesion?.csrf ?? ''}>
         <table class="admin-table">
           <thead>
-            <tr><th>Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado</th><th>Acceso</th><th>Destacada</th><th>Fecha</th></tr>
+            <tr><th>Producto / Título</th><th>Slug</th><th>Equipo</th><th>Herramienta</th><th>Estado catálogo</th><th>Acceso tienda</th><th>Destacada</th><th>Fecha</th></tr>
           </thead>
           <tbody>
             {filas.map((fila: (typeof filas)[number]) => (
@@ -122,8 +132,14 @@ const enlacePagina = (pagina: number) => {
                 </td>
                 <td>
                   {fila.acceso === 'gratis'
-                    ? <span class="admin-badge admin-badge--green">Gratis</span>
-                    : <span class="admin-badge admin-badge--gray">Pago</span>}
+                    ? <span class="admin-badge admin-badge--gratis">Gratis</span>
+                    : (
+                      <span class="admin-badge admin-badge--pago">
+                        {Number(fila.precio_centimos) > 0
+                          ? `De pago · ${formatearDinero(Number(fila.precio_centimos) / 100, fila.moneda)}`
+                          : 'De pago · precio pendiente'}
+                      </span>
+                    )}
                 </td>
                 <td>
                   <button

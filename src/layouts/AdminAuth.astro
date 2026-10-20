@@ -29,8 +29,8 @@ interface Props {
 }
 
 const {
-  title = 'Acceso | JOANIX GUIDES',
-  description = 'Acceso privado a la oficina de administración de JOANIX GUIDES.',
+  title = 'Acceso | JOANIX',
+  description = 'Acceso privado a la oficina de administración de JOANIX.',
   pageTitle = '',
   volverTexto = 'Volver al portal público',
   volverHref = '/inicio/',
@@ -44,7 +44,7 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="description" content={description} />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="dark" />
     <title>{title}</title>
   </head>
   <body class="admin admin--auth">
@@ -52,10 +52,10 @@ const {
       <div class="admin-logo-chip">
         <img
           class="admin-logo-chip__img"
-          src="/logo.png"
-          alt="JOANIX GUIDES"
-          width="120"
-          height="60"
+          src="/brand/logo-joanix-oscuro.svg"
+          alt="JOANIX"
+          width="630"
+          height="160"
           loading="eager"
           decoding="async"
         />

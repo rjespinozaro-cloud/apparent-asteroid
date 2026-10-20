@@ -10,6 +10,9 @@ type FilaGuia = {
   nivel?: string;
   acceso?: 'gratis' | 'pago';
   enlace_compra?: string | null;
+  precio_centimos?: number | null;
+  moneda?: string | null;
+  pasarela?: 'stripe' | 'lemonsqueezy' | 'polar' | 'manual' | null;
   guia_pareja?: string | null;
   fecha?: string;
   cuerpo_md?: string;
@@ -34,6 +37,9 @@ const acceso = guia?.acceso ?? 'gratis';
 const cuerpoMd = guia?.cuerpo_md ?? '';
 const htmlInicial = markdownAHtml(cuerpoMd);
 const tieneId = guia?.id !== undefined && guia?.id !== null;
+const precio = Number(guia?.precio_centimos) > 0 ? (Number(guia?.precio_centimos) / 100).toFixed(2) : '';
+const moneda = guia?.moneda ?? 'EUR';
+const pasarela = guia?.pasarela ?? '';
 ---
 
 <form
@@ -96,7 +102,34 @@ const tieneId = guia?.id !== undefined && guia?.id !== null;
       </div>
       <div class="admin-form__campo">
         <label for="enlaceCompra">Enlace de compra</label>
-        <input id="enlaceCompra" name="enlaceCompra" type="url" placeholder="https://" value={guia?.enlace_compra ?? ''} />
+        <input id="enlaceCompra" name="enlaceCompra" type="url" placeholder="https://buy.stripe.com/..." value={guia?.enlace_compra ?? ''} />
+      </div>
+      <div class="admin-form__campo">
+        <label for="precio">Precio</label>
+        <input id="precio" name="precio" type="number" min="0" step="0.01" inputmode="decimal" placeholder="9,90" value={precio} />
+      </div>
+      <div class="admin-form__campo">
+        <label for="moneda">Moneda</label>
+        <select id="moneda" name="moneda">
+          <option value="EUR" selected={moneda === 'EUR'}>EUR (€)</option>
+          <option value="USD" selected={moneda === 'USD'}>USD ($)</option>
+          <option value="GBP" selected={moneda === 'GBP'}>GBP (£)</option>
+        </select>
+      </div>
+      <div class="admin-form__campo">
+        <label for="pasarela">Pasarela de pago</label>
+        <select id="pasarela" name="pasarela">
+          <option value="" selected={!pasarela}>No especificada</option>
+          <option value="stripe" selected={pasarela === 'stripe'}>Stripe</option>
+          <option value="lemonsqueezy" selected={pasarela === 'lemonsqueezy'}>Lemon Squeezy</option>
+          <option value="polar" selected={pasarela === 'polar'}>Polar</option>
+          <option value="manual" selected={pasarela === 'manual'}>Pago manual</option>
+        </select>
+      </div>
+      <div class="admin-form__campo admin-form__campo--ancho">
+        <p class="admin-form__nota">
+          El enlace debe ser un checkout HTTPS de la pasarela. El cobro y la entrega del PDF se gestionan ahí; JOANIX no almacena datos de tarjeta. Si no indicas precio, la ficha mostrará «Precio en la tienda».
+        </p>
       </div>
       <div class="admin-form__campo">
         <label for="guiaPareja">Guía pareja</label>
@@ -120,7 +153,7 @@ const tieneId = guia?.id !== undefined && guia?.id !== null;
           <label for="cuerpoMd">Contenido</label>
           <textarea id="cuerpoMd" name="cuerpoMd" rows="22" required spellcheck="false">{cuerpoMd}</textarea>
         </div>
-        <div class="admin-editor__preview">
+        <div class="admin-editor__preview" data-preview-scroll>
           <p class="admin-editor__preview-titulo">Vista previa</p>
           <div class="admin-markdown" data-preview-zona set:html={htmlInicial} />
         </div>

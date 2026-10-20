@@ -58,8 +58,25 @@ const jsonLd = guia
       isAccessibleForFree: guia.acceso === 'gratis',
       keywords: [nombreHerramienta(guia.herramienta), 'ciberseguridad', guia.equipo === 'blue' ? 'defensa' : 'ofensiva'],
       mainEntityOfPage: new URL(`${base}guias/${guia.slug}/`, origen).href,
-      author: { '@type': 'Organization', name: 'JOANIX GUIDES' },
-      publisher: { '@type': 'Organization', name: 'JOANIX GUIDES' },
+      author: { '@type': 'Organization', name: 'JOANIX' },
+      publisher: { '@type': 'Organization', name: 'JOANIX' },
+    }
+  : undefined;
+
+const jsonLdProducto = guia && guia.acceso === 'pago' && Number(guia.precio_centimos) > 0 && guia.enlace_compra
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: guia.titulo,
+      description: descripcionDesdeMarkdown(cuerpoVisible),
+      brand: { '@type': 'Brand', name: 'JOANIX' },
+      offers: {
+        '@type': 'Offer',
+        url: guia.enlace_compra,
+        price: (Number(guia.precio_centimos) / 100).toFixed(2),
+        priceCurrency: guia.moneda || 'EUR',
+        availability: 'https://schema.org/InStock',
+      },
     }
   : undefined;
 
@@ -76,12 +93,16 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
       nivel={guia.nivel}
       acceso={guia.acceso}
       enlaceCompra={guia.enlace_compra}
+      precioCentimos={guia.precio_centimos}
+      moneda={guia.moneda}
+      pasarela={guia.pasarela}
       descripcion={descripcionDesdeMarkdown(cuerpoVisible)}
       fecha={guia.fecha}
       tiempoLectura={esPago ? (guia.lectura_min ?? tiempoLectura(cuerpoVisible)) : tiempoLectura(cuerpoVisible)}
       restoTitulos={seccionesRestantes}
       indice={indice}
       jsonLd={jsonLd}
+      jsonLdProducto={jsonLdProducto}
     >
       <span data-continua-guardar data-slug={guia.slug} data-titulo={guia.titulo} hidden></span>
       <div class="markdown" set:html={html} />

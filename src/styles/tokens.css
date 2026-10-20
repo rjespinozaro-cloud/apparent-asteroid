@@ -35,6 +35,19 @@
   --success: #34D399;
   --warning: #FBBF24;
   --danger: #F97316;
+
+  /* Premium (guías de pago): oro cálido sobre superficie oscura.
+     Se mantiene oscuro también en tema claro para conservar el contraste. */
+  --oro: #F5B942;
+  --premium-fondo-inicio: #1A1408;
+  --premium-texto: #E8EAF6;
+  --premium-texto-suave: #A6ACC9;
+  --premium-borde: rgba(245, 185, 66, 0.38);
+  --premium-borde-tenue: rgba(245, 185, 66, 0.1);
+  --premium-glow: rgba(245, 185, 66, 0.13);
+  --premium-glow-fuerte: rgba(245, 185, 66, 0.26);
+  --premium-badge-fondo: rgba(245, 185, 66, 0.14);
+
   /* Gradientes y brillos -------------------------------------------------- */
   --signal-grad: linear-gradient(135deg, var(--violet-500) 0%, var(--fuchsia) 100%);
   --team-grad: linear-gradient(90deg, var(--red) 0%, var(--violet-500) 50%, var(--blue) 100%);

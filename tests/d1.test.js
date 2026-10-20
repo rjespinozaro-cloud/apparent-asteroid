@@ -40,7 +40,7 @@ import { hashPassword, crearSesion, destruirSesion, obtenerSesion, claveIntento,
 import { crearUsuario, eliminarUsuario, listarUsuarios, purgarSesionesCaducadas } from '../src/lib/db/usuarios.js';
 import { registrarAuditoria, listarAuditoria, listarFacetasAuditoria, ultimasAcciones } from '../src/lib/db/auditoria.js';
 
-const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql', '0005_catalogo.sql']
+const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql', '0005_catalogo.sql', '0007_pago_guias.sql']
   .map((nombre) => fs.readFileSync(path.join(import.meta.dirname, '..', 'migrations', nombre), 'utf8'))
   .join('\n');
 
@@ -86,6 +86,27 @@ test('crear y leer una guía por slug', async () => {
   assert.equal(guia.titulo, GUIA_BLUE.titulo);
   assert.equal(guia.equipo, 'blue');
   assert.equal(guia.cuerpo_md, GUIA_BLUE.cuerpoMd);
+});
+
+test('precio, moneda y pasarela se guardan y viajan en el listado', async () => {
+  const db = crearBase();
+  await crearGuia(db, {
+    ...GUIA_RED,
+    acceso: 'pago',
+    enlaceCompra: 'https://pago.example.com/nmap-basico',
+    precioCentimos: 990,
+    moneda: 'EUR',
+    pasarela: 'stripe',
+  });
+  const guia = await obtenerGuiaPorSlug(db, GUIA_RED.slug);
+  assert.equal(guia.precio_centimos, 990);
+  assert.equal(guia.moneda, 'EUR');
+  assert.equal(guia.pasarela, 'stripe');
+
+  const listado = await listarGuiasPublicadas(db, {});
+  const fila = listado.guias.find((item) => item.slug === GUIA_RED.slug);
+  assert.equal(fila.precio_centimos, 990, 'el listado ligero incluye el precio');
+  assert.equal(fila.moneda, 'EUR');
 });
 
 test('un borrador no aparece en el catálogo público', async () => {

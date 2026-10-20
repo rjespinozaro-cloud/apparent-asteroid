@@ -45,8 +45,11 @@ git -C /tmp/ghp rm -rq .
 cp -r dist/client/apparent-asteroid/. /tmp/ghp/
 touch /tmp/ghp/.nojekyll
 
-# 4) Conservar assets clave (logo y hero de public/)
-test -f /tmp/ghp/.nojekyll && test -f /tmp/ghp/logo.png \
+# 4) Conservar assets clave (marca y hero de public/)
+test -f /tmp/ghp/.nojekyll && test -f /tmp/ghp/brand/logo-joanix-oscuro.svg \
+  && test -f /tmp/ghp/brand/icono-joanix.svg \
+  && test -f /tmp/ghp/brand/icono-joanix-sin-fondo.svg \
+  && test -f /tmp/ghp/brand/og-image.png \
   && test -f /tmp/ghp/hero/hero-wide.avif && test -f /tmp/ghp/hero/hero-tall.avif \
   || { echo "ERROR: faltan assets"; exit 1; }
 

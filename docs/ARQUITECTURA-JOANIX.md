@@ -1,4 +1,4 @@
-# JOANIX GUIDES — Arquitectura y funciones (especificación para IA)
+# JOANIX — Arquitectura y funciones (especificación para IA)
 
 Documento para que un agente de programación (ChatGPT, OpenCode u otro) entienda
 el proyecto y lo continúe sin romper lo que ya funciona. Lo marcado con
@@ -60,8 +60,9 @@ sesión) → handler (`validarPeticionAdmin`: sesión, rol, CSRF) → validació
 
 ```text
 migrations/   0001_esquema · 0002_indices · 0003_auditoria_usuario_nombre
-              · 0004_compra_opcional · 0005_catalogo
-public/       hero/ (fondos y constelación SVG), assets/, favicons, logo.png
+              · 0004_compra_opcional · 0005_catalogo · 0006_expansion_plataforma
+              · 0007_pago_guias
+public/       brand/ (logos, icono, favicons, OG), hero/ (fondos y constelación SVG), assets/
 scripts/      importar-guias.mjs · publicar-preview.sh · publicar-pages.sh
 docs/         PUBLICAR-PREVIEW.md, arquitectura-ia.md
 tests/        unidad.test.js
@@ -115,8 +116,9 @@ Tablas: `usuarios`, `sesiones`, `intentos_login`, `guias`, `ajustes_ia`,
 
 Campos de `guias` relevantes: `slug`, `titulo`, `equipo` (red/blue), `acceso`
 (gratis/pago), `nivel`, `herramienta`, `publicada`, `cuerpo_md`, `enlace_compra`
-(opcional), `destacada`, `lectura_min`, fecha. El esquema exacto está en
-`migrations/` **(verificar)**.
+(checkout HTTPS externo), `precio_centimos`, `moneda` (ISO 4217), `pasarela`
+(stripe/lemonsqueezy/polar/manual), `destacada`, `lectura_min`, fecha. El pago se
+completa en un checkout alojado: JOANIX no procesa ni almacena tarjetas.
 
 Reglas de datos:
 
@@ -175,8 +177,8 @@ Auditoría: `registrarAuditoria`, `listarAuditoria` (paginada, filtros).
 ### Validación (`lib/validar.js`)
 
 Título, slug único, equipo, acceso, nivel, herramienta, longitud del Markdown,
-enlace de compra HTTPS obligatorio en pago, usuario, rol y contraseña
-(mínimo 12 caracteres).
+enlace de compra HTTPS obligatorio en pago, precio en céntimos, moneda ISO,
+pasarela permitida, usuario, rol y contraseña (mínimo 12 caracteres).
 
 ### Cifrado e IA (`lib/cripto.js`, `lib/ia.js`)
 

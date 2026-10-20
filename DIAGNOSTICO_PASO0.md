@@ -1,21 +1,23 @@
 PASO 0 - DIAGNÓSTICO
 =====================
 
+> Nota histórica: los logos se migraron a `public/brand/`. Las referencias
+> de marca de este documento ya reflejan la ubicación actual.
+
 1. Archivo de la portada (localización)
 ----------------------------------------
 - Sección: src/pages/index.astro:31-70 (section class="portada")
 - Estilos: src/styles/guias-listado.css:7-48 (.portada y elementos relacionados)
 - No hay componentes de hero separados (no se encontró *hero*.astro, *portada*.astro)
 - No hay imágenes/vídeos de fondo referenciados en CSS para portada (grep background-image en styles no devuelve referencias a portada)
-- Logo usado actualmente: public/logo-joanix-guide.svg (referenciado en Base.astro:75, también usado en dist)
+- Logo actual: `public/brand/logo-joanix.svg` en el admin y `public/brand/logo-joanix-oscuro.svg` (transparente) en el header público; la portada usa `public/brand/icono-joanix-sin-fondo.svg`.
 
 2. (a) Ruta/nombre incorrecto o mayúsculas
 ------------------------------------------
-- Logo.png existe en raíz: /var/www/html/apparent-asteroid/logo.png (PNG 1774x887, no en public/)
-- En código no se referencia logo.png, solo /logo-joanix-guide.svg
-- En public/ hay logo-joanix-guide.svg pero NO logo.png
-- No hay imágenes de hero/portada con rutas erróneas detectadas
-- Diferencias de mayúsculas: no evidentes
+- Los assets de marca actuales viven en `public/brand/` (ver README).
+- El favicon SVG es `public/brand/icono-joanix.svg`.
+- No hay imágenes de hero/portada con rutas erróneas detectadas.
+- Diferencias de mayúsculas: no evidentes.
 
 3. (b) CSP (conflictos)
 -----------------------

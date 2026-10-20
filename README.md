@@ -1,6 +1,6 @@
 > **Publicar en el repo y en GitHub Pages:** ver [README-PUBLICAR.md](README-PUBLICAR.md).
 
-# JOANIX GUIDES — Cybersecurity Knowledge Lab
+# JOANIX — Cybersecurity Knowledge Lab
 
 Astro + Cloudflare Workers + D1. Catálogo en `/inicio/` y `/guias/`
 (filtros, destacadas), rutas de aprendizaje en `/rutas/`, búsqueda en
@@ -23,7 +23,7 @@ Inside of your Astro project, you'll see the following folders and files:
 ```text
 /
 ├── public/
-│   └── favicon.svg
+│   └── brand/ (logos, icono, favicons y OG de JOANIX)
 ├── src
 │   ├── assets
 │   │   └── astro.svg

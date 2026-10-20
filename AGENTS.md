@@ -16,6 +16,13 @@ Manage the background server with `astro dev stop`, `astro dev status`, and `ast
 - Listados sin `cuerpo_md`; en pago, la búsqueda solo usa campos públicos + vista previa.
 - Estilos: `catalogo.css` tras `components.css` (stats, `.chip-filtro`, `.ruta-card`, `.ruta-pasos`).
 
+## Plataforma (migración 0006)
+
+- `0006_expansion_plataforma.sql` (ya aplicada): `compras`, `accesos_guias`, `progreso_rutas`, `guias_completadas`, `favoritos`, `metricas_visitas`.
+- Datos: `src/lib/db/compras.js`, `alumno.js`, `metricas.js`, reexportados por `src/lib/db.js`. Nunca editar migraciones aplicadas: la siguiente ampliación va en `0007_...`.
+- Analítica privada: el middleware cuenta solo GET HTML 200 de rutas públicas (portada, catálogo, guía, ruta, herramienta, búsqueda), agrega por día y no guarda IPs ni cookies. La escritura usa `context.locals.cfContext.waitUntil`, así que nunca bloquea ni tumba la respuesta. El resumen real se ve en `/admin/`.
+- Compras/accesos: capa de datos probada (`tests/plataforma.test.js`) y vista de solo lectura en `/admin/ventas/` (solo `admin`), con KPIs de ingresos/completadas/pendientes/reembolsadas y tabla paginada. Aún no hay webhook de pago ni cuentas de alumno.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build

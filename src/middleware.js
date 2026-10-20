@@ -1,4 +1,4 @@
-import { getDatabase, contarUsuarios } from './lib/db.js';
+import { getDatabase, contarUsuarios, registrarVisita } from './lib/db.js';
 import { obtenerSesion } from './lib/auth.js';
 import { env } from 'cloudflare:workers';
 
@@ -20,6 +20,66 @@ function esApiAdmin(ruta) {
 
 function esProduccion() {
   return import.meta.env.PROD;
+}
+
+/**
+ * Clasifica una ruta pública en el tipo que admite `metricas_visitas`.
+ * Devuelve `null` para todo lo que no se mide (admin, API, assets, legales).
+ * @param {string} ruta ruta normalizada, sin barra final
+ * @returns {{ rutaTipo: 'portada'|'catalogo'|'guia'|'ruta'|'herramienta'|'buscar', slug: string } | null}
+ */
+function visitaDeRuta(ruta) {
+  if (ruta === '/') return { rutaTipo: 'portada', slug: '' };
+  if (ruta === '/inicio' || ruta === '/guias' || ruta === '/rutas' || ruta === '/herramientas') {
+    return { rutaTipo: 'catalogo', slug: '' };
+  }
+  if (ruta === '/buscar') return { rutaTipo: 'buscar', slug: '' };
+
+  const coincidencia = ruta.match(/^\/(guias|rutas|herramientas)\/(.+)$/);
+  if (!coincidencia) return null;
+
+  const [, seccion, resto] = coincidencia;
+  const rutaTipo = seccion === 'guias' ? 'guia' : seccion === 'rutas' ? 'ruta' : 'herramienta';
+  const slug = resto.replace(/^\/+|\/+$/g, '').slice(0, 200);
+  return slug ? { rutaTipo, slug } : null;
+}
+
+/** Las precargas del navegador no son visitas reales. */
+function esNavegacionPrevia(request) {
+  const proposito = (
+    request.headers.get('Sec-Purpose')
+    || request.headers.get('Purpose')
+    || request.headers.get('X-Purpose')
+    || ''
+  ).toLowerCase();
+  return proposito.includes('prefetch') || proposito.includes('prerender');
+}
+
+/**
+ * Cuenta una visita de forma anónima y agregada (sin IP ni cookies).
+ * Se ejecuta con `waitUntil`: nunca bloquea la respuesta y cualquier fallo
+ * de métricas se ignora, porque la analítica es un extra.
+ * @param {import('astro').APIContext} context
+ * @param {Request} request
+ * @param {Response} response
+ * @param {string} ruta
+ */
+function registrarMetricaSiProcede(context, request, response, ruta) {
+  if (request.method !== 'GET' || response.status !== 200) return;
+  if (esNavegacionPrevia(request)) return;
+  if (!(response.headers.get('content-type') || '').includes('text/html')) return;
+
+  const visita = visitaDeRuta(ruta);
+  if (!visita) return;
+
+  try {
+    const tarea = registrarVisita(getDatabase(env), visita).catch(() => {});
+    const cfContext = context.locals?.cfContext;
+    if (typeof cfContext?.waitUntil === 'function') cfContext.waitUntil(tarea);
+    else tarea.catch(() => {});
+  } catch {
+    // Nunca debe afectar a la respuesta.
+  }
 }
 
 function origenDeCabecera(valor) {
@@ -116,6 +176,7 @@ export async function onRequest(context, next) {
   }
 
   const response = await next();
+  registrarMetricaSiProcede(context, context.request, response, ruta);
   const segura = cabecerasSeguras(response);
   if (admin || apiAdmin) {
     segura.headers.set('X-Robots-Tag', 'noindex');

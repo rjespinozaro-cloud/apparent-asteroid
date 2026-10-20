@@ -37,7 +37,7 @@ Rama: `qa/post-portal` · Baseline tomado el 2026-10-05 sobre `a5fab42` (main).
 
 ### 0.2 Archivos del portal (intocables) y compartidos
 
-- **Intocables:** `src/pages/index.astro`, `src/styles/inicio.css` (solo ajustes de catálogo desde Fase 3), `src/scripts/motion.js`, `src/scripts/spotlight.js`, `public/hero/*`, `public/logo*`, `public/favicon*`, `public/apple-touch-icon.png`, `public/og-image*`, `assets-src/`.
+- **Intocables:** `src/pages/index.astro`, `src/styles/inicio.css` (solo ajustes de catálogo desde Fase 3), `src/scripts/motion.js`, `src/scripts/spotlight.js`, `public/hero/*`, `public/brand/*`, `assets-src/`.
 - **Nota 2026-10-06:** `src/pages/inicio.astro` deja de ser portal congelado y pasa a ser el catálogo evolucionable (Fase 3). `src/styles/inicio.css` admite ajustes de catálogo; el hero y la marca inicial no se rediseñan.
 - **Compartidos (editables con capturas antes/después):** `src/layouts/Base.astro`, `src/components/Menu.astro`, `src/styles/{tokens,base,layout,components,motion}.css`.
 

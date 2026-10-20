@@ -4,6 +4,7 @@ const formulario = document.querySelector('[data-editor]');
 
 if (formulario instanceof HTMLFormElement) {
   const zonaPreview = formulario.querySelector('[data-preview-zona]');
+  const zonaPreviewScroll = formulario.querySelector('[data-preview-scroll]');
   const mensaje = formulario.querySelector('[data-mensaje]');
   const botonGuardar = formulario.querySelector('[data-guardar]');
   const botonPublicar = formulario.querySelector('[data-publicar]');
@@ -61,14 +62,48 @@ if (formulario instanceof HTMLFormElement) {
     }
   };
 
+  /** @type {{ elemento: HTMLElement, posicion: number } | null} */
+  let scrollProgramado = null;
+
+  /**
+   * Sincroniza el scroll de editor y vista previa de forma proporcional.
+   * Solo actúa en la disposición de dos columnas y evita el bucle de eventos
+   * que provoca asignar `scrollTop` al otro panel.
+   */
+  const sincronizarScroll = (origen, destino) => {
+    if (!(origen instanceof HTMLElement) || !(destino instanceof HTMLElement)) return;
+    if (!window.matchMedia('(min-width: 64.0625rem)').matches) return;
+
+    const maximoOrigen = origen.scrollHeight - origen.clientHeight;
+    const maximoDestino = destino.scrollHeight - destino.clientHeight;
+    if (maximoOrigen <= 0 || maximoDestino <= 0) return;
+
+    if (
+      scrollProgramado &&
+      scrollProgramado.elemento === origen &&
+      Math.abs(origen.scrollTop - scrollProgramado.posicion) < 2
+    ) {
+      scrollProgramado = null;
+      return;
+    }
+
+    const posicion = Math.round((origen.scrollTop / maximoOrigen) * maximoDestino);
+    scrollProgramado = { elemento: destino, posicion };
+    destino.scrollTop = posicion;
+  };
+
   const refrescarPreview = async () => {
     if (!(areaMarkdown instanceof HTMLTextAreaElement)) return;
     const { html, maximo } = await renderPreview(areaMarkdown.value);
     if (zonaPreview) zonaPreview.innerHTML = html;
+    sincronizarScroll(areaMarkdown, zonaPreviewScroll);
     if (maximo && areaMarkdown.value.length > maximo) {
       avisar(`El contenido supera los ${maximo} caracteres de la vista previa.`, 'aviso');
     }
   };
+
+  areaMarkdown?.addEventListener('scroll', () => sincronizarScroll(areaMarkdown, zonaPreviewScroll), { passive: true });
+  zonaPreviewScroll?.addEventListener('scroll', () => sincronizarScroll(zonaPreviewScroll, areaMarkdown), { passive: true });
 
   let temporizador;
   areaMarkdown?.addEventListener('input', () => {

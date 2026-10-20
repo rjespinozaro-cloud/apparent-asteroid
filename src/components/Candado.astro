@@ -1,26 +1,63 @@
 ---
 import AssistantMascot from './AssistantMascot.astro';
+import { formatearDinero } from '../lib/utils/texto.js';
 
 interface Props {
-  /** URL externa de compra (normalmente una pasarela de pago). Puede ser null si no hay. */
+  /** URL externa de compra (checkout alojado). Puede ser null si no hay. */
   enlaceCompra?: string | null;
   /** Títulos reales de las secciones que continúan tras el corte. Nunca inventados. */
   incluye?: string[];
   /** Equipo de la guía, para el matiz del bloque. */
   equipo?: 'blue' | 'red';
+  /** Precio en céntimos; 0 o null = precio pendiente de configurar. */
+  precioCentimos?: number | null;
+  /** Código ISO 4217. */
+  moneda?: string;
+  /** Pasarela que gestiona el checkout alojado. */
+  pasarela?: 'stripe' | 'lemonsqueezy' | 'polar' | 'manual' | null;
 }
 
-const { enlaceCompra, incluye = [], equipo = 'blue' } = Astro.props;
+const {
+  enlaceCompra,
+  incluye = [],
+  equipo = 'blue',
+  precioCentimos = null,
+  moneda = 'EUR',
+  pasarela = null,
+} = Astro.props;
+
+const precio = Number(precioCentimos) > 0
+  ? formatearDinero(Number(precioCentimos) / 100, moneda)
+  : null;
+
+const PROVEEDORES: Record<string, string> = {
+  stripe: 'Stripe',
+  lemonsqueezy: 'Lemon Squeezy',
+  polar: 'Polar',
+  manual: 'pago manual',
+};
+const proveedor = pasarela ? (PROVEEDORES[pasarela] ?? 'la tienda externa') : 'la tienda externa';
+const esManual = pasarela === 'manual';
 ---
 
 <aside class:list={['candado', `candado--${equipo}`]} aria-labelledby="candado-titulo">
-  <p class="candado__estado">Contenido premium</p>
+  <div class="candado__cabecera">
+    <p class="candado__estado">Contenido premium</p>
+    {precio && (
+      <p class="candado__precio">
+        {precio}
+        <span>Pago único</span>
+      </p>
+    )}
+  </div>
+
   <h2 id="candado-titulo">La guía continúa en el PDF completo</h2>
   <p>
     Has leído el adelanto público: el laboratorio, el primer procedimiento y sus
     comprobaciones. El documento completo desarrolla el resto paso a paso, con
     interpretación de resultados y su correspondencia defensiva.
   </p>
+
   {incluye.length > 0 ? (
     <>
       <div class="candado__recomienda">
@@ -36,11 +73,31 @@ const { enlaceCompra, incluye = [], equipo = 'blue' } = Astro.props;
   ) : (
     <p>El PDF incluye el procedimiento completo, interpretación de resultados y comprobaciones defensivas.</p>
   )}
+
   {enlaceCompra ? (
-    <a class="boton--premium" href={enlaceCompra} rel="nofollow noopener noreferrer" target="_blank">
-      Obtener PDF
-    </a>
+    <div class="candado__compra">
+      <a class="boton--premium candado__cta" href={enlaceCompra} rel="nofollow noopener noreferrer" target="_blank">
+        <span>Comprar PDF</span>
+        <span class="candado__cta-flecha" aria-hidden="true">→</span>
+      </a>
+
+      <ul class="candado__sellos" aria-label="Condiciones de la compra">
+        <li>Pago único</li>
+        <li>PDF completo</li>
+        <li>Entrega digital</li>
+      </ul>
+
+      <p class="candado__pago-nota">
+        {esManual
+          ? 'La compra se gestiona de forma manual. El vendedor te indicará cómo completar el pago y recibir el PDF.'
+          : `Pago seguro en ${proveedor}. JOANIX no almacena los datos de tu tarjeta.`}
+      </p>
+      <p class="candado__pago-nota candado__pago-nota--suave">
+        {precio ? `Precio final: ${precio}. ` : 'Consulta el precio final en la tienda. '}
+        La tienda gestiona el cobro y la entrega del PDF.
+      </p>
+    </div>
   ) : (
-    <p class="candado__aviso">Este PDF todavía no está disponible. Vuelve pronto.</p>
+    <p class="candado__aviso">Este PDF todavía no está a la venta. Vuelve pronto.</p>
   )}
 </aside>

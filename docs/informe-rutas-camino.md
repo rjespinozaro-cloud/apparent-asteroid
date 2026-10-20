@@ -5,7 +5,7 @@ sin gh-pages. Commits atómicos: `89068ce` (datos + tests), `e59b8fb` (visual).
 
 ## 1. Inventario real y mapa Disponible vs Próximamente
 
-Fuente: D1 remota (solo lectura) + `docs/Árbol de contenido — JOANIX GUIDES (RED BLUE).docx`
+Fuente: D1 remota (solo lectura) + `docs/Árbol de contenido — JOANIX (RED BLUE).docx`
 (movido de `~/Descargas` a `docs/`). Solo existen **2 guías publicadas**:
 
 | slug | título | equipo | herramienta | nivel | acceso |

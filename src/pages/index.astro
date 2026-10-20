@@ -1,6 +1,6 @@
 ---
 /**
- * MEGAPORTADA JOANIX GUIDES — RED vs BLUE, el choque emerge PURPLE TEAM.
+ * MEGAPORTADA JOANIX — RED vs BLUE, el choque emerge PURPLE TEAM.
  *
  * Narrativa: mitad atacante (rojo) y mitad defensa (azul) convergen al centro,
  * cae un rayo procedural (canvas, único por carga) y el logo se enciende en
@@ -8,7 +8,8 @@
  *
  * Color: fondo #05060C; rojo #ff2e4d, azul #2e8bff, violeta de unión #a855f7
  * (--purple en tokens). Tipografía de sistema a propósito (cero fuentes
- * bloqueantes en el LCP). Logo public/logo.png intrínseco 640x320 (2:1).
+ * bloqueantes en el LCP). Icono transparente public/brand/icono-joanix-sin-fondo.svg
+ * intrínseco 512x512 (1:1), con la animación de entrada del emblema.
  * Fotos: public/hero/hero-wide (1024x572) y hero-tall (572x1024).
  */
 
@@ -18,12 +19,12 @@ const baseBruto = import.meta.env.BASE_URL;
 // BASE_URL puede venir sin barra final ('/apparent-asteroid'): se normaliza
 // una vez para que `${base}ruta` siempre genere '/base/ruta' (o '/ruta').
 const base = `${baseBruto.replace(/\/+$/, '')}/`;
-const title = 'JOANIX GUIDES | Cybersecurity Knowledge Lab';
+const title = 'JOANIX | Cybersecurity Knowledge Lab';
 const description =
-  'JOANIX GUIDES — laboratorio de conocimiento en ciberseguridad: guías prácticas de hacking ético para equipos RED y BLUE. Del choque nace el PURPLE TEAM.';
+  'JOANIX — laboratorio de conocimiento en ciberseguridad: guías prácticas de hacking ético para equipos RED y BLUE. Del choque nace el PURPLE TEAM.';
 const origen = Astro.site ?? Astro.url.origin;
 const canonical = new URL(Astro.url.pathname, origen).href;
-const imagenOg = new URL(`${base}og-image.png`, origen).href;
+const imagenOg = new URL(`${base}brand/og-image.png`, origen).href;
 ---
 
 <!doctype html>
@@ -36,14 +37,15 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#05060C" />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/png" sizes="32x32" href={`${base}favicon-32.png`} />
-    <link rel="icon" href={`${base}favicon.ico`} sizes="any" />
-    <link rel="apple-touch-icon" href={`${base}apple-touch-icon.png`} />
+    <link rel="icon" type="image/svg+xml" href={`${base}brand/icono-joanix.svg`} />
+    <link rel="icon" type="image/png" sizes="32x32" href={`${base}brand/favicon-32.png`} />
+    <link rel="icon" href={`${base}brand/favicon.ico`} sizes="any" />
+    <link rel="apple-touch-icon" href={`${base}brand/apple-touch-icon.png`} />
     <link rel="preload" as="image" href={`${base}hero/hero-tall.avif`} fetchpriority="high" media="(max-aspect-ratio: 1/1)" />
     <link rel="preload" as="image" href={`${base}hero/hero-wide.avif`} fetchpriority="high" media="(min-aspect-ratio: 1/1)" />
     <link rel="prefetch" href={`${base}inicio/`} />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="JOANIX GUIDES" />
+    <meta property="og:site_name" content="JOANIX" />
     <meta property="og:locale" content="es_ES" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -51,7 +53,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
     <meta property="og:image" content={imagenOg} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="JOANIX GUIDES, guías de ciberseguridad RED y BLUE" />
+    <meta property="og:image:alt" content="JOANIX, guías de ciberseguridad RED y BLUE" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
@@ -584,10 +586,6 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         color: transparent;
         text-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
       }
-      .cover__brand span {
-        font-weight: 300;
-        margin-left: 0.5em;
-      }
       .cover__tag {
         margin: 0.6em 0 0;
         font-size: clamp(0.68rem, 1.6vmin, 0.9rem);
@@ -614,12 +612,8 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         z-index: 2;
         width: 100%;
         height: auto;
-        aspect-ratio: 2 / 1;
+        aspect-ratio: 1 / 1;
         object-fit: contain;
-        /* El asset trae la X casi pegada al borde derecho: aire para el
-           glifo. Fondo transparente limpio, sin halo en reposo: el violeta
-           solo aparece en la ignición del impacto. */
-        padding: 1% 4% 2% 0;
         user-select: none;
         -webkit-user-drag: none;
         animation: float 6s ease-in-out infinite;
@@ -1224,7 +1218,7 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
       <i class="hud hud--br" aria-hidden="true"></i>
 
       <header class="cover__top">
-        <h1 class="cover__brand">JOANIX<span>GUIDES</span></h1>
+        <h1 class="cover__brand">JOANIX</h1>
         <p class="cover__tag">Cybersecurity Knowledge Lab</p>
       </header>
 
@@ -1235,10 +1229,10 @@ const imagenOg = new URL(`${base}og-image.png`, origen).href;
         <i class="logo__glow logo__glow--violet" aria-hidden="true"></i>
         <img
           class="logo__img"
-          src={`${base}logo.png`}
-          width="640"
-          height="320"
-          alt="JOANIX GUIDES"
+          src={`${base}brand/icono-joanix-sin-fondo.svg`}
+          width="512"
+          height="512"
+          alt="JOANIX"
           fetchpriority="high"
           decoding="async"
         />

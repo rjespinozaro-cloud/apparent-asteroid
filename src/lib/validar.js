@@ -12,6 +12,7 @@ const NIVELES = new Set(['basico', 'intermedio', 'avanzado']);
 const EQUIPOS = new Set(['blue', 'red']);
 const ACCESOS = new Set(['gratis', 'pago']);
 const ROLES = new Set(['admin', 'editor']);
+const PASARELAS = new Set(['stripe', 'lemonsqueezy', 'polar', 'manual']);
 
 const MAX_MARKDOWN_RED = 6000;
 const MAX_MARKDOWN = 120_000;
@@ -33,6 +34,22 @@ function texto(valor) {
  */
 export function esVerdadero(valor) {
   return valor === true || valor === 1 || valor === '1' || valor === 'true' || valor === 'on';
+}
+
+/**
+ * Convierte un precio humano ("9,90", "9.90") a céntimos enteros.
+ * Un precio vacío significa "sin precio"; un valor inválido se rechaza.
+ * @param {unknown} valor
+ * @returns {{ ok: boolean, centimos: number }}
+ */
+function parsePrecioCentimos(valor) {
+  const crudo = typeof valor === 'number' ? String(valor) : texto(valor);
+  const limpio = crudo.replace(',', '.');
+  if (!limpio) return { ok: true, centimos: 0 };
+  if (!/^\d+(?:\.\d{1,2})?$/.test(limpio)) return { ok: false, centimos: 0 };
+  const numero = Number(limpio);
+  const centimos = Math.round(numero * 100);
+  return { ok: Number.isFinite(numero) && centimos >= 0 && centimos <= 1_000_000, centimos };
 }
 
 /** Recorta un valor de texto y descarta control chars que rompen la consola. */
@@ -63,6 +80,9 @@ export function validarGuiaEntrada(entrada, { existenteId = null } = {}) {
     nivel: texto(entrada?.nivel).toLowerCase(),
     acceso: texto(entrada?.acceso).toLowerCase(),
     enlaceCompra: texto(entrada?.enlaceCompra) || null,
+    precioCentimos: 0,
+    moneda: (texto(entrada?.moneda) || 'EUR').toUpperCase(),
+    pasarela: texto(entrada?.pasarela).toLowerCase() || null,
     guiaPareja: texto(entrada?.guiaPareja) || null,
     fecha: texto(entrada?.fecha),
     cuerpoMd: typeof entrada?.cuerpoMd === 'string' ? entrada.cuerpoMd.trim() : '',
@@ -72,6 +92,8 @@ export function validarGuiaEntrada(entrada, { existenteId = null } = {}) {
   // Minutos del contenido COMPLETO (también en pago: la página muestra la
   // cifra sin enviar el cuerpo). Se recalcula en cada guardado.
   datos.lecturaMin = tiempoLectura(datos.cuerpoMd);
+  const precio = parsePrecioCentimos(entrada?.precio);
+  datos.precioCentimos = precio.centimos;
   const errores = [];
 
   if (datos.titulo.length < 3) errores.push(error('titulo', 'El título debe tener al menos 3 caracteres.'));
@@ -92,6 +114,15 @@ export function validarGuiaEntrada(entrada, { existenteId = null } = {}) {
   }
   if (datos.acceso === 'pago' && !datos.enlaceCompra) {
     errores.push(error('enlaceCompra', 'Una guía de pago necesita un enlace de compra.'));
+  }
+  if (!precio.ok) {
+    errores.push(error('precio', 'El precio debe ser un número con hasta dos decimales (por ejemplo, 9,90).'));
+  }
+  if (!/^[A-Z]{3}$/.test(datos.moneda)) {
+    errores.push(error('moneda', 'La moneda debe ser un código ISO de tres letras (por ejemplo, EUR).'));
+  }
+  if (datos.pasarela && !PASARELAS.has(datos.pasarela)) {
+    errores.push(error('pasarela', 'La pasarela debe ser Stripe, Lemon Squeezy, Polar o pago manual.'));
   }
   if (datos.cuerpoMd.length === 0) errores.push(error('cuerpoMd', 'El Markdown no puede estar vacío.'));
   if (datos.cuerpoMd.length > MAX_MARKDOWN) {

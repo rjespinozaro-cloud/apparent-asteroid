@@ -1,15 +1,11 @@
 /**
  * Pantallas de administración sin sesión (/admin/login, /admin/instalar).
  *
- * Layout mínimo: logotipo sobre pastilla oscura, tarjeta del formulario
- * centrada y regreso al portal. Sin barra lateral ni barra superior.
- *
- * Paleta heredada del admin (blanco + amarillo). El fondo se mantiene
- * claro para no romper los tokens existentes; la pastilla del logo es
- * oscura porque el PNG lleva un halo que ensucia cualquier fondo claro.
+ * Dark mode: fondo oscuro, logo claro, tarjeta con borde translúcido.
  */
 
 .admin--auth {
+  background: var(--adm-bg);
   min-height: 100dvh;
 }
 
@@ -26,33 +22,31 @@
   padding-block-end: max(clamp(1.5rem, 5vw, 3rem), env(safe-area-inset-bottom, 0px));
 }
 
-/* Pastilla oscura del logo: el PNG tiene halo y se ve sucio en claro. */
+/* El logo claro sobre fondo oscuro: sin pastilla, padding amplio. */
 .admin-logo-chip {
   align-items: center;
-  background: #07080F;
-  border-radius: 14px;
   display: inline-flex;
-  padding: 10px 14px;
+  padding: 0.5rem 0;
 }
 
 .admin-logo-chip__img {
   display: block;
   block-size: auto;
   inline-size: auto;
-  max-block-size: 56px;
-  max-inline-size: 220px;
+  max-block-size: 48px;
+  max-inline-size: 200px;
   object-fit: contain;
 }
 
-/* Tarjeta del formulario. */
+/* Tarjeta del formulario — dark premium. */
 .admin-auth-shell__card {
   background: var(--adm-surface);
-  border: 1px solid var(--adm-border);
-  border-radius: var(--adm-radius-lg);
-  box-shadow: var(--adm-shadow-md);
+  border: 1px solid var(--adm-border-strong);
+  border-radius: var(--adm-radius-xl);
+  box-shadow: var(--adm-shadow-lg), 0 0 0 1px rgba(255,255,255,0.04);
   inline-size: 100%;
   max-inline-size: 28rem;
-  padding: clamp(1.25rem, 5vw, 2.25rem);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
 }
 
 /* Envoltorio de contenido que ya usan las páginas.
@@ -113,27 +107,28 @@
 }
 
 .admin-alerta--error {
-  background: var(--adm-red-bg, #FFE4E6);
-  border: 1px solid #FCA5A5;
-  color: var(--adm-red-text, #B91C1C);
+  background: var(--adm-danger-bg);
+  border: 1px solid var(--adm-danger-border);
+  color: var(--adm-danger-text);
 }
 
 .admin-alerta--ok {
-  background: #DCFCE7;
-  border: 1px solid #86EFAC;
-  color: var(--adm-success-text, #15803D);
+  background: var(--adm-success-bg);
+  border: 1px solid var(--adm-success-border);
+  color: var(--adm-success-text);
 }
 
 /* Enlace de vuelta: zona táctil cómoda y foco visible. */
 .admin-auth-shell__volver {
   align-items: center;
-  color: var(--adm-text-muted);
+  color: var(--adm-text-subtle);
   display: inline-flex;
+  font-size: 0.8125rem;
   justify-content: center;
   min-block-size: 44px;
   padding: 0.5rem 0.75rem;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  transition: color var(--adm-duration-fast) var(--adm-ease-out);
 }
 
 .admin-auth-shell__volver:hover {
@@ -154,13 +149,16 @@
   inline-size: 100%;
 }
 
+.admin-form__actions,
 .admin-form__acciones {
   display: flex;
   flex-wrap: wrap;
   gap: var(--adm-space-sm);
 }
 
-.admin-form__acciones .admin-boton {
+.admin--auth .admin-form__actions .admin-boton,
+.admin--auth .admin-form__acciones .admin-boton {
+  flex: 1 1 100%;
   min-block-size: 44px;
 }
 
@@ -180,8 +178,8 @@
 }
 
 /* ==========================================================================
-   Logo de la barra lateral del dashboard: mismo problema de halo, tamaño
-   mucho menor (antes ocupaba ~176px de ancho y se veía enorme).
+   Logo de la barra lateral del dashboard: tamaño compacto para que no
+   compita con la navegación.
    ========================================================================== */
 
 .admin-sidebar__logo {
@@ -194,10 +192,10 @@
 }
 
 .admin-sidebar__header .admin-logo-chip {
-  padding: 6px 10px;
+  padding: 0;
 }
 
 .admin-sidebar__header .admin-logo-chip__img {
-  max-block-size: 40px;
-  max-inline-size: 150px;
+  max-block-size: 36px;
+  max-inline-size: 140px;
 }

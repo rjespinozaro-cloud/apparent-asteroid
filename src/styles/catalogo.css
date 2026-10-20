@@ -86,6 +86,10 @@
   -webkit-background-clip: text;
 }
 
+.catalogo-stat--violet {
+  border-color: color-mix(in srgb, var(--violet-500) 38%, var(--linea));
+}
+
 .catalogo-stat--premium {
   border-color: color-mix(in srgb, var(--fuchsia) 38%, var(--linea));
 }

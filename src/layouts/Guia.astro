@@ -2,6 +2,7 @@
 import Base from './Base.astro';
 import Candado from '../components/Candado.astro';
 import Migas from '../components/Migas.astro';
+import { formatearDinero } from '../lib/utils/texto.js';
 import '../styles/guia.css';
 
 interface Props {
@@ -13,6 +14,9 @@ interface Props {
   nivel: string;
   acceso: string;
   enlaceCompra?: string | null;
+  precioCentimos?: number | null;
+  moneda?: string;
+  pasarela?: 'stripe' | 'lemonsqueezy' | 'polar' | 'manual' | null;
   /** Títulos reales de las secciones que quedan tras el corte (solo pago). */
   restoTitulos?: string[];
   descripcion?: string;
@@ -21,6 +25,8 @@ interface Props {
   indice?: Array<{ id: string; texto: string; nivel?: number }>;
   /** Datos estructurados de la guía (JSON-LD). */
   jsonLd?: Record<string, unknown>;
+  /** Ficha de producto para guías de pago con precio (JSON-LD). */
+  jsonLdProducto?: Record<string, unknown>;
   noindex?: boolean;
 }
 
@@ -34,24 +40,35 @@ const {
   nivel,
   acceso,
   enlaceCompra = null,
+  precioCentimos = null,
+  moneda = 'EUR',
+  pasarela = null,
   restoTitulos = [],
   descripcion,
   fecha,
   tiempoLectura,
   indice = [],
   jsonLd,
+  jsonLdProducto,
   noindex = false,
 } = Astro.props;
+
+const precio = Number(precioCentimos) > 0
+  ? formatearDinero(Number(precioCentimos) / 100, moneda)
+  : null;
 ---
 
 <Base
-  title={`${titulo} | JOANIX GUIDES`}
+  title={`${titulo} | JOANIX`}
   description={descripcion ?? `Guía de ${herramienta} para el equipo ${equipo === 'blue' ? 'BLUE (defensa)' : 'RED (ofensiva)'}, nivel ${nivel}.`}
   ogType="article"
   noindex={noindex}
 >
   {jsonLd && (
     <script type="application/ld+json" slot="cabecera" set:html={JSON.stringify(jsonLd)} />
+  )}
+  {jsonLdProducto && (
+    <script type="application/ld+json" slot="cabecera" set:html={JSON.stringify(jsonLdProducto)} />
   )}
 
   <article class:list={['guia', `guia--${equipo}`, 'contenedor']}>
@@ -69,7 +86,11 @@ const {
       <p class="guia__equipo-linea">
         <strong>{equipo === 'blue' ? 'BLUE · Defensa' : 'RED · Ofensiva'}</strong>
         <span aria-hidden="true"> · </span>
-        <span>{acceso === 'pago' ? 'Premium · PDF de pago' : 'Gratis · Lectura completa'}</span>
+        <span>
+          {acceso === 'pago'
+            ? `Premium · PDF de pago${precio ? ` · ${precio}` : ''}`
+            : 'Gratis · Lectura completa'}
+        </span>
       </p>
       <h1>{titulo}</h1>
 
@@ -107,7 +128,16 @@ const {
 
       <div class="guia__contenido">
         <slot />
-        {acceso === 'pago' && <Candado enlaceCompra={enlaceCompra} incluye={restoTitulos} equipo={equipo} />}
+        {acceso === 'pago' && (
+          <Candado
+            enlaceCompra={enlaceCompra}
+            incluye={restoTitulos}
+            equipo={equipo}
+            precioCentimos={precioCentimos}
+            moneda={moneda}
+            pasarela={pasarela}
+          />
+        )}
       </div>
     </div>
   </article>

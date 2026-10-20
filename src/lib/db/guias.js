@@ -4,10 +4,10 @@
  */
 import { dividirPreview } from '../utils/texto.js';
 
-/** @typedef {{ id: number, slug: string, titulo: string, herramienta: string, equipo: 'blue'|'red', nivel: string, acceso: 'gratis'|'pago', enlace_compra: string|null, guia_pareja: string|null, fecha: string, cuerpo_md: string, publicada: number, destacada: number, lectura_min: number|null, actualizado_en: string, actualizado_por: number|null }} GuiaFila */
+/** @typedef {{ id: number, slug: string, titulo: string, herramienta: string, equipo: 'blue'|'red', nivel: string, acceso: 'gratis'|'pago', enlace_compra: string|null, precio_centimos: number, moneda: string, pasarela: 'stripe'|'lemonsqueezy'|'polar'|'manual'|null, guia_pareja: string|null, fecha: string, cuerpo_md: string, publicada: number, destacada: number, lectura_min: number|null, actualizado_en: string, actualizado_por: number|null }} GuiaFila */
 
 /** Columnas ligeras para listados: nunca se trae `cuerpo_md` si no se va a renderizar. */
-const COLUMNAS_LISTADO = 'id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en, destacada, lectura_min';
+const COLUMNAS_LISTADO = 'id, slug, titulo, herramienta, equipo, nivel, acceso, publicada, fecha, actualizado_en, destacada, lectura_min, precio_centimos, moneda, pasarela';
 
 /** @typedef {Omit<GuiaFila, 'cuerpo_md' | 'enlace_compra' | 'guia_pareja' | 'actualizado_por'>} GuiaResumen */
 
@@ -282,6 +282,10 @@ export async function listarGuiasAdmin(database, filtros = {}) {
   if (filtros.herramienta) {
     condiciones.push('herramienta = ?');
     valores.push(filtros.herramienta);
+  }
+  if (filtros.acceso === 'gratis' || filtros.acceso === 'pago') {
+    condiciones.push('acceso = ?');
+    valores.push(filtros.acceso);
   }
   if (filtros.estado === 'publicada') condiciones.push('publicada = 1');
   if (filtros.estado === 'borrador') condiciones.push('publicada = 0');
@@ -572,8 +576,8 @@ export async function contarGuiasPublicadas(database, filtros = {}) {
 
 export async function crearGuia(database, datos) {
   return database.prepare(
-    `INSERT INTO guias (slug, titulo, herramienta, equipo, nivel, acceso, enlace_compra, guia_pareja, fecha, cuerpo_md, publicada, destacada, lectura_min, actualizado_por)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO guias (slug, titulo, herramienta, equipo, nivel, acceso, enlace_compra, precio_centimos, moneda, pasarela, guia_pareja, fecha, cuerpo_md, publicada, destacada, lectura_min, actualizado_por)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(
     datos.slug,
     datos.titulo,
@@ -582,6 +586,9 @@ export async function crearGuia(database, datos) {
     datos.nivel,
     datos.acceso,
     datos.enlaceCompra,
+    datos.precioCentimos ?? 0,
+    datos.moneda ?? 'EUR',
+    datos.pasarela ?? null,
     datos.guiaPareja,
     datos.fecha,
     datos.cuerpoMd,
@@ -596,8 +603,9 @@ export async function actualizarGuia(database, id, datos) {
   return database.prepare(
     `UPDATE guias
      SET slug = ?, titulo = ?, herramienta = ?, equipo = ?, nivel = ?, acceso = ?, enlace_compra = ?,
-         guia_pareja = ?, fecha = ?, cuerpo_md = ?, publicada = ?, destacada = ?, lectura_min = ?,
-         actualizado_en = CURRENT_TIMESTAMP, actualizado_por = ?
+         precio_centimos = ?, moneda = ?, pasarela = ?, guia_pareja = ?, fecha = ?, cuerpo_md = ?,
+         publicada = ?, destacada = ?, lectura_min = ?, actualizado_en = CURRENT_TIMESTAMP,
+         actualizado_por = ?
      WHERE id = ?`,
   ).bind(
     datos.slug,
@@ -607,6 +615,9 @@ export async function actualizarGuia(database, id, datos) {
     datos.nivel,
     datos.acceso,
     datos.enlaceCompra,
+    datos.precioCentimos ?? 0,
+    datos.moneda ?? 'EUR',
+    datos.pasarela ?? null,
     datos.guiaPareja,
     datos.fecha,
     datos.cuerpoMd,

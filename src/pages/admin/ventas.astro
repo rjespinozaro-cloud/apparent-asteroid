@@ -1,0 +1,191 @@
+---
+import AdminBase from '../../layouts/AdminBase.astro';
+import { getDatabase, listarComprasAdmin, metricasVentasAdmin } from '../../lib/db.js';
+import { esAdmin } from '../../lib/admin-api.js';
+import { formatearDinero, formatearFechaHora } from '../../lib/utils/texto.js';
+import { env } from 'cloudflare:workers';
+
+export const prerender = false;
+
+if (!esAdmin(Astro.locals.admin)) {
+  return Astro.redirect('/admin/', 302);
+}
+
+const parametros = Astro.url.searchParams;
+const pagina = Math.max(Number(parametros.get('pagina')) || 1, 1);
+const porPagina = 25;
+
+const database = getDatabase(env);
+const [metricas, { filas, total }] = await Promise.all([
+  metricasVentasAdmin(database),
+  listarComprasAdmin(database, {
+    limite: porPagina,
+    desplazamiento: (pagina - 1) * porPagina,
+  }),
+]);
+
+const paginas = Math.max(Math.ceil(total / porPagina), 1);
+const paginaAnterior = pagina > 1 ? pagina - 1 : null;
+const paginaSiguiente = pagina < paginas ? pagina + 1 : null;
+
+const pendientes = Math.max(metricas.totalVentas - metricas.completadas - metricas.reembolsadas, 0);
+
+const ESTADOS: Record<string, { texto: string; clase: string }> = {
+  completado: { texto: 'Completado', clase: 'admin-badge--green' },
+  pendiente: { texto: 'Pendiente', clase: 'admin-badge--yellow' },
+  reembolsado: { texto: 'Reembolsado', clase: 'admin-badge--red' },
+};
+
+const PASARELAS: Record<string, string> = {
+  stripe: 'Stripe',
+  lemonsqueezy: 'Lemon Squeezy',
+  polar: 'Polar',
+  manual: 'Manual',
+};
+---
+
+<AdminBase
+  title="Ventas | JOANIX"
+  pageTitle="Ventas"
+  crumbs={[{ href: '/admin/', label: 'Resumen' }, { label: 'Ventas' }]}
+>
+  <div class="admin-content">
+    <header class="admin-section__header">
+      <div>
+        <p class="admin-section__eyebrow">Tienda</p>
+        <h1 class="admin-section__title">Ventas y compras</h1>
+        <p class="admin-section__nota">
+          Compras registradas por la pasarela y accesos concedidos. Esta vista es de solo lectura:
+          las compras se crean desde el webhook de pago.
+        </p>
+      </div>
+    </header>
+
+    <section class="admin-kpi-grid" aria-label="Indicadores de ventas">
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Ingresos</span>
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{formatearDinero(metricas.ingresosTotales)}</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--green">Cobrado</span>
+          <span>Solo completadas</span>
+        </p>
+      </article>
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Completadas</span>
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{metricas.completadas}</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--green">Pagadas</span>
+          <span>Acceso concedido</span>
+        </p>
+      </article>
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Pendientes</span>
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{pendientes}</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--yellow">En curso</span>
+          <span>Sin confirmar</span>
+        </p>
+      </article>
+
+      <article class="admin-kpi">
+        <header class="admin-kpi__header">
+          <span class="admin-kpi__label">Reembolsadas</span>
+          <span class="admin-kpi__icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+          </span>
+        </header>
+        <p class="admin-kpi__value">{metricas.reembolsadas}</p>
+        <p class="admin-kpi__subtext">
+          <span class="admin-badge admin-badge--red">Devueltas</span>
+          <span>Acceso revocado</span>
+        </p>
+      </article>
+    </section>
+
+    <section class="admin-panel" aria-labelledby="compras-title">
+      <header class="admin-panel__header">
+        <h2 id="compras-title" class="admin-panel__titulo">Compras</h2>
+        <span class="admin-badge admin-badge--gray">{total} registro{total === 1 ? '' : 's'}</span>
+      </header>
+      <div class="admin-panel__body">
+        {filas.length > 0 ? (
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Usuario</th>
+                  <th>Pasarela</th>
+                  <th>Transacción</th>
+                  <th>Importe</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filas.map((compra) => {
+                  const estado = ESTADOS[compra.estado] ?? { texto: String(compra.estado), clase: 'admin-badge--gray' };
+                  return (
+                    <tr>
+                      <td><time datetime={compra.fecha}>{formatearFechaHora(compra.fecha)}</time></td>
+                      <td>{compra.usuario_nombre ?? `#${compra.usuario_id}`}</td>
+                      <td>{PASARELAS[compra.pasarela] ?? compra.pasarela}</td>
+                      <td><code>{compra.transaccion_id}</code></td>
+                      <td>{formatearDinero(Number(compra.monto), String(compra.moneda))}</td>
+                      <td>
+                        <span class:list={['admin-badge', estado.clase]}>{estado.texto}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p class="admin-empty">
+            Todavía no hay compras registradas. Cuando conectes la pasarela, las confirmaciones
+            aparecerán aquí automáticamente.
+          </p>
+        )}
+      </div>
+    </section>
+
+    {paginas > 1 && (
+      <nav class="admin-paginacion" aria-label="Paginación de compras">
+        {paginaAnterior
+          ? <a class="admin-boton admin-boton--plano" href={`/admin/ventas/?pagina=${paginaAnterior}`} rel="prev">← Anterior</a>
+          : <span class="admin-boton admin-boton--plano admin-boton--inactivo">← Anterior</span>}
+        <span class="admin-paginacion__estado">Página {pagina} de {paginas}</span>
+        {paginaSiguiente
+          ? <a class="admin-boton admin-boton--plano" href={`/admin/ventas/?pagina=${paginaSiguiente}`} rel="next">Siguiente →</a>
+          : <span class="admin-boton admin-boton--plano admin-boton--inactivo">Siguiente →</span>}
+      </nav>
+    )}
+  </div>
+</AdminBase>

@@ -323,6 +323,11 @@
   color: var(--tinta);
 }
 
+.doc-callout--violeta {
+  border-left-color: var(--violet-500);
+  background: rgb(139 92 246 / 0.1);
+}
+
 .doc-callout--rojo {
   border-left-color: var(--red);
   background: rgb(255 77 109 / 0.1);

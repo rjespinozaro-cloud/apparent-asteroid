@@ -34,9 +34,9 @@ interface Props {
 const baseAsset = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 const {
-  title = 'JOANIX GUIDES | Guías de ciberseguridad RED y BLUE',
+  title = 'JOANIX | Guías de ciberseguridad RED y BLUE',
   description = 'Guías prácticas de hacking ético y redes para equipos RED y BLUE: reconocimiento, análisis y defensa con herramientas reales.',
-  ogImage = `${baseAsset}og-image.png`,
+  ogImage = `${baseAsset}brand/og-image.png`,
   ogType = 'website',
   noindex = false,
   clase,
@@ -58,12 +58,13 @@ const imagenOg = new URL(ogImage, origen).href;
     <meta name="color-scheme" content="dark light" />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/png" sizes="32x32" href={`${baseAsset}favicon-32.png`} />
-    <link rel="icon" href={`${baseAsset}favicon.ico`} sizes="any" />
-    <link rel="apple-touch-icon" href={`${baseAsset}apple-touch-icon.png`} />
+    <link rel="icon" type="image/svg+xml" href={`${baseAsset}brand/icono-joanix.svg`} />
+    <link rel="icon" type="image/png" sizes="32x32" href={`${baseAsset}brand/favicon-32.png`} />
+    <link rel="icon" href={`${baseAsset}brand/favicon.ico`} sizes="any" />
+    <link rel="apple-touch-icon" href={`${baseAsset}brand/apple-touch-icon.png`} />
     <link rel="sitemap" href={`${baseAsset}sitemap.xml`} />
     <meta property="og:type" content={ogType} />
-    <meta property="og:site_name" content="JOANIX GUIDES" />
+    <meta property="og:site_name" content="JOANIX" />
     <meta property="og:locale" content="es_ES" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -71,7 +72,7 @@ const imagenOg = new URL(ogImage, origen).href;
     <meta property="og:image" content={imagenOg} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="JOANIX GUIDES, guías de ciberseguridad RED y BLUE" />
+    <meta property="og:image:alt" content="JOANIX, guías de ciberseguridad RED y BLUE" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
@@ -84,18 +85,15 @@ const imagenOg = new URL(ogImage, origen).href;
 
     <header class="cabecera">
       <div class="cabecera__interna contenedor">
-        <a class="marca" href={`${baseAsset}inicio/`} aria-label="JOANIX GUIDES, inicio">
-          <picture>
-            <source
-              type="image/avif"
-              srcset={`${baseAsset}logo-160.avif 1x, ${baseAsset}logo-320.avif 2x`}
-            />
-            <source
-              type="image/webp"
-              srcset={`${baseAsset}logo-160.webp 1x, ${baseAsset}logo-320.webp 2x`}
-            />
-            <img class="marca__logo" src={`${baseAsset}logo.png`} alt="JOANIX GUIDES" width="180" height="90" decoding="async" />
-          </picture>
+        <a class="marca" href={`${baseAsset}inicio/`} aria-label="JOANIX, inicio">
+          <img
+            class="marca__logo"
+            src={`${baseAsset}brand/logo-joanix-oscuro.svg`}
+            alt="JOANIX"
+            width="630"
+            height="160"
+            decoding="async"
+          />
         </a>
         <Menu ruta={Astro.url.pathname} />
       </div>
@@ -110,7 +108,7 @@ const imagenOg = new URL(ogImage, origen).href;
     <footer class="pie">
       <div class="pie__interna contenedor">
         <div class="pie__marca">
-          <p class="pie__nombre">JOANIX GUIDES</p>
+          <p class="pie__nombre">JOANIX</p>
           <p class="pie__lema">Cybersecurity Knowledge Lab</p>
           <p class="pie__aviso">Contenido educativo para laboratorios propios y entornos autorizados.</p>
           <AvisoLegal />

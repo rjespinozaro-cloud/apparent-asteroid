@@ -1,5 +1,5 @@
 ---
-import { descripcionDesdeMarkdown } from '../lib/utils/texto.js';
+import { descripcionDesdeMarkdown, formatearDinero } from '../lib/utils/texto.js';
 import { claseEquipo, nombreEquipo, nombreHerramienta, nombreNivel } from '../lib/vocabulario.js';
 
 interface Props {
@@ -13,6 +13,9 @@ interface Props {
     fecha: string;
     /** Minutos de lectura (columna `lectura_min` desde la Fase 2; ausente = no se muestra). */
     lectura_min?: number | null;
+    /** Precio en céntimos y moneda ISO 4217 (solo guías de pago). */
+    precio_centimos?: number | null;
+    moneda?: string | null;
     /** Solo si viene del detalle; en listados se resume desde el meta. */
     resumen?: string | null;
   };
@@ -27,13 +30,16 @@ const equipo = claseEquipo(guia.equipo);
 const resumen = descripcion ?? guia.resumen ?? null;
 const destino = `${base}guias/${guia.slug}/`;
 const esPremium = guia.acceso === 'pago';
+const precio = esPremium && Number(guia.precio_centimos) > 0
+  ? formatearDinero(Number(guia.precio_centimos) / 100, guia.moneda ?? 'EUR')
+  : null;
 
 /** Puntos de nivel: refuerzo visual del texto (los lectores de pantalla usan el nombre). */
 const puntosNivel = guia.nivel === 'basico' ? '●○○' : guia.nivel === 'intermedio' ? '●●○' : guia.nivel === 'avanzado' ? '●●●' : null;
 ---
 
-<article class:list={['tarjeta-premium', `tarjeta--${equipo}`, 'reveal']} data-spotlight>
-  <p class:list={['tarjeta__kicker', `tarjeta__kicker--${equipo}`]}>
+<article class:list={['tarjeta-premium', `tarjeta--${equipo}`, esPremium && 'tarjeta--pago', 'reveal']} data-spotlight>
+  <p class:list={['tarjeta__kicker', esPremium ? 'tarjeta__kicker--premium' : `tarjeta__kicker--${equipo}`]}>
     {nombreEquipo(guia.equipo)} · {esPremium && (
       <svg class="tarjeta__candado" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
         <rect x="4" y="10" width="16" height="11" rx="2" />
@@ -49,8 +55,8 @@ const puntosNivel = guia.nivel === 'basico' ? '●○○' : guia.nivel === 'inte
   {resumen && <p class="tarjeta__resumen">{descripcionDesdeMarkdown(resumen)}</p>}
 
   <p class="tarjeta__meta-linea">
-    {nombreHerramienta(guia.herramienta)}{mostrarNivel && (<> · {nombreNivel(guia.nivel)}{puntosNivel && (<> <span aria-hidden="true">{puntosNivel}</span></>)}</>)}{guia.lectura_min ? ` · ${guia.lectura_min} min` : ''}
+    {nombreHerramienta(guia.herramienta)}{mostrarNivel && (<> · {nombreNivel(guia.nivel)}{puntosNivel && (<> <span aria-hidden="true">{puntosNivel}</span></>)}</>)}{guia.lectura_min ? ` · ${guia.lectura_min} min` : ''}{precio && (<> · <strong class="tarjeta__precio">{precio}</strong></>)}
   </p>
 
-  <span class="tarjeta__accion" aria-hidden="true">Ver guía →</span>
+  <span class="tarjeta__accion" aria-hidden="true">{esPremium ? (precio ? 'Comprar PDF →' : 'Desbloquear →') : 'Ver guía →'}</span>
 </article>

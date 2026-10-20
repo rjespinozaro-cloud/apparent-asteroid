@@ -1,7 +1,7 @@
 # Publicar la vista previa estática (rama `gh-pages`)
 
 Procedimiento exacto y reproducible para generar la vista previa pública de
-JOANIX GUIDES en `https://rjespinozaro-cloud.github.io/apparent-asteroid/`.
+JOANIX en `https://rjespinozaro-cloud.github.io/apparent-asteroid/`.
 
 > Relación con `README-PUBLICAR.md` (raíz): ese documento describe el flujo
 > alternativo basado en build estático (`PAGES_BUILD=1` + worktree). Este

@@ -76,3 +76,29 @@ export {
   obtenerAjustesIa,
   registrarUsoIa,
 } from './ia.js';
+
+export {
+  concederAccesoGuia,
+  listarAccesosUsuario,
+  listarComprasAdmin,
+  metricasVentasAdmin,
+  registrarCompra,
+  usuarioTieneAccesoGuia,
+} from './compras.js';
+
+export {
+  desmarcarGuiaCompletada,
+  esFavorito,
+  esGuiaCompletada,
+  guardarProgresoRuta,
+  listarFavoritosUsuario,
+  listarGuiasCompletadas,
+  marcarGuiaCompletada,
+  obtenerProgresoRuta,
+  toggleFavorito,
+} from './alumno.js';
+
+export {
+  obtenerResumenMetricas,
+  registrarVisita,
+} from './metricas.js';

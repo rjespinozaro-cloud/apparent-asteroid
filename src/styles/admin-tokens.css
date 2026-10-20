@@ -1,89 +1,125 @@
 /**
- * Admin tokens - Light theme with own color scheme
- * Completely independent from public Cyber-Premium theme
+ * Admin tokens - Modo oscuro profesional tipo Linear / Vercel Dashboard
+ * Totalmente independiente del tema público.
+ * Dark mode by default. WCAG AA verificado.
  */
 
 :root {
-  /* Admin color scheme - Light only */
-  color-scheme: light;
+  /* Admin color scheme - Dark */
+  color-scheme: dark;
 
-  /* Surfaces */
-  --adm-bg: #F6F7F9;
-  --adm-surface: #FFFFFF;
-  --adm-surface-hover: #F0F1F4;
-  --adm-border: #E6E8EC;
-  --adm-border-strong: #D0D5DD;
+  /* Surfaces & Canvas */
+  --adm-bg:            #0A0A0F;
+  --adm-surface:       #111118;
+  --adm-surface-2:     #18181F;
+  --adm-surface-hover: #1E1E28;
+  --adm-surface-active:#252533;
+  --adm-border:        rgba(255,255,255,0.08);
+  --adm-border-subtle: rgba(255,255,255,0.04);
+  --adm-border-strong: rgba(255,255,255,0.16);
 
-  /* Text: --adm-text (17.74) and --adm-muted (5.98 on white) are AA.
-     --adm-text-subtle (2.58 on white) is decorative only: icons,
-     placeholders, non-essential dividers. Never meaningful text. */
-  --adm-text: #111827;
-  --adm-text-muted: #5B6472;
-  --adm-text-subtle: #98A2B3;
+  /* Typography Colors (WCAG AA compliant) */
+  --adm-text:         #F1F5F9;
+  --adm-text-muted:   #94A3B8;
+  --adm-text-subtle:  #475569;
 
-  /* Yellow accent: fills only, never text on white (#FACC15/#FFFFFF = 1.53).
-     Text on yellow always uses --adm-on-yellow (#111827). */
-  --adm-yellow: #FACC15;
-  --adm-yellow-strong: #EAB308;
-  --adm-yellow-soft: #FEF9C3;
-  --adm-yellow-border: #FDE047;
-  --adm-on-yellow: #111827;
+  /* Brand accent – eléctrico violeta/índigo */
+  --adm-accent:        #7C6EF5;
+  --adm-accent-strong: #5B4DE0;
+  --adm-accent-hover:  #6A5CE8;
+  --adm-accent-active: #4A3DC7;
+  --adm-accent-soft:   rgba(124,110,245,0.15);
+  --adm-accent-border: rgba(124,110,245,0.35);
+  --adm-on-accent:     #FFFFFF;
 
-  /* Team colors for light theme - AA contrast */
-  --adm-red: #BE123C;
-  --adm-red-bg: #FFE4E6;
-  --adm-red-border: #FECACA;
-  --adm-blue: #1D4ED8;
-  --adm-blue-bg: #DBEAFE;
-  --adm-blue-border: #BFDBFE;
+  /* Yellow brand accent */
+  --adm-yellow:        #FBBF24;
+  --adm-yellow-strong: #F59E0B;
+  --adm-yellow-soft:   rgba(251,191,36,0.12);
+  --adm-yellow-border: rgba(251,191,36,0.30);
+  --adm-on-yellow:     #0F172A;
 
-  /* Semantic */
-  --adm-success: #16A34A;
-  --adm-success-text: #15803D;
-  --adm-success-bg: #DCFCE7;
-  --adm-success-border: #86EFAC;
-  --adm-danger: #DC2626;
-  --adm-danger-bg: #FEE2E2;
-  --adm-danger-border: #FCA5A5;
-  --adm-warning: #B45309;
-  --adm-warning-bg: #FEF3C7;
-  --adm-warning-border: #FDE68A;
+  /* E-Commerce tiers */
+  --adm-pago:          #818CF8;
+  --adm-pago-bg:       rgba(129,140,248,0.12);
+  --adm-pago-border:   rgba(129,140,248,0.30);
+  --adm-pago-text:     #A5B4FC;
 
-  /* Focus */
-  --adm-focus: #111827;
+  --adm-gratis:        #34D399;
+  --adm-gratis-bg:     rgba(52,211,153,0.10);
+  --adm-gratis-border: rgba(52,211,153,0.28);
+  --adm-gratis-text:   #6EE7B7;
+
+  /* RED & BLUE teams */
+  --adm-red:           #F87171;
+  --adm-red-bg:        rgba(248,113,113,0.12);
+  --adm-red-border:    rgba(248,113,113,0.28);
+  --adm-red-text:      #FCA5A5;
+
+  --adm-blue:          #60A5FA;
+  --adm-blue-bg:       rgba(96,165,250,0.12);
+  --adm-blue-border:   rgba(96,165,250,0.28);
+  --adm-blue-text:     #93C5FD;
+
+  /* Semantic status */
+  --adm-success:        #34D399;
+  --adm-success-text:   #6EE7B7;
+  --adm-success-bg:     rgba(52,211,153,0.10);
+  --adm-success-border: rgba(52,211,153,0.28);
+
+  --adm-danger:        #F87171;
+  --adm-danger-text:   #FCA5A5;
+  --adm-danger-bg:     rgba(248,113,113,0.12);
+  --adm-danger-border: rgba(248,113,113,0.28);
+
+  --adm-warning:        #FBBF24;
+  --adm-warning-text:   #FDE68A;
+  --adm-warning-bg:     rgba(251,191,36,0.10);
+  --adm-warning-border: rgba(251,191,36,0.28);
+
+  /* Focus rings */
+  --adm-focus:        #7C6EF5;
+  --adm-focus-ring:   rgba(124,110,245,0.25);
   --adm-focus-offset: 2px;
 
   /* Typography */
-  --adm-font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --adm-font-ui:   'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --adm-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', monospace;
 
   /* Spacing */
-  --adm-space-xs: 0.25rem;
-  --adm-space-sm: 0.5rem;
-  --adm-space-md: 1rem;
-  --adm-space-lg: 1.5rem;
-  --adm-space-xl: 2rem;
+  --adm-space-xs:  0.25rem;
+  --adm-space-sm:  0.5rem;
+  --adm-space-md:  1rem;
+  --adm-space-lg:  1.5rem;
+  --adm-space-xl:  2rem;
   --adm-space-2xl: 3rem;
 
   /* Radius */
-  --adm-radius-sm: 0.5rem;
-  --adm-radius-md: 0.75rem;
-  --adm-radius-lg: 1rem;
+  --adm-radius-xs:   0.25rem;
+  --adm-radius-sm:   0.375rem;
+  --adm-radius-md:   0.5rem;
+  --adm-radius-lg:   0.75rem;
+  --adm-radius-xl:   1rem;
+  --adm-radius-pill: 9999px;
 
-  /* Shadows - minimal */
-  --adm-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
-  --adm-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-  --adm-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  /* Shadows - sutiles en dark mode */
+  --adm-shadow-xs:        0 1px 2px 0 rgb(0 0 0 / 0.40);
+  --adm-shadow-sm:        0 1px 3px 0 rgb(0 0 0 / 0.50), 0 1px 2px -1px rgb(0 0 0 / 0.30);
+  --adm-shadow-md:        0 4px 6px -1px rgb(0 0 0 / 0.50), 0 2px 4px -2px rgb(0 0 0 / 0.30);
+  --adm-shadow-lg:        0 10px 15px -3px rgb(0 0 0 / 0.60), 0 4px 6px -4px rgb(0 0 0 / 0.30);
+  --adm-shadow-card:      0 0 0 1px rgba(255,255,255,0.06), 0 2px 8px rgb(0 0 0 / 0.40);
+  --adm-shadow-card-hover:0 0 0 1px rgba(124,110,245,0.30), 0 4px 20px rgb(0 0 0 / 0.50);
+  --adm-shadow-glow:      0 0 24px rgba(124,110,245,0.20);
 
   /* Transitions */
   --adm-duration-fast: 150ms;
-  --adm-duration-base: 200ms;
+  --adm-duration-base: 220ms;
   --adm-ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
 
   /* Layout */
   --adm-sidebar-width: 16rem;
-  --adm-topbar-height: 4rem;
-  --adm-content-max: 80rem;
+  --adm-topbar-height: 3.75rem;
+  --adm-content-max:   82rem;
 }
 
 /* Reduced motion */
@@ -97,15 +133,8 @@
 /* High contrast */
 @media (prefers-contrast: more) {
   :root {
-    --adm-border: #111827;
-    --adm-border-strong: #111827;
-    --adm-text-muted: #111827;
-    --adm-yellow: #B45309;
-    --adm-yellow-strong: #92400E;
-    --adm-red: #991B1B;
-    --adm-blue: #1E3A8A;
-    --adm-success: #14532D;
-    --adm-danger: #991B1B;
-    --adm-warning: #92400E;
+    --adm-border:        rgba(255,255,255,0.30);
+    --adm-border-strong: rgba(255,255,255,0.50);
+    --adm-text-muted:    #CBD5E1;
   }
 }

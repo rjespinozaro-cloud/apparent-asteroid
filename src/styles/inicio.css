@@ -572,6 +572,37 @@ html.js .portada--hero__controles {
   color: var(--tinta);
 }
 
+/* «Continúa donde lo dejaste»: el script lo muestra solo si hay una guía
+   guardada en localStorage. Sin estilos propios quedaba como texto suelto. */
+.continua {
+  margin-block: var(--espacio-s) var(--espacio-m);
+}
+
+.continua[hidden] {
+  display: none;
+}
+
+.continua__enlace {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-height: 44px;
+}
+
+.continua__etiqueta {
+  color: var(--tinta-tenue);
+  font-family: var(--fuente-mono);
+  font-size: var(--texto-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.continua__titulo {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .site-main__interior:has(.portada--hero) .seccion {
     animation: none;

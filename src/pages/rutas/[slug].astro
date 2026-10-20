@@ -34,7 +34,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
 {detalle ? (
   <Base
-    title={`${detalle.ruta.titulo} | JOANIX GUIDES`}
+    title={`${detalle.ruta.titulo} | JOANIX`}
     description={detalle.ruta.descripcion || `Ruta de aprendizaje: ${detalle.ruta.titulo}.`}
   >
     <Migas
@@ -100,7 +100,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     <AsistenteFlotante />
   </Base>
 ) : (
-  <Base title="Ruta no encontrada | JOANIX GUIDES" noindex>
+  <Base title="Ruta no encontrada | JOANIX" noindex>
     <article class="pagina-error contenedor">
       <AssistantMascot estado="sad" tamano="lg" decorativa />
       <p class="eyebrow">Error 404</p>
