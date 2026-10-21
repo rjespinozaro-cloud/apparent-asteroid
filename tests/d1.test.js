@@ -41,7 +41,7 @@ import { hashPassword, crearSesion, destruirSesion, obtenerSesion, claveIntento,
 import { contarAdminsActivos, crearUsuario, eliminarUsuario, listarUsuarios, purgarSesionesCaducadas } from '../src/lib/db/usuarios.js';
 import { registrarAuditoria, listarAuditoria, listarFacetasAuditoria, ultimasAcciones } from '../src/lib/db/auditoria.js';
 
-const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql', '0005_catalogo.sql', '0007_pago_guias.sql', '0008_normalizar_roles.sql']
+const ESQUEMA = ['0001_esquema.sql', '0002_indices.sql', '0003_auditoria_usuario_nombre.sql', '0005_catalogo.sql', '0006_expansion_plataforma.sql', '0007_pago_guias.sql', '0008_normalizar_roles.sql', '0009_compradores.sql']
   .map((nombre) => fs.readFileSync(path.join(import.meta.dirname, '..', 'migrations', nombre), 'utf8'))
   .join('\n');
 

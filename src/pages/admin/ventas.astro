@@ -33,6 +33,7 @@ const pendientes = Math.max(metricas.totalVentas - metricas.completadas - metric
 const ESTADOS: Record<string, { texto: string; clase: string }> = {
   completado: { texto: 'Completado', clase: 'admin-badge--green' },
   pendiente: { texto: 'Pendiente', clase: 'admin-badge--yellow' },
+  fallido: { texto: 'Fallido', clase: 'admin-badge--red' },
   reembolsado: { texto: 'Reembolsado', clase: 'admin-badge--red' },
 };
 
@@ -141,7 +142,7 @@ const PASARELAS: Record<string, string> = {
               <thead>
                 <tr>
                   <th scope="col">Fecha</th>
-                  <th scope="col">Usuario</th>
+                  <th scope="col">Comprador</th>
                   <th scope="col">Pasarela</th>
                   <th scope="col">Transacción</th>
                   <th scope="col">Importe</th>
@@ -154,10 +155,13 @@ const PASARELAS: Record<string, string> = {
                   return (
                     <tr>
                       <td><time datetime={compra.fecha}>{formatearFechaHora(compra.fecha)}</time></td>
-                      <td>{compra.usuario_nombre ?? `#${compra.usuario_id}`}</td>
+                      <td>
+                        <span class="admin-table__titulo-texto">{compra.email}</span>
+                        {compra.nombre && <span class="admin-form__nota"> {compra.nombre}</span>}
+                      </td>
                       <td>{PASARELAS[compra.pasarela] ?? compra.pasarela}</td>
                       <td><code>{compra.transaccion_id}</code></td>
-                      <td>{formatearDinero(Number(compra.monto), String(compra.moneda))}</td>
+                      <td>{formatearDinero(Number(compra.importe_centimos) / 100, String(compra.moneda))}</td>
                       <td>
                         <span class:list={['admin-badge', estado.clase]}>{estado.texto}</span>
                       </td>

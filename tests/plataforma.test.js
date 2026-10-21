@@ -17,12 +17,14 @@ import { crearUsuario } from '../src/lib/db/usuarios.js';
 import { obtenerResumenMetricas, registrarVisita } from '../src/lib/db/metricas.js';
 import {
   concederAccesoGuia,
-  listarAccesosUsuario,
+  cuentaTieneAccesoGuia,
+  listarAccesosCuenta,
   listarComprasAdmin,
   metricasVentasAdmin,
   registrarCompra,
-  usuarioTieneAccesoGuia,
+  revocarAccesoGuia,
 } from '../src/lib/db/compras.js';
+import { crearCuenta } from '../src/lib/db/cuentas.js';
 import {
   desmarcarGuiaCompletada,
   esFavorito,
@@ -44,6 +46,7 @@ const ESQUEMA = [
   '0006_expansion_plataforma.sql',
   '0007_pago_guias.sql',
   '0008_normalizar_roles.sql',
+  '0009_compradores.sql',
 ]
   .map((nombre) => fs.readFileSync(path.join(import.meta.dirname, '..', 'migrations', nombre), 'utf8'))
   .join('\n');
@@ -79,7 +82,14 @@ async function sembrarBase(database) {
   const usuario = await database.prepare('SELECT id FROM usuarios WHERE usuario = ?').bind('alumno').first();
   const guia = await database.prepare('SELECT id FROM guias WHERE slug = ?').bind(GUIA.slug).first();
   const ruta = await database.prepare('SELECT id FROM rutas WHERE slug = ?').bind('ruta-prueba').first();
-  return { usuarioId: Number(usuario.id), guiaId: Number(guia.id), rutaId: Number(ruta.id) };
+  // El comprador vive en `cuentas`, no en `usuarios` (tabla del panel).
+  const cuenta = await crearCuenta(database, { email: 'comprador@example.com', nombre: 'Comprador' });
+  return {
+    usuarioId: Number(usuario.id),
+    cuentaId: Number(cuenta.id),
+    guiaId: Number(guia.id),
+    rutaId: Number(ruta.id),
+  };
 }
 
 test('las visitas se agregan por día, tipo y slug sin datos personales', async () => {
@@ -104,26 +114,29 @@ test('las visitas se agregan por día, tipo y slug sin datos personales', async 
 
 test('una compra concede el acceso una sola vez y suma en las métricas de ventas', async () => {
   const db = crearBase();
-  const { usuarioId, guiaId } = await sembrarBase(db);
+  const { cuentaId, guiaId } = await sembrarBase(db);
 
   const compraId = await registrarCompra(db, {
-    usuarioId,
+    cuentaId,
     transaccionId: 'tx-001',
     pasarela: 'stripe',
-    monto: 19.9,
+    importeCentimos: 1990,
     estado: 'completado',
+    email: 'comprador@example.com',
+    nombre: 'Comprador',
   });
   assert.ok(compraId > 0);
 
-  await concederAccesoGuia(db, { usuarioId, guiaId, compraId });
-  await concederAccesoGuia(db, { usuarioId, guiaId, compraId });
+  await concederAccesoGuia(db, { cuentaId, guiaId, compraId });
+  await concederAccesoGuia(db, { cuentaId, guiaId, compraId });
 
-  assert.equal(await usuarioTieneAccesoGuia(db, usuarioId, guiaId), true);
-  assert.deepEqual(await listarAccesosUsuario(db, usuarioId), [guiaId]);
+  assert.equal(await cuentaTieneAccesoGuia(db, cuentaId, guiaId), true);
+  assert.deepEqual(await listarAccesosCuenta(db, cuentaId), [guiaId]);
 
   const listado = await listarComprasAdmin(db);
   assert.equal(listado.total, 1);
-  assert.equal(listado.filas[0].usuario_nombre, 'alumno');
+  assert.equal(listado.filas[0].email, 'comprador@example.com');
+  assert.equal(listado.filas[0].importe_centimos, 1990);
 
   const ventas = await metricasVentasAdmin(db);
   assert.equal(ventas.totalVentas, 1);
@@ -131,10 +144,71 @@ test('una compra concede el acceso una sola vez y suma en las métricas de venta
   assert.equal(ventas.ingresosTotales, 19.9);
 });
 
+test('el importe se guarda en céntimos enteros, sin coma flotante', async () => {
+  const db = crearBase();
+  const { cuentaId } = await sembrarBase(db);
+  await registrarCompra(db, {
+    cuentaId,
+    transaccionId: 'tx-centimos',
+    pasarela: 'manual',
+    importeCentimos: 990,
+    email: 'comprador@example.com',
+  });
+  const { filas } = await listarComprasAdmin(db);
+  assert.equal(filas[0].importe_centimos, 990);
+  assert.equal(typeof filas[0].importe_centimos, 'number');
+});
+
+test('dar de baja la cuenta revoca el acceso pero conserva la venta', async () => {
+  const db = crearBase();
+  const { cuentaId, guiaId } = await sembrarBase(db);
+  const compraId = await registrarCompra(db, {
+    cuentaId,
+    transaccionId: 'tx-baja',
+    pasarela: 'stripe',
+    importeCentimos: 1990,
+    estado: 'completado',
+    email: 'comprador@example.com',
+    nombre: 'Comprador',
+  });
+  await concederAccesoGuia(db, { cuentaId, guiaId, compraId });
+
+  await db.prepare('DELETE FROM cuentas WHERE id = ?').bind(cuentaId).run();
+
+  assert.equal(await cuentaTieneAccesoGuia(db, cuentaId, guiaId), false, 'el acceso se revoca');
+  const { filas, total } = await listarComprasAdmin(db);
+  assert.equal(total, 1, 'la venta no se borra');
+  assert.equal(filas[0].cuenta_id, null, 'queda desvinculada de la cuenta');
+  assert.equal(filas[0].email, 'comprador@example.com', 'conserva la copia del comprador');
+  assert.equal(filas[0].importe_centimos, 1990);
+});
+
+test('revocar un acceso deja la venta intacta', async () => {
+  const db = crearBase();
+  const { cuentaId, guiaId } = await sembrarBase(db);
+  const compraId = await registrarCompra(db, {
+    cuentaId,
+    transaccionId: 'tx-revocar',
+    pasarela: 'stripe',
+    importeCentimos: 1990,
+    email: 'comprador@example.com',
+  });
+  await concederAccesoGuia(db, { cuentaId, guiaId, compraId });
+  await revocarAccesoGuia(db, { cuentaId, guiaId });
+  assert.equal(await cuentaTieneAccesoGuia(db, cuentaId, guiaId), false);
+  assert.equal((await listarComprasAdmin(db)).total, 1);
+});
+
 test('una transacción repetida no se registra dos veces', async () => {
   const db = crearBase();
-  const { usuarioId } = await sembrarBase(db);
-  const compra = { usuarioId, transaccionId: 'tx-duplicada', pasarela: 'manual', monto: 5 };
+  const { cuentaId } = await sembrarBase(db);
+  const compra = {
+    cuentaId,
+    transaccionId: 'tx-duplicada',
+    pasarela: 'manual',
+    importeCentimos: 500,
+    email: 'comprador@example.com',
+  };
   await registrarCompra(db, compra);
   await assert.rejects(() => registrarCompra(db, compra));
   assert.equal((await listarComprasAdmin(db)).total, 1);

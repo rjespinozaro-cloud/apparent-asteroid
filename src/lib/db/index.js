@@ -80,12 +80,21 @@ export {
 
 export {
   concederAccesoGuia,
-  listarAccesosUsuario,
+  cuentaTieneAccesoGuia,
+  listarAccesosCuenta,
   listarComprasAdmin,
   metricasVentasAdmin,
   registrarCompra,
-  usuarioTieneAccesoGuia,
+  revocarAccesoGuia,
 } from './compras.js';
+
+export {
+  anonimizarCuenta,
+  buscarCuentaPorEmail,
+  cambiarEstadoCuenta,
+  crearCuenta,
+  obtenerCuentaPorId,
+} from './cuentas.js';
 
 export {
   desmarcarGuiaCompletada,
