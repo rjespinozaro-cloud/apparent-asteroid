@@ -204,3 +204,38 @@ se revoca.
 - [ ] Decidir las cuatro questions del apartado 6
 - [ ] Escribir `migrations/0009_compradores.sql` con el SQL aprobado
 - [ ] Actualizar el código y las pruebas
+
+---
+
+## 8. Implementado (2026-10-20)
+
+Decisiones tomadas al validar el diseño:
+
+| Decisión | Valor |
+|---|---|
+| Identidad del comprador | Solo correo, sin contraseña (fase 1). El acceso personal llegará con enlace mágico en la fase 2 |
+| Baja del comprador | Se revocan sus accesos y **la venta se conserva** con la copia congelada del correo y el nombre |
+| Fase 2 (área del alumno) | Fuera de este bloque: `progreso_rutas`, `guias_completadas` y `favoritos` siguen apuntando a `usuarios` |
+| Nombre de la tabla | `cuentas` |
+
+Ficheros:
+
+- `migrations/0009_compradores.sql` — el SQL de este documento, con la guarda
+  que aborta si ya hay ventas o accesos.
+- `src/lib/db/cuentas.js` *(nuevo)* — `crearCuenta`, `buscarCuentaPorEmail`,
+  `obtenerCuentaPorId`, `cambiarEstadoCuenta`, `anonimizarCuenta`.
+- `src/lib/db/compras.js` — `registrarCompra` con `importeCentimos` y copia
+  congelada, `concederAccesoGuia`/`revocarAccesoGuia`, `cuentaTieneAccesoGuia`,
+  `listarAccesosCuenta`, `listarComprasAdmin` y `metricasVentasAdmin` sumando
+  en céntimos.
+- `src/pages/admin/ventas.astro` — la columna «Usuario» pasa a «Comprador»
+  (correo + nombre congelados) y el importe se convierte de céntimos a euros.
+- `tests/plataforma.test.js` — esquema con 0009 y pruebas nuevas: el importe
+  se guarda en céntimos enteros, **dar de baja la cuenta revoca el acceso pero
+  conserva la venta** y revocar un acceso deja la venta intacta.
+- `tests/d1.test.js` — el esquema de prueba incluye 0006 y 0009.
+
+Estado: `npm run check` → 0 errores · `npm test` → **121/121** · build normal y
+de Pages correctos. La migración `0009` está aplicada en la **D1 local**; en la
+remota no se ha aplicado (queda pendiente de tu confirmación, junto con el
+resto de migraciones futuras).

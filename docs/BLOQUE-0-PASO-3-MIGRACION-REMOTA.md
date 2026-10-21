@@ -150,3 +150,70 @@ Las migraciones van **antes** que el despliegue: el código las lee.
 - [ ] Ejecutar `migrations apply --remote` (3.3)
 - [ ] Ejecutar la verificación (3.4)
 - [ ] Decidir si el despliegue es desde `hotfix-editor` o desde `main`
+
+---
+
+## 7. Ejecutado (2026-10-20, con confirmación)
+
+### 7.1 Revisión desplegada
+
+```bash
+npx wrangler deployments list --name ciberguias
+```
+
+```
+Created: 2026-10-01T14:16:05.325Z  Version 81f3e88e-…  Source: Upload
+Created: 2026-10-01T14:16:05.977Z  Version c67b9cdd-…  Source: Secret Change
+```
+
+**Solo hay dos despliegues, ambos del 2026-10-01.** El Worker de producción va
+tres semanas por detrás del repositorio: confirma que ni el fix de permisos ni
+el módulo de pago están desplegados.
+
+### 7.2 Respaldo
+
+```bash
+npx wrangler d1 export ciberguias --remote --output /tmp/opencode/respaldo-d1-20261020-1859.sql
+```
+
+11 KB, 12 `CREATE TABLE`, con `d1_migrations` 0001-0005, el usuario `joanix` y
+las 2 guías. Se guarda **fuera del repositorio** (contiene el hash y la sal
+del admin).
+
+Dato relevante que salió del propio respaldo: en la base remota
+`guias.enlace_compra` ya era `NULL`. El enlace al alta OAuth de Stripe
+**solo estaba en la copia local**, que ya quedó limpia en el Paso 2.
+
+### 7.3 Migración aplicada
+
+```bash
+npx wrangler d1 migrations apply ciberguias --remote
+```
+
+```
+0006_expansion_plataforma.sql ✅
+0007_pago_guias.sql             ✅
+0008_normalizar_roles.sql       ✅
+```
+
+### 7.4 Verificación
+
+```
+migraciones: 0001 … 0008
+columnas guias: …, destacada, lectura_min, precio_centimos, moneda, pasarela
+tablas nuevas: accesos_guias, compras, favoritos, guias_completadas,
+               metricas_visitas, progreso_rutas
+guía 1 blue/detectar-escaneo-nmap | gratis | publicada 1 | 0 EUR | sin pasarela | sin enlace
+guía 2 red/nmap-basico            | pago   | publicada 1 | 0 EUR | sin pasarela | sin enlace
+admins activos: 1
+guías: 2 (datos intactos)
+```
+
+**La base remota está ya en el esquema que necesita `main`.** Falta el
+despliegue del código (no realizado: sigue en pausa por decisión propia).
+
+### 7.5 Rollback disponible
+
+```bash
+npx wrangler d1 execute ciberguias --remote --file /tmp/opencode/respaldo-d1-20261020-1859.sql
+```
