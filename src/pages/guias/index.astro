@@ -25,17 +25,20 @@ const acceso = opcion(Astro.url.searchParams.get('acceso'), ['gratis', 'pago']);
 const pagina = Math.max(1, Number(Astro.url.searchParams.get('pagina')) || 1);
 const POR_PAGINA = 12;
 
-const [resultado, herramientas, conteo, recientes] = await Promise.all([
+const [resultado, herramientas, conteo, conteoGlobal, recientes] = await Promise.all([
   listarGuiasPublicadas(database, { equipo, nivel, herramienta, acceso, pagina, porPagina: POR_PAGINA }),
   listarHerramientasPublicadas(database),
   contarGuiasPublicadas(database, { equipo, nivel, herramienta, acceso }),
+  // Los contadores de los chips son globales: si dependieran del filtro
+  // activo, un chip podía mostrar «0» para algo que sí tiene guías.
+  contarGuiasPublicadas(database),
   listarGuiasDestacadas(database, 3),
 ]);
 
 const { guias, total, pagina: paginaActual, paginas } = resultado;
 const hayFiltros = Boolean(equipo || nivel || herramienta || acceso);
 const tienda = tiendaActiva(env);
-const premium = tienda ? conteo.total - conteo.gratis : 0;
+const premium = tienda ? conteoGlobal.total - conteoGlobal.gratis : 0;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 const estadisticas = !hayFiltros
   ? [
@@ -108,9 +111,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     </p>
 
     <ul class="chips-rapidos" aria-label="Filtros rápidos">
-      <li><a class="chip-filtro" data-equipo="red" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED <span class="chip-filtro__count">{conteo.red}</span></a></li>
-      <li><a class="chip-filtro" data-equipo="blue" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE <span class="chip-filtro__count">{conteo.blue}</span></a></li>
-      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-current={acceso === 'gratis' ? 'true' : undefined}>Gratis <span class="chip-filtro__count">{conteo.gratis}</span></a></li>
+      <li><a class="chip-filtro" data-equipo="red" href={enlaceCon({ equipo: equipo === 'red' ? '' : 'red', pagina: 1 })} aria-current={equipo === 'red' ? 'true' : undefined}>RED <span class="chip-filtro__count">{conteoGlobal.red}</span></a></li>
+      <li><a class="chip-filtro" data-equipo="blue" href={enlaceCon({ equipo: equipo === 'blue' ? '' : 'blue', pagina: 1 })} aria-current={equipo === 'blue' ? 'true' : undefined}>BLUE <span class="chip-filtro__count">{conteoGlobal.blue}</span></a></li>
+      <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'gratis' ? '' : 'gratis', pagina: 1 })} aria-current={acceso === 'gratis' ? 'true' : undefined}>Gratis <span class="chip-filtro__count">{conteoGlobal.gratis}</span></a></li>
       {tienda && <li><a class="chip-filtro" href={enlaceCon({ acceso: acceso === 'pago' ? '' : 'pago', pagina: 1 })} aria-current={acceso === 'pago' ? 'true' : undefined}>Premium <span class="chip-filtro__count">{premium}</span></a></li>}
     </ul>
 

@@ -317,24 +317,24 @@
 .doc-callout {
   margin-block: 1rem;
   padding: 0.85rem 1rem;
-  border-left: 3px solid var(--violet-500);
-  border-radius: 0 var(--radio-s) var(--radio-s) 0;
+  border: 1px solid rgb(139 92 246 / 0.35);
+  border-radius: var(--radio-s);
   background: rgb(139 92 246 / 0.1);
   color: var(--tinta);
 }
 
 .doc-callout--violeta {
-  border-left-color: var(--violet-500);
+  border-color: rgb(139 92 246 / 0.35);
   background: rgb(139 92 246 / 0.1);
 }
 
 .doc-callout--rojo {
-  border-left-color: var(--red);
+  border-color: rgb(255 77 109 / 0.35);
   background: rgb(255 77 109 / 0.1);
 }
 
 .doc-callout--azul {
-  border-left-color: var(--blue);
+  border-color: rgb(77 124 255 / 0.35);
   background: rgb(77 124 255 / 0.1);
 }
 

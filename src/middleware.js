@@ -1,5 +1,5 @@
-import { getDatabase, contarUsuarios, registrarVisita } from './lib/db.js';
-import { obtenerSesion } from './lib/auth.js';
+import { getDatabase, contarUsuarios, purgarSesionesCaducadas, registrarVisita } from './lib/db.js';
+import { obtenerSesion, purgarIntentos } from './lib/auth.js';
 import { env } from 'cloudflare:workers';
 
 const RUTAS_LIBRES = new Set(['/admin/login', '/admin/instalar']);
@@ -74,6 +74,33 @@ function registrarMetricaSiProcede(context, request, response, ruta) {
 
   try {
     const tarea = registrarVisita(getDatabase(env), visita).catch(() => {});
+    const cfContext = context.locals?.cfContext;
+    if (typeof cfContext?.waitUntil === 'function') cfContext.waitUntil(tarea);
+    else tarea.catch(() => {});
+  } catch {
+    // Nunca debe afectar a la respuesta.
+  }
+}
+
+/**
+ * Purga periódica de sesiones caducadas e intentos de login.
+ *
+ * `sesiones` e `intentos_login` solo crecen: nadie las limpiaba. Se hace de
+ * forma práctica: como mucho una vez por hora, en `waitUntil`, para no retrasar
+ * la respuesta ni castigar a D1 con una escritura por petición.
+ */
+let ultimaPurga = 0;
+const PURGA_CADA_MS = 60 * 60 * 1000;
+
+function purgarSiToca(context) {
+  const ahora = Date.now();
+  if (ahora - ultimaPurga < PURGA_CADA_MS) return;
+  ultimaPurga = ahora;
+  try {
+    const database = getDatabase(env);
+    const tarea = purgarSesionesCaducadas(database)
+      .then(() => purgarIntentos(database))
+      .catch(() => {});
     const cfContext = context.locals?.cfContext;
     if (typeof cfContext?.waitUntil === 'function') cfContext.waitUntil(tarea);
     else tarea.catch(() => {});
@@ -177,6 +204,7 @@ export async function onRequest(context, next) {
 
   const response = await next();
   registrarMetricaSiProcede(context, context.request, response, ruta);
+  purgarSiToca(context);
   const segura = cabecerasSeguras(response);
   if (admin || apiAdmin) {
     segura.headers.set('X-Robots-Tag', 'noindex');

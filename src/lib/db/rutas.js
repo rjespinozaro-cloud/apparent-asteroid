@@ -124,16 +124,97 @@ export async function obtenerTipologiaRuta(database, rutaId) {
 }
 
 /**
+ * Tipologías de varias rutas en dos consultas.
+ *
+ * Antes se llamaba a `obtenerTipologiaRuta` una vez por ruta: 1 + 2N consultas.
+ * Ahora los agregados de todos los pasos salen agrupados por ruta y el primer
+ * paso se resuelve con una sola consulta más.
+ * @param {D1Database} database
+ * @param {number[]} rutaIds
+ * @returns {Promise<Map<number, ReturnType<typeof tipologiaVacia>>>}
+ */
+export async function tipologiasRutas(database, rutaIds) {
+  const vacias = new Map();
+  if (!rutaIds.length) return vacias;
+
+  const agregados = await database
+    .prepare(
+      `SELECT p.ruta_id,
+              COUNT(p.id) AS pasos,
+              COALESCE(SUM(CASE WHEN g.equipo = 'red' THEN 1 ELSE 0 END), 0) AS rojas,
+              COALESCE(SUM(CASE WHEN g.equipo = 'blue' THEN 1 ELSE 0 END), 0) AS azules,
+              MAX(CASE g.nivel WHEN 'basico' THEN 0 WHEN 'intermedio' THEN 1 WHEN 'avanzado' THEN 2 ELSE -1 END) AS nivel_max,
+              GROUP_CONCAT(DISTINCT g.herramienta) AS herramientas,
+              SUM(g.lectura_min) AS duracion_min
+       FROM ruta_pasos p
+       LEFT JOIN guias g ON g.id = p.guia_id AND g.publicada = 1
+       WHERE p.ruta_id IN (${rutaIds.map(() => '?').join(', ')})
+       GROUP BY p.ruta_id`,
+    )
+    .bind(...rutaIds)
+    .all();
+
+  const primeros = await database
+    .prepare(
+      `SELECT p.ruta_id, COALESCE(g.titulo, p.nota) AS titulo
+       FROM ruta_pasos p
+       LEFT JOIN guias g ON g.id = p.guia_id AND g.publicada = 1
+       JOIN (
+         SELECT ruta_id, MIN(orden) AS orden FROM ruta_pasos
+         WHERE ruta_id IN (${rutaIds.map(() => '?').join(', ')})
+         GROUP BY ruta_id
+       ) primero ON primero.ruta_id = p.ruta_id AND primero.orden = p.orden`,
+    )
+    .bind(...rutaIds)
+    .all();
+
+  const porRuta = new Map(primeros.results.map((fila) => [Number(fila.ruta_id), fila.titulo]));
+
+  for (const fila of agregados.results ?? []) {
+    vacias.set(Number(fila.ruta_id), construirTipologia(fila, porRuta.get(Number(fila.ruta_id))));
+  }
+  // Las rutas sin pasos se devuelven con la tipología vacía.
+  for (const id of rutaIds) {
+    if (!vacias.has(id)) vacias.set(id, tipologiaVacia());
+  }
+  return vacias;
+}
+
+/** Tipología de una ruta sin pasos publicados. */
+function tipologiaVacia() {
+  return { tipo: null, nivel: null, herramientas: [], duracion_min: null, pasos: 0, primer_paso: null };
+}
+
+/** Convierte una fila agregada en la tipología de la ruta. */
+function construirTipologia(fila, primerPaso) {
+  const pasos = Number(fila?.pasos ?? 0);
+  if (pasos === 0) return tipologiaVacia();
+  const rojas = Number(fila?.rojas ?? 0);
+  const azules = Number(fila?.azules ?? 0);
+  const pasosPublicados = rojas + azules;
+  const niveles = ['basico', 'intermedio', 'avanzado'];
+  const nivelMax = Number(fila?.nivel_max ?? -1);
+  return {
+    tipo: pasosPublicados === 0 ? null : rojas > 0 && azules > 0 ? 'purple' : rojas > 0 ? 'red' : 'blue',
+    nivel: pasosPublicados === 0 ? null : niveles[nivelMax] ?? null,
+    herramientas: String(fila?.herramientas ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+    duracion_min: fila?.duracion_min === null || fila?.duracion_min === undefined ? null : Number(fila.duracion_min),
+    pasos,
+    primer_paso: primerPaso ? String(primerPaso) : null,
+  };
+}
+
+/**
  * Rutas con su tipología lista para tarjetas.
  * @param {D1Database} database
  */
 export async function listarRutasConTipologia(database, { destacadas = false, publicadas = true } = {}) {
   const rutas = await listarRutas(database, { publicadas, destacadas });
-  const fichas = [];
-  for (const ruta of rutas) {
-    fichas.push({ ruta, tipologia: await obtenerTipologiaRuta(database, ruta.id) });
-  }
-  return fichas;
+  const tipologias = await tipologiasRutas(database, rutas.map((ruta) => ruta.id));
+  return rutas.map((ruta) => ({
+    ruta,
+    tipologia: tipologias.get(ruta.id) ?? tipologiaVacia(),
+  }));
 }
 
 /**

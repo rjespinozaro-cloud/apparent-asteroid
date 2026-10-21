@@ -28,6 +28,7 @@ export {
   listarHerramientasAdmin,
   listarHerramientasPublicadas,
   listarSlugsGuiasPago,
+  listarSlugsGuiasPublicadas,
   listarUltimasGuias,
   obtenerEstadisticasAdmin,
   obtenerGuiaPorId,

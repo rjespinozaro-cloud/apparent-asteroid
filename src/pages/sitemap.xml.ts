@@ -1,4 +1,4 @@
-import { getDatabase, listarGuiasPublicadas, listarHerramientasPublicadas, listarRutas } from '../lib/db.js';
+import { getDatabase, listarHerramientasPublicadas, listarRutas, listarSlugsGuiasPublicadas } from '../lib/db.js';
 import { env } from 'cloudflare:workers';
 
 import type { APIContext } from 'astro';
@@ -44,8 +44,10 @@ export async function GET({ site, url: requestUrl }: APIContext) {
   const hoy = new Date().toISOString().slice(0, 10);
 
   // Solo contenido publicado: el sitemap nunca debe filtrar borradores.
-  const [guias, herramientas, rutas] = await Promise.all([
-    listarGuiasPublicadas(database, { porPagina: 48 }),
+  // El sitemap incluye TODAS las guías publicadas: `listarGuiasPublicadas`
+  // pagina con un máximo de 48 y truncaría el catálogo en silencio.
+  const [slugs, herramientas, rutas] = await Promise.all([
+    listarSlugsGuiasPublicadas(database),
     listarHerramientasPublicadas(database),
     listarRutas(database, { publicadas: true }),
   ]);
@@ -64,9 +66,9 @@ export async function GET({ site, url: requestUrl }: APIContext) {
       prioridad: '0.7',
       frecuencia: 'weekly',
     })),
-    ...guias.guias.map((fila) => ({
-      loc: rutaCompleta(`/guias/${fila.slug}/`, origen),
-      ultima: String(fila.fecha).slice(0, 10),
+    ...slugs.map((slug) => ({
+      loc: rutaCompleta(`/guias/${slug}/`, origen),
+      ultima: hoy,
       prioridad: '0.8',
       frecuencia: 'monthly',
     })),

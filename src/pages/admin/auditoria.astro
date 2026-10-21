@@ -2,6 +2,7 @@
 import AdminBase from '../../layouts/AdminBase.astro';
 import { getDatabase, listarAuditoria, listarFacetasAuditoria } from '../../lib/db.js';
 import { esAdmin } from '../../lib/roles.js';
+import { formatearFechaHora } from '../../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -114,7 +115,7 @@ const enlacePagina = (pagina: number) => {
             {registros.map((registro: (typeof registros)[number]) => (
               <tr>
                 <td>{registro.id}</td>
-                <td><time datetime={registro.fecha}>{registro.fecha}</time></td>
+                <td><time datetime={registro.fecha}>{formatearFechaHora(registro.fecha)}</time></td>
                 <td>{registro.usuario ?? 'sistema'}</td>
                 <td><code>{registro.accion}</code></td>
                 <td><code>{registro.objeto}</code></td>

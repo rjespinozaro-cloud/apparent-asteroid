@@ -2,7 +2,7 @@
 import Guia from '../../layouts/Guia.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
-import { getDatabase, guiasRelacionadas, guiasVecinas, listarGuiasPublicadas, obtenerGuiaPorSlug } from '../../lib/db.js';
+import { getDatabase, guiasRelacionadas, guiasVecinas, listarSlugsGuiasPublicadas, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
 import { urlCheckout } from '../../lib/pago.js';
 import { tiendaActiva } from '../../lib/tienda.js';
@@ -18,7 +18,8 @@ export const prerender = false;
  */
 export async function getStaticPaths() {
   const database = getDatabase(env);
-  const { guias } = await listarGuiasPublicadas(database, { porPagina: 48 });
+  // Todas las publicadas: paginar con 48 truncaría el catálogo en el build.
+  const guias = (await listarSlugsGuiasPublicadas(database)).map((slug) => ({ slug }));
   return guias.map((fila) => ({ params: { slug: fila.slug } }));
 }
 

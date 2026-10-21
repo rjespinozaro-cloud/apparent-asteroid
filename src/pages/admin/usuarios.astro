@@ -2,6 +2,7 @@
 import AdminBase from '../../layouts/AdminBase.astro';
 import { getDatabase, listarUsuarios } from '../../lib/db.js';
 import { esAdmin, rolEsAdmin } from '../../lib/roles.js';
+import { formatearFechaHora } from '../../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
 
 export const prerender = false;
@@ -32,7 +33,7 @@ const totalAdmins = usuarios.filter((u) => rolEsAdmin(u.rol) && u.activo).length
       </div>
     </header>
 
-    <p class="admin-editor__estado" role="status" data-mensaje hidden></p>
+    <p class="admin-editor__estado" role="alert" data-mensaje hidden></p>
 
     <section class="admin-panel">
       <header class="admin-panel__header">
@@ -107,7 +108,7 @@ const totalAdmins = usuarios.filter((u) => rolEsAdmin(u.rol) && u.activo).length
                     {fila.activo ? 'activo → desactivar' : 'inactivo → activar'}
                   </button>
                 </td>
-                <td>{fila.creado_en}</td>
+                <td>{formatearFechaHora(fila.creado_en)}</td>
                 <td class="admin-table__actions">
                   <button type="button" class="admin-boton admin-boton--plano" data-accion="password" data-id={fila.id}>Resetear contraseña</button>
                   {fila.id !== miId && !(rolEsAdmin(fila.rol) && fila.activo && totalAdmins <= 1) && (

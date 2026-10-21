@@ -132,6 +132,39 @@ export async function listarSlugsGuiasPago(database) {
  * y la consulta devuelve solo columnas ligeras (nunca `cuerpo_md`).
  * @returns {Promise<{guias: GuiaResumen[], total: number, pagina: number, paginas: number}>}
  */
+/**
+ * Todos los slugs de guías publicadas, sin tope.
+ *
+ * `listarGuiasPublicadas` pagina con un máximo de 48 por página: usarla para
+ * el sitemap o para el build de Pages truncaría el catálogo en silencio. Esta
+ * función recorre todas las páginas y devuelve solo el slug.
+ * @param {D1Database} database
+ * @returns {Promise<string[]>}
+ */
+export async function listarSlugsGuiasPublicadas(database) {
+  const porPagina = 48;
+  const slugs = [];
+  let pagina = 1;
+  let total = Infinity;
+  while (slugs.length < total) {
+    const resultado = await database
+      .prepare(
+        `SELECT slug FROM guias WHERE publicada = 1
+         ORDER BY fecha DESC, id DESC
+         LIMIT ? OFFSET ?`,
+      )
+      .bind(porPagina, (pagina - 1) * porPagina)
+      .all();
+    const filas = resultado.results ?? [];
+    if (filas.length === 0) break;
+    slugs.push(...filas.map((fila) => String(fila.slug)));
+    total = await database.prepare('SELECT COUNT(*) AS total FROM guias WHERE publicada = 1').first()
+      .then((fila) => Number(fila?.total ?? 0));
+    pagina += 1;
+  }
+  return slugs;
+}
+
 export async function listarGuiasPublicadas(database, filtros = {}) {
   const condiciones = ['publicada = 1'];
   const valores = [];
@@ -665,7 +698,8 @@ export async function cambiarDestacadaGuia(database, id, destacada) {
  */
 export async function listarGuiasCamino(database) {
   const resultado = await database.prepare(
-    `SELECT slug, titulo, herramienta, equipo, nivel, acceso, guia_pareja, fecha, cuerpo_md
+    `SELECT slug, titulo, herramienta, equipo, nivel, acceso, guia_pareja, fecha,
+            substr(cuerpo_md, 1, 2000) AS cuerpo_md
      FROM guias WHERE publicada = 1
      ORDER BY fecha ASC, id ASC`,
   ).all();
