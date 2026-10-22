@@ -61,73 +61,144 @@
   }
 }
 
-.planeta__escenario {
-  /* Las estrellas solo tienen sentido sobre el fondo oscuro. El script lee
-     esta propiedad; en claro vale 0 y no dibuja puntos. */
-  --planeta-estrellas: 1;
+/* Planeta v2 ---------------------------------------------------------------
+   La escena es siempre oscura, también en tema claro. El canvas lee los
+   colores de --pl-* en `.planeta-escena`; el resto de la página sigue con
+   los tokens del sitio. */
+
+:root {
+  --pl-ocean-a: #0B1E5A; --pl-ocean-b: #030720;
+  --pl-land: #0F3B6B; --pl-coast: #2FD0FF;
+  --pl-city-warm: #FFC857; --pl-city-cool: #5FE7FF;
+  --pl-circuit: #37E3FF; --pl-circuit-alt: #C06BFF;
+  --pl-atmo: #5AA8FF; --pl-glow: #3B82F6;
+  --pl-nebula-1: #1E2A78; --pl-nebula-2: #5B1F7A;
+  --pl-blue: #5B9DFF; --pl-red: #FF5470; --pl-purple: #B070FF;
+  --pl-line: #2A3568; --pl-text: #E8ECFF;
+}
+
+.planeta-escena {
+  /* Los colores de equipo salen de los tokens del sitio. */
+  --pl-blue: var(--blue);
+  --pl-red: var(--red);
+  --pl-purple: var(--purple);
+  position: relative; isolation: isolate; overflow: hidden;
   min-width: 0;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-l);
-  background:
-    radial-gradient(ellipse at 50% 45%, rgb(77 124 255 / 0.16), transparent 64%),
-    var(--papel);
-  /* Sin `min-height`: con `aspect-ratio`, un alto mínimo ensancha el
-     escenario y desborda la columna en móvil. */
+  border: 1px solid var(--pl-line); border-radius: 20px; color: var(--pl-text);
   aspect-ratio: 4 / 3;
   touch-action: manipulation;
+  background:
+    radial-gradient(60% 50% at 50% 50%, color-mix(in srgb, var(--pl-glow) 24%, transparent), transparent 70%),
+    radial-gradient(40% 35% at 14% 18%, color-mix(in srgb, var(--pl-nebula-2) 32%, transparent), transparent 70%),
+    radial-gradient(45% 40% at 86% 82%, color-mix(in srgb, var(--pl-nebula-1) 42%, transparent), transparent 70%),
+    #040716;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--pl-glow) 18%, transparent),
+    0 30px 80px -30px color-mix(in srgb, var(--pl-glow) 50%, transparent);
 }
+
+/* En claro los tokens de equipo se oscurecen; la escena no. */
+@media (prefers-color-scheme: light) {
+  .planeta-escena {
+    --pl-blue: #4D7CFF;
+    --pl-red: #FF4D6D;
+    --pl-purple: #A855F7;
+  }
+}
+
+/* Rejilla HUD tenue */
+.planeta-escena::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .18;
+  background-image:
+    linear-gradient(var(--pl-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pl-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 75%);
+          mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 75%);
+}
+
+/* Líneas de escaneo muy sutiles */
+.planeta-escena::after {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .35;
+  background: repeating-linear-gradient(0deg, rgb(255 255 255 / .03) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+
+.planeta-escena canvas {
+  position: relative; z-index: 1; display: block;
+  width: 100%; max-width: 100%; height: 100%;
+}
+
+/* Leyenda superior */
+.planeta-leyenda {
+  position: absolute; top: 12px; left: 12px; z-index: 3;
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 0;
+}
+.planeta-leyenda span {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px;
+  font-size: .78rem; color: var(--pl-text);
+  background: color-mix(in srgb, #0A1030 70%, transparent); border: 1px solid var(--pl-line);
+}
+.planeta-leyenda i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+.planeta-leyenda .eq-blue { --c: var(--pl-blue); }
+.planeta-leyenda .eq-red { --c: var(--pl-red); }
+.planeta-leyenda .eq-purple { --c: var(--pl-purple); }
+
+/* Ficha flotante de la herramienta seleccionada */
+.planeta-ficha {
+  position: absolute; left: 16px; bottom: 16px; z-index: 3;
+  pointer-events: none;
+  max-width: min(280px, calc(100% - 32px)); padding: 10px 14px; border-radius: 12px;
+  font-size: .88rem; line-height: 1.4; color: var(--pl-text);
+  background: color-mix(in srgb, #0A1030 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--eq, var(--pl-glow)) 55%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 0 24px -6px var(--eq, var(--pl-glow));
+}
+.planeta-ficha[hidden] { display: none; }
+.planeta-ficha strong { display: block; font-size: 1rem; }
+.planeta-ficha[data-equipo='blue'] { --eq: var(--pl-blue); }
+.planeta-ficha[data-equipo='red'] { --eq: var(--pl-red); }
+.planeta-ficha[data-equipo='purple'] { --eq: var(--pl-purple); }
+
+/* Botón de descarga */
+.planeta-descargar {
+  position: absolute; right: 12px; bottom: 12px; z-index: 3; cursor: pointer;
+  padding: 6px 12px; border-radius: 99px; font: inherit; font-size: .82rem; color: var(--pl-text);
+  background: color-mix(in srgb, #0A1030 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pl-glow) 50%, transparent);
+}
+.planeta-descargar:hover { box-shadow: 0 0 18px -4px var(--pl-glow); }
+.planeta-descargar:focus-visible { outline: 2px solid var(--pl-text); outline-offset: 2px; }
+
+/* Medidor de desarrollo (?planeta-medir solo en `astro dev`) */
+.planeta-hud {
+  position: absolute; top: 12px; right: 12px; z-index: 3; margin: 0; pointer-events: none;
+  padding: 4px 8px; border-radius: 8px; white-space: pre;
+  font: 600 .7rem/1.4 var(--fuente-mono, ui-monospace, monospace);
+  color: var(--pl-text); background: rgb(4 7 22 / .82); border: 1px solid var(--pl-line);
+}
+.planeta-hud[hidden] { display: none; }
+
+/* Fila seleccionada en la lista (el panel sigue los tokens del sitio) */
+.planeta-lista [aria-current='true'] {
+  box-shadow: inset 3px 0 0 var(--c, var(--pl-glow));
+  background: color-mix(in srgb, var(--c, var(--pl-glow)) 10%, transparent);
+}
+.planeta-fila[data-equipo='blue'] { --c: var(--blue); }
+.planeta-fila[data-equipo='red'] { --c: var(--red); }
+.planeta-fila[data-equipo='purple'] { --c: var(--purple); }
 
 @media (max-width: 560px) {
-  .planeta__escenario {
-    aspect-ratio: 1 / 1;
-  }
+  .planeta-escena { aspect-ratio: 1 / 1; border-radius: 14px; }
+  .planeta-leyenda { max-width: calc(100% - 128px); }
+  .planeta-ficha { left: 8px; right: 8px; bottom: 8px; max-width: none; }
+  .planeta-descargar { top: 12px; bottom: auto; }
+  .planeta-hud { top: 44px; right: 8px; }
 }
 
-@media (prefers-color-scheme: light) {
-  .planeta__escenario {
-    --planeta-estrellas: 0;
-  }
-}
-
-.planeta__canvas {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-}
-
-.planeta__leyenda {
-  position: absolute;
-  inset-inline: var(--espacio-s);
-  inset-block-end: var(--espacio-xs);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espacio-s);
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--tinta-suave);
-  pointer-events: none;
-}
-
-.planeta__leyenda span::before {
-  content: '';
-  display: inline-block;
-  width: 0.55rem;
-  height: 0.55rem;
-  margin-inline-end: 0.3rem;
-  border-radius: 50%;
-  background: var(--blue);
-  vertical-align: baseline;
-}
-
-.planeta__leyenda [data-equipo='red']::before {
-  background: var(--red);
-}
-
-.planeta__leyenda [data-equipo='purple']::before {
-  background: var(--purple);
+@media (prefers-reduced-motion: reduce) {
+  .planeta-escena *, .planeta-escena { transition: none; animation: none; }
 }
 
 /* Panel ------------------------------------------------------------------- */

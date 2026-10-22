@@ -17,6 +17,9 @@
  *     valores dinámicos van por CSSOM (`element.style.width`) y por clases.
  */
 import { etiquetaNivel, nivelHerramienta, resumenEquipos, validarNivelHerramienta } from '../lib/perfil.js';
+import { INCLINACION } from './planeta-proyeccion.js';
+import { crearEscena } from './planeta-escena.js';
+import { crearTextura } from './planeta-textura.js';
 
 /** Clave de almacenamiento. Lleva versión para poder migrar el formato. */
 const CLAVE = 'joanix:perfil:v1';
@@ -29,6 +32,17 @@ const EQUIPOS = ['blue', 'red', 'purple'];
 /** Guiones reutilizados: `setLineDash` no recibe un array nuevo en cada fotograma. */
 const GUION_ORBITA = [2, 6];
 const GUION_RAYO = [3, 7];
+/** Vueltas por segundo del planeta. */
+const GIRO_PLANETA = 0.012;
+const LADO_MIN = 256;
+const LADO_MAX = 640;
+const MUESTRAS = 120;
+
+/** @param {number} t segundos */
+function giroPlaneta(t) {
+  const giro = (t * GIRO_PLANETA) % 1;
+  return giro < 0 ? giro + 1 : giro;
+}
 
 const raiz = document.querySelector('[data-planeta]');
 if (raiz instanceof HTMLElement) iniciar(raiz);
@@ -37,6 +51,10 @@ if (raiz instanceof HTMLElement) iniciar(raiz);
  * @typedef {{ slug: string, nombre: string, equipo: 'red'|'blue'|'purple'|null, guias: number,
  *             ruta: { slug: string, titulo: string } | null }} Herramienta
  */
+
+/** @typedef {{ halo: CanvasGradient, esfera: CanvasGradient, sombra: CanvasGradient }} GradientesV1 */
+/** @typedef {{ cx: number, cy: number, R: number, halo: CanvasGradient,
+ *             terminador: CanvasGradient, curvatura: CanvasGradient, borde: CanvasGradient }} Iluminacion */
 
 /** @param {HTMLElement} raiz */
 function iniciar(raiz) {
@@ -47,8 +65,13 @@ function iniciar(raiz) {
   const contexto = canvas instanceof HTMLCanvasElement ? canvas.getContext('2d') : null;
   if (!(canvas instanceof HTMLCanvasElement) || !contexto) return;
 
+  const escenaEl = canvas.closest('.planeta-escena');
   const detalle = raiz.querySelector('[data-planeta-detalle]');
   const aviso = raiz.querySelector('[data-planeta-aviso]');
+  const ficha = raiz.querySelector('[data-planeta-ficha]');
+  const fichaNombre = raiz.querySelector('[data-ficha-nombre]');
+  const fichaDetalle = raiz.querySelector('[data-ficha-detalle]');
+  const hud = raiz.querySelector('[data-planeta-hud]');
   const botonPng = raiz.querySelector('[data-planeta-png]');
   const general = raiz.querySelector('[data-planeta-general]');
   const entradas = /** @type {HTMLInputElement[]} */ ([...raiz.querySelectorAll('[data-nivel]')]);
@@ -57,6 +80,22 @@ function iniciar(raiz) {
 
   /** Niveles guardados (autoevaluación). @type {Map<string, number>} */
   const niveles = new Map();
+  /** @type {ReturnType<typeof crearEscena> | null} */
+  let v2 = null;
+  /** @type {Iluminacion | null} */
+  let iluminacion = null;
+  /** @type {{ pixeles: Uint32Array, anchoBase: number, alto: number,
+   *          hubs: Array<{ lon: number, lat: number, principal: boolean }>, ms: number } | null} */
+  let texturaDatos = null;
+  /** @type {ReturnType<typeof crearTextura> | null} */
+  let generador = null;
+  let msTextura = 0;
+  let msTrozo = 0;
+  let escenaProgramada = false;
+  let temporizadorLado = 0;
+  const medidas = new Float32Array(MUESTRAS);
+  let medidasTotal = 0;
+  let decidido = false;
   let seleccionSlug = null;
   let seleccionIndice = null;
   let resaltado = null;
@@ -146,7 +185,15 @@ function iniciar(raiz) {
 
   // ── Tema y geometría ─────────────────────────────────────────────────────
 
-  let colores = { blue: '#4D7CFF', red: '#FF4D6D', purple: '#A855F7', texto: '#E8EAF6', fondo: '#07080F' };
+  let colores = {
+    blue: '#5B9DFF', red: '#FF5470', purple: '#B070FF',
+    texto: '#E8ECFF', fondo: '#040716',
+    oceanoA: '#0B1E5A', oceanoB: '#030720', tierra: '#0F3B6B', costa: '#2FD0FF',
+    ciudadCalida: '#FFC857', ciudadFria: '#5FE7FF',
+    circuito: '#37E3FF', circuitoAlt: '#C06BFF',
+    atmo: '#5AA8FF', glow: '#3B82F6', nebula1: '#1E2A78', nebula2: '#5B1F7A',
+    linea: '#2A3568',
+  };
   let estrellas = true;
   let fuente = 'system-ui, sans-serif';
   let fuenteEtiqueta = '12px system-ui, sans-serif';
@@ -159,19 +206,33 @@ function iniciar(raiz) {
   let gradientes = crearGradientes(contexto);
 
   function leerTema() {
-    // Se leen del canvas: los tokens de :root bajan hasta aquí y
-    // `--planeta-estrellas` se define en el escenario, del que el canvas es hijo.
-    const estilos = getComputedStyle(canvas);
+    // La escena es siempre oscura: los colores se leen de `.planeta-escena`
+    // (donde viven los alias --pl-*), no de documentElement.
+    const estilos = getComputedStyle(escenaEl ?? canvas);
     /** @param {string} nombre @param {string} alterno */
     const token = (nombre, alterno) => estilos.getPropertyValue(nombre).trim() || alterno;
     colores = {
-      blue: token('--blue', '#4D7CFF'),
-      red: token('--red', '#FF4D6D'),
-      purple: token('--purple', '#A855F7'),
-      texto: token('--tinta', '#E8EAF6'),
-      fondo: token('--papel', '#07080F'),
+      blue: token('--pl-blue', '#5B9DFF'),
+      red: token('--pl-red', '#FF5470'),
+      purple: token('--pl-purple', '#B070FF'),
+      texto: token('--pl-text', '#E8ECFF'),
+      fondo: '#040716',
+      oceanoA: token('--pl-ocean-a', '#0B1E5A'),
+      oceanoB: token('--pl-ocean-b', '#030720'),
+      tierra: token('--pl-land', '#0F3B6B'),
+      costa: token('--pl-coast', '#2FD0FF'),
+      ciudadCalida: token('--pl-city-warm', '#FFC857'),
+      ciudadFria: token('--pl-city-cool', '#5FE7FF'),
+      circuito: token('--pl-circuit', '#37E3FF'),
+      circuitoAlt: token('--pl-circuit-alt', '#C06BFF'),
+      atmo: token('--pl-atmo', '#5AA8FF'),
+      glow: token('--pl-glow', '#3B82F6'),
+      nebula1: token('--pl-nebula-1', '#1E2A78'),
+      nebula2: token('--pl-nebula-2', '#5B1F7A'),
+      linea: token('--pl-line', '#2A3568'),
     };
-    estrellas = Number(estilos.getPropertyValue('--planeta-estrellas') || '1') > 0;
+    // La escena siempre es oscura; las estrellas no dependen del tema.
+    estrellas = true;
     fuente = getComputedStyle(document.body).fontFamily || 'system-ui, sans-serif';
     fuenteEtiqueta = `12px ${fuente}`;
   }
@@ -292,14 +353,17 @@ function iniciar(raiz) {
    * @param {number} t
    * @param {CanvasRenderingContext2D} destino
    * @param {number} escala
-   * @param {{ halo: CanvasGradient, esfera: CanvasGradient, sombra: CanvasGradient }} degradados
    * @param {boolean} exportando
+   * @param {Iluminacion | GradientesV1 | null} ilum
    */
-  function dibujar(t, destino, escala, degradados, exportando) {
+  function dibujar(t, destino, escala, exportando, ilum) {
     destino.setTransform(escala, 0, 0, escala, 0, 0);
     if (exportando) {
-      destino.fillStyle = colores.fondo;
-      destino.fillRect(0, 0, W, H);
+      if (v2) v2.fondoExport(destino, W, H);
+      else {
+        destino.fillStyle = colores.fondo;
+        destino.fillRect(0, 0, W, H);
+      }
     } else {
       destino.clearRect(0, 0, W, H);
     }
@@ -307,11 +371,23 @@ function iniciar(raiz) {
     posicionar(t);
 
     if (estrellas) dibujarEstrellas(destino, t);
+    if (v2 && ilum) {
+      const luz = /** @type {Iluminacion} */ (ilum);
+      v2.dibujarHalo(destino, luz);
+    }
     dibujarOrbitas(destino);
     if (seleccionIndice !== null) dibujarRayos(destino);
 
     for (const cuerpo of cuerpos) if (cuerpo.d < 0) dibujarCuerpo(destino, cuerpo);
-    dibujarPlaneta(destino, degradados, t);
+    if (v2 && ilum) {
+      const luz = /** @type {Iluminacion} */ (ilum);
+      const giro = giroPlaneta(t);
+      v2.dibujarDisco(destino, luz, giro);
+      v2.dibujarLimbo(destino, t, reducido);
+      v2.dibujarFlujos(destino, t, giro, reducido);
+    } else {
+      dibujarPlanetaV1(destino, /** @type {GradientesV1} */ (ilum ?? gradientes), t);
+    }
     for (const cuerpo of cuerpos) if (cuerpo.d >= 0) dibujarCuerpo(destino, cuerpo);
     dibujarEtiquetas(destino);
   }
@@ -369,8 +445,14 @@ function iniciar(raiz) {
     destino.restore();
   }
 
-  /** @param {CanvasRenderingContext2D} destino @param {number} t */
-  function dibujarPlaneta(destino, degradados, t) {
+  /**
+   * Planeta anterior (rejilla y puntos). Se mantiene mientras la textura se
+   * genera y como respaldo si el navegador no puede crearla.
+   * @param {CanvasRenderingContext2D} destino
+   * @param {GradientesV1} degradados
+   * @param {number} t
+   */
+  function dibujarPlanetaV1(destino, degradados, t) {
     destino.fillStyle = degradados.halo;
     destino.beginPath();
     destino.arc(cx, cy, R * 1.35, 0, Math.PI * 2);
@@ -428,7 +510,6 @@ function iniciar(raiz) {
    *           s: number, d: number, nivel: number }} cuerpo
    */
   function dibujarCuerpo(destino, cuerpo) {
-    const herramienta = herramientas[cuerpo.indice];
     const color = colores[cuerpo.equipo];
     const elegido = cuerpo.indice === seleccionIndice;
 
@@ -489,13 +570,6 @@ function iniciar(raiz) {
       destino.stroke();
     }
 
-    // El nombre solo aparece en el cuerpo elegido o al pasar el ratón: así no
-    // hay etiquetas encima de otras.
-    if ((elegido || resaltado === cuerpo.indice) && herramienta) {
-      destino.restore();
-      dibujarEtiqueta(destino, herramienta.nombre, cuerpo.x, cuerpo.y + cuerpo.r * cuerpo.s * 1.9 + 13, 1);
-      return;
-    }
     destino.restore();
   }
 
@@ -537,32 +611,66 @@ function iniciar(raiz) {
   function dibujarEtiquetas(destino) {
     if (W < 560 && seleccionIndice === null && resaltado === null) return;
     let ocupadas = 0;
-    for (const cuerpo of cuerpos) {
-      const elegido = cuerpo.indice === seleccionIndice || cuerpo.indice === resaltado;
-      if (!elegido && W < 640) continue;
-      // Un cuerpo oculto detrás del planeta no debe etiquetarse: el texto
-      // quedaría flotando sobre la esfera.
-      if (!elegido && cuerpo.d < 0.05) continue;
-      const herramienta = herramientas[cuerpo.indice];
-      if (!herramienta) continue;
-      const ancho = anchosEtiqueta[cuerpo.indice] + 8;
-      const x = cuerpo.x;
-      const y = cuerpo.y + cuerpo.r * cuerpo.s * 1.9 + 13;
-      if (x - ancho / 2 < 0 || x + ancho / 2 > W || y < 12 || y > H - 4) continue;
-      const dentroDelPlaneta = Math.hypot(x - cx, y - cy) < R * 1.05 + 6;
-      if (!elegido && dentroDelPlaneta) continue;
-      const cajaX = x - ancho / 2;
-      const cajaY = y - 12;
-      if (!elegido && solapaAlguna(cajaX, cajaY, ancho, 16, ocupadas)) continue;
-      if (ocupadas < cajas.length / 4) {
-        cajas[ocupadas * 4] = cajaX;
-        cajas[ocupadas * 4 + 1] = cajaY;
-        cajas[ocupadas * 4 + 2] = ancho;
-        cajas[ocupadas * 4 + 3] = 16;
-        ocupadas += 1;
+    // Primero la etiqueta elegida o resaltada; el resto se aparta de ella.
+    for (let pasada = 0; pasada < 2; pasada += 1) {
+      for (const cuerpo of cuerpos) {
+        const elegido = cuerpo.indice === seleccionIndice || cuerpo.indice === resaltado;
+        if ((pasada === 0) !== elegido) continue;
+        if (!elegido && W < 640) continue;
+        // Un cuerpo oculto detrás del planeta no debe etiquetarse: el texto
+        // quedaría flotando sobre la esfera.
+        if (cuerpo.d < 0.05) continue;
+        const herramienta = herramientas[cuerpo.indice];
+        if (!herramienta) continue;
+        const ancho = anchosEtiqueta[cuerpo.indice] + 8;
+        const alto = 16;
+        const dx = cuerpo.x - cx;
+        const dy = cuerpo.y - cy;
+        const distancia = Math.hypot(dx, dy) || 1;
+        const ux = dx / distancia;
+        const uy = dy / distancia;
+        const salto = Math.max(8, cuerpo.r * cuerpo.s * 1.9 + 8);
+        let x = cuerpo.x + ux * salto;
+        let y = cuerpo.y + uy * salto + 4;
+        let cajaX = x - ancho / 2;
+        let cajaY = y - 12;
+
+        // Si la caja toca el disco o se sale, se empuja hacia fuera (nunca
+        // hacia el planeta) hasta encontrar un hueco.
+        for (let intento = 0; intento < 8; intento += 1) {
+          const dentro = cajaX >= 2 && cajaX + ancho <= W - 2 && cajaY >= 2 && cajaY + alto <= H - 2;
+          const libre = elegido || !solapaAlguna(cajaX, cajaY, ancho, alto, ocupadas);
+          if (dentro && libre && !cajaSobrePlaneta(cajaX, cajaY, ancho, alto)) break;
+          x += ux * 14;
+          y += uy * 14;
+          cajaX = x - ancho / 2;
+          cajaY = y - 12;
+        }
+        if (cajaX < 2 || cajaX + ancho > W - 2 || cajaY < 2 || cajaY + alto > H - 2) continue;
+        if (cajaSobrePlaneta(cajaX, cajaY, ancho, alto)) continue;
+        if (!elegido && solapaAlguna(cajaX, cajaY, ancho, alto, ocupadas)) continue;
+        if (ocupadas < cajas.length / 4) {
+          cajas[ocupadas * 4] = cajaX;
+          cajas[ocupadas * 4 + 1] = cajaY;
+          cajas[ocupadas * 4 + 2] = ancho;
+          cajas[ocupadas * 4 + 3] = alto;
+          ocupadas += 1;
+        }
+        dibujarEtiqueta(destino, herramienta.nombre, x, y, elegido ? 1 : 0.75);
       }
-      dibujarEtiqueta(destino, herramienta.nombre, x, y, elegido ? 1 : 0.75);
     }
+  }
+
+  /**
+   * Distancia mínima de una caja al disco del planeta.
+   * @param {number} x @param {number} y @param {number} ancho @param {number} alto
+   */
+  function cajaSobrePlaneta(x, y, ancho, alto) {
+    const cercanoX = Math.max(x, Math.min(cx, x + ancho));
+    const cercanoY = Math.max(y, Math.min(cy, y + alto));
+    const dx = cercanoX - cx;
+    const dy = cercanoY - cy;
+    return dx * dx + dy * dy < (R + 6) * (R + 6);
   }
 
   /**
@@ -678,6 +786,31 @@ function iniciar(raiz) {
     detalle.append(enlace);
   }
 
+  /** Ficha flotante: duplica en la escena lo que anuncia el panel. */
+  function actualizarFicha() {
+    if (!(ficha instanceof HTMLElement)) return;
+    const herramienta = seleccionSlug === null ? null : porSlug.get(seleccionSlug);
+    if (!herramienta) {
+      ficha.hidden = true;
+      return;
+    }
+    const nivel = nivelDe(herramienta);
+    if (fichaNombre instanceof HTMLElement) fichaNombre.textContent = herramienta.nombre;
+    if (fichaDetalle instanceof HTMLElement) {
+      const equipo = herramienta.equipo === 'red'
+        ? 'Red team'
+        : herramienta.equipo === 'blue'
+          ? 'Blue team'
+          : herramienta.equipo === 'purple'
+            ? 'Purple team'
+            : 'Sin equipo';
+      fichaDetalle.textContent = `${nivel} % · ${etiquetaNivel(nivel)} · ${equipo}`;
+    }
+    if (herramienta.equipo) ficha.dataset.equipo = herramienta.equipo;
+    else delete ficha.dataset.equipo;
+    ficha.hidden = false;
+  }
+
   /** @param {string | null} slug */
   function seleccionar(slug) {
     seleccionSlug = slug !== null && porSlug.has(slug) ? slug : null;
@@ -697,7 +830,8 @@ function iniciar(raiz) {
       }
     }
     pintarDetalle();
-    if (reducido) dibujar(tActual, contexto, dpr, gradientes, false);
+    actualizarFicha();
+    if (reducido) pintarQuieto();
   }
 
   // ── Animación ────────────────────────────────────────────────────────────
@@ -705,13 +839,111 @@ function iniciar(raiz) {
   const consultaMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
   let reducido = consultaMovimiento.matches;
   let visible = true;
+  const medir = hud instanceof HTMLElement;
 
   function bucle(ms) {
     raf = 0;
     if (document.hidden || !visible) return;
     tActual = ms / 1000;
-    dibujar(tActual, contexto, dpr, gradientes, false);
+    const inicio = performance.now();
+    dibujar(tActual, contexto, dpr, false, iluminacion);
+    medirFotograma(performance.now() - inicio);
     programar();
+  }
+
+  /** @param {number} p */
+  function percentil(p) {
+    const total = Math.min(medidasTotal, MUESTRAS);
+    if (total === 0) return 0;
+    const copia = Array.from(medidas.subarray(0, total)).sort((a, b) => a - b);
+    return copia[Math.min(copia.length - 1, Math.floor((copia.length * p) / 100))] ?? 0;
+  }
+
+  /** @param {number} ms */
+  function medirFotograma(ms) {
+    if (!v2) return;
+    medidas[medidasTotal % MUESTRAS] = ms;
+    medidasTotal += 1;
+    if (!decidido && medidasTotal >= MUESTRAS) {
+      decidido = true;
+      if (percentil(95) > 6 && v2.lado > 512) {
+        v2.cambiarLado(512);
+        pintarQuieto();
+      }
+    }
+    if (medir && medidasTotal % 30 === 0) actualizarHud();
+  }
+
+  function actualizarHud() {
+    if (!(hud instanceof HTMLElement) || !v2) return;
+    const total = Math.min(medidasTotal, MUESTRAS);
+    if (total === 0) return;
+    let maximo = 0;
+    for (let i = 0; i < total; i += 1) if (medidas[i] > maximo) maximo = medidas[i];
+    hud.hidden = false;
+    hud.textContent = `p50 ${percentil(50).toFixed(1)} · p95 ${percentil(95).toFixed(1)} · máx ${maximo.toFixed(1)} ms · disco ${v2.lado} · ${(v2.memoria() / 1048576).toFixed(1)} MB · tex ${msTextura} ms (trozo ${msTrozo.toFixed(1)} ms)`;
+  }
+
+  function ladoDisco() {
+    const px = Math.round(2 * R * Math.min(dpr, 2));
+    return Math.max(LADO_MIN, Math.min(LADO_MAX, px));
+  }
+
+  function programarLado() {
+    if (temporizadorLado) window.clearTimeout(temporizadorLado);
+    temporizadorLado = window.setTimeout(() => {
+      temporizadorLado = 0;
+      const lado = ladoDisco();
+      if (!v2 || lado === v2.lado) return;
+      v2.cambiarLado(lado);
+      pintarQuieto();
+    }, 150);
+  }
+
+  function crearV2() {
+    if (!texturaDatos) return;
+    try {
+      v2 = crearEscena({
+        textura: texturaDatos,
+        colores,
+        lado: ladoDisco(),
+        inclinacion: INCLINACION,
+      });
+      v2.actualizarGeometria({ W, H, cx, cy, R, dpr });
+      iluminacion = v2.prepararIluminacion(contexto);
+    } catch {
+      v2 = null;
+      iluminacion = null;
+      return;
+    }
+    medidasTotal = 0;
+    decidido = false;
+    if (reducido) pintarQuieto();
+  }
+
+  function programarEscena() {
+    if (escenaProgramada) return;
+    escenaProgramada = true;
+    const crear = () => {
+      escenaProgramada = false;
+      crearV2();
+    };
+    if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(crear, { timeout: 300 });
+    else window.setTimeout(crear, 0);
+  }
+
+  function iniciarTextura() {
+    if (generador) return;
+    generador = crearTextura({
+      colores,
+      alListo: (datos) => {
+        texturaDatos = datos;
+        msTextura = datos.ms;
+        msTrozo = datos.msTrozoMax;
+        programarEscena();
+      },
+    });
+    generador.iniciar();
   }
 
   function programar() {
@@ -720,7 +952,10 @@ function iniciar(raiz) {
   }
 
   function pintarQuieto() {
-    dibujar(tActual, contexto, dpr, gradientes, false);
+    // Con movimiento reducido no se pinta el planeta provisional: se espera a
+    // la textura y se muestra un único fotograma.
+    if (reducido && !v2) return;
+    dibujar(tActual, contexto, dpr, false, iluminacion);
   }
 
   function dimensionar() {
@@ -736,6 +971,11 @@ function iniciar(raiz) {
     gradientes = crearGradientes(contexto);
     medirEtiquetas();
     posicionar(tActual);
+    if (v2) {
+      v2.actualizarGeometria({ W, H, cx, cy, R, dpr });
+      iluminacion = v2.prepararIluminacion(contexto);
+      programarLado();
+    }
   }
 
   // ── Eventos ──────────────────────────────────────────────────────────────
@@ -787,6 +1027,7 @@ function iniciar(raiz) {
       actualizarSalida(validado.slug);
       guardar();
       pintarResumen();
+      actualizarFicha();
       if (reducido) pintarQuieto();
     });
   }
@@ -805,7 +1046,11 @@ function iniciar(raiz) {
       lienzo.height = Math.max(1, Math.round(H * escala));
       const salida = lienzo.getContext('2d');
       if (!salida) return;
-      dibujar(tActual, salida, escala, crearGradientes(salida), true);
+      // Fondo opaco a tamaño de dispositivo: cubre también la última fila.
+      salida.fillStyle = '#040716';
+      salida.fillRect(0, 0, lienzo.width, lienzo.height);
+      const ilumSalida = v2 ? v2.prepararIluminacion(salida) : crearGradientes(salida);
+      dibujar(tActual, salida, escala, true, ilumSalida);
       lienzo.toBlob((blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
@@ -850,6 +1095,11 @@ function iniciar(raiz) {
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
     leerTema();
     medirEtiquetas();
+    gradientes = crearGradientes(contexto);
+    if (v2) {
+      v2.actualizarColores(colores);
+      iluminacion = v2.prepararIluminacion(contexto);
+    }
     pintarQuieto();
   });
 
@@ -864,6 +1114,8 @@ function iniciar(raiz) {
   for (const herramienta of herramientas) actualizarSalida(herramienta.slug);
   pintarResumen();
   pintarDetalle();
+  actualizarFicha();
   pintarQuieto();
   programar();
+  iniciarTextura();
 }

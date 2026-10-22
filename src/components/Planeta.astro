@@ -55,7 +55,7 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slu
       </div>
     ) : (
       <>
-        <div class="planeta__escenario">
+        <div class="planeta-escena">
           <canvas
             class="planeta__canvas"
             data-planeta-canvas
@@ -63,11 +63,25 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slu
             width="720"
             height="540"
           />
-          <p class="planeta__leyenda" aria-hidden="true">
-            <span data-equipo="blue">Defensa</span>
-            <span data-equipo="red">Ataque</span>
-            <span data-equipo="purple">Ambos equipos</span>
+
+          <p class="planeta-leyenda">
+            <span class="eq-blue"><i aria-hidden="true"></i>Defensa</span>
+            <span class="eq-red"><i aria-hidden="true"></i>Ataque</span>
+            <span class="eq-purple"><i aria-hidden="true"></i>Ambos equipos</span>
           </p>
+
+          <aside class="planeta-ficha" data-planeta-ficha hidden>
+            <strong data-ficha-nombre></strong>
+            <span data-ficha-detalle></span>
+          </aside>
+
+          <button type="button" class="planeta-descargar" data-planeta-png aria-label="Descargar mi planeta en PNG">
+            Descargar PNG
+          </button>
+
+          {import.meta.env.DEV && Astro.url.searchParams.has('planeta-medir') && (
+            <p class="planeta-hud" data-planeta-hud hidden aria-hidden="true"></p>
+          )}
         </div>
 
         <div class="planeta__panel">
@@ -183,9 +197,6 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slu
           </section>
 
           <div class="planeta-acciones">
-            <button type="button" class="boton boton--secundario" data-planeta-png>
-              Descargar mi planeta (PNG)
-            </button>
             <a class="boton boton--ghost" href={`${base}guias/`}>Ver las guías</a>
           </div>
 
