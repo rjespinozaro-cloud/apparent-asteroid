@@ -1,0 +1,73 @@
+---
+/**
+ * /perfil/ — el planeta de herramientas.
+ *
+ * Es una página pública: no hay cuenta ni sesión. Los niveles se guardan en
+ * el navegador (ver src/scripts/planeta.js) y el servidor solo aporta el
+ * catálogo de herramientas y su equipo, deducido de las guías publicadas.
+ */
+import Base from '../../layouts/Base.astro';
+import Migas from '../../components/Migas.astro';
+import Planeta from '../../components/Planeta.astro';
+import { getDatabase, listarHerramientasPlaneta, listarRutasPorHerramienta } from '../../lib/db.js';
+import { plural } from '../../lib/utils/texto.js';
+import { env } from 'cloudflare:workers';
+import '../../styles/perfil.css';
+
+export const prerender = false;
+
+const database = getDatabase(env);
+const [herramientasBase, rutas] = await Promise.all([
+  listarHerramientasPlaneta(database),
+  listarRutasPorHerramienta(database),
+]);
+
+const herramientas = herramientasBase.map((herramienta) => ({
+  ...herramienta,
+  ruta: rutas.get(herramienta.slug) ?? null,
+}));
+
+const conGuias = herramientas.filter((herramienta) => herramienta.guias > 0).length;
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
+const descripcion = conGuias > 0
+  ? `Tu perfil de ciberseguridad como un sistema solar: ${plural(herramientas.length, 'herramienta', 'herramientas')} en órbita, ${conGuias} con guías publicadas.`
+  : 'Tu perfil de ciberseguridad como un sistema solar: marca tu nivel en cada herramienta y descubre por dónde seguir.';
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+---
+
+<Base
+  title="Mi planeta de herramientas | JOANIX"
+  description={descripcion}
+  ogType="website"
+>
+  <header class="perfil-hero contenedor">
+    <Migas clase="" items={[{ texto: 'Inicio', href: `${base}inicio/` }, { texto: 'Mi planeta' }]} />
+
+    <h1>Tu <em>planeta</em> de herramientas</h1>
+
+    <p class="entradilla">
+      Cada herramienta es un cuerpo en órbita. Azul defiende, rojo ataca y los de dos colores sirven a los dos
+      equipos. Cuanto más la dominas, más grande se ve.
+    </p>
+
+    <p class="perfil-nota">
+      Este perfil se guarda <strong>solo en este navegador</strong>. Todavía no hay cuentas de visitante, así que
+      no se envía nada al servidor: si cambias de dispositivo o borras los datos del navegador, el perfil empieza
+      de cero.
+    </p>
+
+    <p class="perfil-nota">
+      {plural(herramientas.length, 'herramienta', 'herramientas')} en el catálogo
+      {conGuias > 0 ? ` · ${conGuias} con guías publicadas` : ' · todavía sin guías publicadas'}.
+      El equipo de cada una se deduce de sus guías; mientras no las haya, del temario.
+    </p>
+  </header>
+
+  <Planeta herramientas={herramientas} />
+</Base>
+
+<script>
+  import '../../scripts/planeta.js';
+</script>

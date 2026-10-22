@@ -1,0 +1,369 @@
+/* Página /perfil/ — el planeta de herramientas.
+   Se carga después de catalogo.css (ver la página) y no define colores
+   nuevos: todo sale de tokens.css, de modo que el tema claro y el oscuro
+   siguen funcionando sin duplicar valores. */
+
+.perfil-hero {
+  display: grid;
+  gap: var(--espacio-s);
+  padding-block: var(--espacio-xl) var(--espacio-m);
+}
+
+.perfil-hero h1 {
+  font-family: var(--fuente-titulo);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.perfil-hero h1 em {
+  font-style: normal;
+  color: var(--oro-texto);
+}
+
+.perfil-hero .entradilla {
+  color: var(--tinta-suave);
+  max-width: 62ch;
+  margin: 0;
+}
+
+.perfil-nota {
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--papel-alto);
+  color: var(--tinta-suave);
+  font-size: 0.875rem;
+  padding: var(--espacio-xs) var(--espacio-s);
+  max-width: 62ch;
+}
+
+/* Escenario + panel ------------------------------------------------------- */
+
+.planeta {
+  display: grid;
+  gap: var(--espacio-m);
+  padding-block: var(--espacio-m) var(--espacio-2xl);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .planeta {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+  }
+}
+
+/* En una columna el panel no necesita todo el ancho: los nombres y los
+   deslizadores quedarían demasiado lejos. */
+@media (max-width: 899px) {
+  .planeta__panel {
+    max-width: 34rem;
+  }
+}
+
+.planeta__escenario {
+  /* Las estrellas solo tienen sentido sobre el fondo oscuro. El script lee
+     esta propiedad; en claro vale 0 y no dibuja puntos. */
+  --planeta-estrellas: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  background:
+    radial-gradient(ellipse at 50% 45%, rgb(77 124 255 / 0.16), transparent 64%),
+    var(--papel);
+  /* Sin `min-height`: con `aspect-ratio`, un alto mínimo ensancha el
+     escenario y desborda la columna en móvil. */
+  aspect-ratio: 4 / 3;
+  touch-action: manipulation;
+}
+
+@media (max-width: 560px) {
+  .planeta__escenario {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .planeta__escenario {
+    --planeta-estrellas: 0;
+  }
+}
+
+.planeta__canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+}
+
+.planeta__leyenda {
+  position: absolute;
+  inset-inline: var(--espacio-s);
+  inset-block-end: var(--espacio-xs);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-s);
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--tinta-suave);
+  pointer-events: none;
+}
+
+.planeta__leyenda span::before {
+  content: '';
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-inline-end: 0.3rem;
+  border-radius: 50%;
+  background: var(--blue);
+  vertical-align: baseline;
+}
+
+.planeta__leyenda [data-equipo='red']::before {
+  background: var(--red);
+}
+
+.planeta__leyenda [data-equipo='purple']::before {
+  background: var(--purple);
+}
+
+/* Panel ------------------------------------------------------------------- */
+
+.planeta__panel {
+  min-width: 0;
+  display: grid;
+  gap: var(--espacio-s);
+}
+
+.planeta-tarjeta {
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  background: var(--papel-alto);
+  padding: var(--espacio-s);
+}
+
+.planeta-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.planeta-tarjeta h2 {
+  font-size: 1rem;
+  margin: 0 0 var(--espacio-2xs);
+}
+
+.planeta-tarjeta p {
+  margin: 0;
+  color: var(--tinta-suave);
+  font-size: 0.9rem;
+}
+
+.planeta-detalle__linea {
+  margin: var(--espacio-2xs) 0 0;
+  color: var(--tinta-suave);
+}
+
+.planeta-tarjeta__cifra {
+  margin: 0 0 var(--espacio-2xs);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.planeta-tarjeta__cifra small {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+
+.planeta-barras {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: var(--espacio-s);
+}
+
+.planeta-barra {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 2.5rem;
+  align-items: center;
+  gap: var(--espacio-2xs);
+  font-size: 0.8125rem;
+  color: var(--tinta-suave);
+}
+
+.planeta-barra__pista {
+  height: 0.5rem;
+  border-radius: var(--radio-full);
+  background: var(--linea);
+  overflow: hidden;
+}
+
+.planeta-barra__relleno {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+  transition: width 220ms var(--curva);
+}
+
+.planeta-barra__relleno[data-equipo='red'] {
+  background: var(--red);
+}
+
+.planeta-barra__relleno[data-equipo='purple'] {
+  background: var(--purple);
+}
+
+.planeta-barra output {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+/* Lista accesible (funciona sin ratón y sin canvas) ----------------------- */
+
+.planeta-grupo {
+  margin-top: var(--espacio-s);
+}
+
+.planeta-grupo:first-of-type {
+  margin-top: 0;
+}
+
+.planeta-grupo h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2xs);
+  margin: 0 0 var(--espacio-3xs);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+.planeta-punto {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+[data-equipo='red'] > .planeta-punto {
+  background: var(--red);
+}
+
+[data-equipo='purple'] > .planeta-punto {
+  background: var(--purple);
+}
+
+.planeta-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5rem 2.5rem;
+  gap: var(--espacio-2xs);
+  align-items: center;
+  padding-block: 0.15rem;
+}
+
+.planeta-fila__nombre {
+  background: none;
+  border: 0;
+  border-radius: var(--radio-s);
+  color: var(--tinta);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.2rem;
+  text-align: start;
+}
+
+.planeta-fila__nombre:hover {
+  color: var(--violet-300);
+}
+
+.planeta-fila[aria-current='true'] .planeta-fila__nombre {
+  font-weight: 600;
+  color: var(--violet-300);
+}
+
+.planeta-fila__sin-guias {
+  margin-inline-start: 0.35rem;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-full);
+  color: var(--tinta-tenue);
+  font-size: 0.6875rem;
+  padding: 0 0.35rem;
+  white-space: nowrap;
+}
+
+.planeta-fila input[type='range'] {
+  width: 100%;
+  accent-color: var(--blue);
+}
+
+.planeta-fila[data-equipo='red'] input[type='range'] {
+  accent-color: var(--red);
+}
+
+.planeta-fila[data-equipo='purple'] input[type='range'] {
+  accent-color: var(--purple);
+}
+
+.planeta-fila output {
+  font-size: 0.8rem;
+  color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.planeta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2xs);
+  margin-top: var(--espacio-xs);
+}
+
+/* Avisos y estados -------------------------------------------------------- */
+
+.planeta-aviso {
+  margin: 0;
+  padding: var(--espacio-xs) var(--espacio-s);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--papel-alto);
+  color: var(--tinta-suave);
+  font-size: 0.875rem;
+}
+
+.planeta-aviso--error {
+  border-color: var(--red);
+  color: var(--tinta);
+}
+
+.planeta-vacio {
+  display: grid;
+  gap: var(--espacio-xs);
+  place-items: start;
+  padding: var(--espacio-l) var(--espacio-m);
+}
+
+.planeta-vacio h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+/* Enfoque visible en todo lo interactivo del planeta. */
+.planeta :is(a, button, input):focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planeta-barra__relleno {
+    transition: none;
+  }
+}

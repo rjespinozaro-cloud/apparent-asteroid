@@ -1,0 +1,202 @@
+---
+/**
+ * Planeta de herramientas.
+ *
+ * El servidor dibuja la lista accesible completa (botones + deslizadores) y el
+ * script solo la mejora: añade el canvas, guarda los niveles y conecta la
+ * selección. Sin JavaScript se sigue pudiendo leer el catálogo de
+ * herramientas y sus equipos.
+ */
+interface Herramienta {
+  slug: string;
+  nombre: string;
+  equipo: 'red' | 'blue' | 'purple' | null;
+  guias: number;
+  ruta: { slug: string; titulo: string } | null;
+}
+
+interface Props {
+  herramientas: Herramienta[];
+}
+
+const { herramientas } = Astro.props;
+const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+
+const GRUPOS = [
+  { id: 'blue', titulo: 'Blue team · defensa' },
+  { id: 'red', titulo: 'Red team · ataque' },
+  { id: 'purple', titulo: 'Purple team · ambos' },
+] as const;
+
+const nombreEquipo = { red: 'Red team', blue: 'Blue team', purple: 'Purple team' } as const;
+
+const grupos = GRUPOS.map((grupo) => ({
+  ...grupo,
+  herramientas: herramientas.filter((herramienta) => herramienta.equipo === grupo.id),
+})).filter((grupo) => grupo.herramientas.length > 0);
+
+const sinEquipo = herramientas.filter((herramienta) => herramienta.equipo === null);
+const hayGuias = herramientas.some((herramienta) => herramienta.guias > 0);
+const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slug, nombre, equipo, guias, ruta }));
+---
+
+<section class="planeta contenedor" aria-labelledby="planeta-titulo" data-planeta data-herramientas={JSON.stringify(datos)}>
+  {
+    herramientas.length === 0 ? (
+      <div class="planeta-vacio planeta-tarjeta">
+        <h2 id="planeta-titulo">Todavía no hay herramientas publicadas</h2>
+        <p>
+          El planeta se llena con las herramientas del catálogo. Cuando haya guías publicadas, aparecerán aquí
+          como cuerpos en órbita.
+        </p>
+        <a class="boton" href={`${base}guias/`}>
+          Ver las guías
+        </a>
+      </div>
+    ) : (
+      <>
+        <div class="planeta__escenario">
+          <canvas
+            class="planeta__canvas"
+            data-planeta-canvas
+            aria-hidden="true"
+            width="720"
+            height="540"
+          />
+          <p class="planeta__leyenda" aria-hidden="true">
+            <span data-equipo="blue">Defensa</span>
+            <span data-equipo="red">Ataque</span>
+            <span data-equipo="purple">Ambos equipos</span>
+          </p>
+        </div>
+
+        <div class="planeta__panel">
+          <section class="planeta-tarjeta" aria-labelledby="planeta-resumen-titulo">
+            <h2 id="planeta-resumen-titulo">Tu dominio</h2>
+            <p class="planeta-tarjeta__cifra">
+              <span data-planeta-general>0</span><small> % de media</small>
+            </p>
+            <div class="planeta-barras" data-planeta-barras>
+              {GRUPOS.map((grupo) => (
+                <div class="planeta-barra" data-equipo={grupo.id}>
+                  <span>{nombreEquipo[grupo.id]}</span>
+                  <span class="planeta-barra__pista">
+                    <span class="planeta-barra__relleno" data-barra={grupo.id} data-equipo={grupo.id} />
+                  </span>
+                  <output data-barra-valor={grupo.id}>0 %</output>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section class="planeta-tarjeta" aria-labelledby="planeta-detalle-titulo">
+            <h2 id="planeta-detalle-titulo">Herramienta seleccionada</h2>
+            <div data-planeta-detalle aria-live="polite">
+              <p data-planeta-detalle-texto>
+                Toca un cuerpo del planeta o elige una herramienta de la lista para ver su nivel y el siguiente paso.
+              </p>
+            </div>
+            <p class="planeta-aviso" data-planeta-aviso hidden role="alert"></p>
+          </section>
+
+          <section class="planeta-tarjeta" aria-labelledby="planeta-lista-titulo">
+            <h2 id="planeta-lista-titulo">Herramientas</h2>
+            <p>
+              {hayGuias
+                ? 'Ajusta tu nivel en cada herramienta. Se guarda solo en este navegador.'
+                : 'Aún no hay guías publicadas: marca tu nivel de partida y el planeta irá creciendo con el catálogo.'}
+            </p>
+
+            {grupos.map((grupo) => (
+              <div class="planeta-grupo" data-equipo={grupo.id}>
+                <h3>
+                  <span class="planeta-punto" aria-hidden="true" />
+                  {grupo.titulo}
+                </h3>
+                <ul class="planeta-lista" role="list">
+                  {grupo.herramientas.map((herramienta) => (
+                    <li
+                      class="planeta-fila"
+                      data-equipo={grupo.id}
+                      data-fila={herramienta.slug}
+                    >
+                      <button
+                        type="button"
+                        class="planeta-fila__nombre"
+                        data-elegir={herramienta.slug}
+                        aria-pressed="false"
+                      >
+                        {herramienta.nombre}
+                        {herramienta.guias === 0 && <span class="planeta-fila__sin-guias">Sin guías</span>}
+                      </button>
+                      <input
+                        id={`nivel-${herramienta.slug}`}
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value="0"
+                        data-nivel={herramienta.slug}
+                        aria-label={`Nivel de ${herramienta.nombre}`}
+                      />
+                      <output for={`nivel-${herramienta.slug}`} data-valor={herramienta.slug}>
+                        0 %
+                      </output>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+
+            {sinEquipo.length > 0 && (
+              <div class="planeta-grupo">
+                <h3>Sin equipo asignado</h3>
+                <ul class="planeta-lista" role="list">
+                  {sinEquipo.map((herramienta) => (
+                    <li class="planeta-fila" data-fila={herramienta.slug}>
+                      <button
+                        type="button"
+                        class="planeta-fila__nombre"
+                        data-elegir={herramienta.slug}
+                        aria-pressed="false"
+                      >
+                        {herramienta.nombre}
+                      </button>
+                      <input
+                        id={`nivel-${herramienta.slug}`}
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value="0"
+                        data-nivel={herramienta.slug}
+                        aria-label={`Nivel de ${herramienta.nombre}`}
+                      />
+                      <output for={`nivel-${herramienta.slug}`} data-valor={herramienta.slug}>
+                        0 %
+                      </output>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+
+          <div class="planeta-acciones">
+            <button type="button" class="boton boton--secundario" data-planeta-png>
+              Descargar mi planeta (PNG)
+            </button>
+            <a class="boton boton--ghost" href={`${base}guias/`}>Ver las guías</a>
+          </div>
+
+          <noscript>
+            <p class="planeta-aviso">
+              El planeta necesita JavaScript para dibujarse. La lista de herramientas y sus equipos sigue
+              estando disponible arriba.
+            </p>
+          </noscript>
+        </div>
+      </>
+    )
+  }
+</section>

@@ -44,6 +44,8 @@ export {
   obtenerTipologiaRuta,
 } from './rutas.js';
 
+export { listarHerramientasPlaneta, listarRutasPorHerramienta } from './perfil.js';
+
 export {
   actualizarPasswordUsuario,
   cambiarEstadoUsuario,

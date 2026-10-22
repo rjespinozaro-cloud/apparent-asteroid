@@ -55,12 +55,30 @@ export function claseEquipo(equipo) {
   return equipo === 'red' || equipo === 'blue' ? equipo : 'neutro';
 }
 
+/**
+ * Nombres que no se deducen del slug: siglas, marcas y grafías con guion.
+ * Sin esta tabla, `osint` se leería «Osint» y `wifi` «Wifi».
+ * @type {Record<string, string>}
+ */
+const NOMBRES_FIJOS = {
+  enumeracion: 'Enumeración',
+  postexplotacion: 'Postexplotación',
+  osint: 'OSINT',
+  siem: 'SIEM',
+  owasp: 'OWASP',
+  wifi: 'Wi-Fi',
+};
+
+/** Partes de un slug compuesto que se escriben en mayúsculas o con guion. */
+const PARTES_FIJAS = { ssh: 'SSH', sql: 'SQL', api: 'API' };
+
 /** Nombre legible de una herramienta a partir de su slug: `burp-suite` → `Burp Suite`. */
 export function nombreHerramienta(herramienta) {
   const valor = String(herramienta ?? '').trim();
   if (!valor) return '—';
+  if (NOMBRES_FIJOS[valor]) return NOMBRES_FIJOS[valor];
   return valor
     .split('-')
-    .map((parte) => (parte.length <= 2 ? parte : `${parte[0].toUpperCase()}${parte.slice(1)}`))
+    .map((parte) => PARTES_FIJAS[parte] ?? (parte.length <= 2 ? parte : `${parte[0].toUpperCase()}${parte.slice(1)}`))
     .join(' ');
 }
