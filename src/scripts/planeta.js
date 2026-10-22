@@ -841,7 +841,9 @@ function iniciar(raiz) {
 
   const observadorTamano = new ResizeObserver(() => {
     dimensionar();
-    if (reducido) pintarQuieto();
+    // Redimensionar vacía el canvas: se repinta un fotograma aunque el bucle
+    // esté parado (fuera de pantalla o con movimiento reducido).
+    pintarQuieto();
   });
   observadorTamano.observe(canvas);
 
