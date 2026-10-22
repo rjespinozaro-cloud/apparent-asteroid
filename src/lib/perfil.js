@@ -19,26 +19,117 @@ export function limitarNivel(valor) {
   return Math.min(NIVEL_MAX, Math.max(0, Math.round(numero)));
 }
 
+/** Peso de cada fuente de actividad en el nivel. */
+export const PESOS_NIVEL = Object.freeze({
+  guias: 50,
+  practicas: 20,
+  examen: 20,
+  juegos: 10,
+});
+
 /**
- * Nivel de una herramienta: mezcla lo que se ha leído con lo que la persona
- * cree saber.
+ * Datos mínimos de una fuente. Cada una usa sus propios campos:
+ * guías (`completadas`/`publicadas`), prácticas y juegos
+ * (`completadas`/`disponibles`) y examen (`nota`, 0-100).
+ * @typedef {{ completadas?: number, publicadas?: number, disponibles?: number, nota?: number }} FuenteNivel
+ */
+
+/** @param {unknown} valor @returns {number} fracción entre 0 y 1 */
+function fraccion(valor) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return 0;
+  return Math.min(1, Math.max(0, numero));
+}
+
+/**
+ * @param {unknown} completadas
+ * @param {unknown} total
+ * @returns {number} fracción entre 0 y 1
+ */
+function proporcion(completadas, total) {
+  const publicadas = Math.max(0, Math.trunc(Number(total) || 0));
+  if (publicadas === 0) return 0;
+  const hechas = Math.min(publicadas, Math.max(0, Math.trunc(Number(completadas) || 0)));
+  return hechas / publicadas;
+}
+
+/**
+ * @param {keyof typeof PESOS_NIVEL} clave
+ * @param {FuenteNivel} fuente
+ * @returns {number}
+ */
+function fraccionDeFuente(clave, fuente) {
+  if (clave === 'examen') return fraccion(Number(fuente.nota) / 100);
+  if (clave === 'guias') return proporcion(fuente.completadas, fuente.publicadas);
+  return proporcion(fuente.completadas, fuente.disponibles);
+}
+
+/**
+ * Nivel 0-100 de una herramienta calculado solo con actividad verificable.
  *
- * Regla (documentada también en el panel):
- *   - Sin guías publicadas, o sin ninguna completada, manda la autoevaluación:
- *     un 0-0 no puede borrar lo que alguien ya sabe.
- *   - Con progreso real, el nivel es 60 % guías completadas + 40 %
- *     autoevaluación. Da más peso al hecho verificable sin ignorar el criterio
- *     de quien estudia.
- * @param {{ completadas?: number, publicadas?: number, autoevaluacion?: number }} [datos]
+ * Pesos: guías completadas 50 %, prácticas 20 %, examen 20 %, juegos 10 %.
+ * Una fuente ausente (`null`/`undefined`) no cuenta y su peso se reparte entre
+ * las disponibles; una fuente presente con 0 actividad sí cuenta. Hoy solo se
+ * pasa `guias`; prácticas, examen y juegos llegarán más adelante.
+ * @param {{ guias?: FuenteNivel | null, practicas?: FuenteNivel | null, examen?: FuenteNivel | null, juegos?: FuenteNivel | null }} [fuentes]
  * @returns {number} entero de 0 a 100
  */
-export function nivelHerramienta({ completadas = 0, publicadas = 0, autoevaluacion = 0 } = {}) {
-  const auto = limitarNivel(autoevaluacion);
-  const total = Math.max(0, Math.trunc(Number(publicadas) || 0));
-  const hechas = Math.min(total, Math.max(0, Math.trunc(Number(completadas) || 0)));
-  if (total === 0 || hechas === 0) return auto;
-  const progreso = (hechas / total) * 100;
-  return limitarNivel(progreso * 0.6 + auto * 0.4);
+export function nivelHerramienta(fuentes = {}) {
+  let pesoDisponible = 0;
+  let acumulado = 0;
+  /** @type {Array<keyof typeof PESOS_NIVEL>} */
+  const claves = ['guias', 'practicas', 'examen', 'juegos'];
+  for (const clave of claves) {
+    const fuente = fuentes[clave];
+    if (fuente == null || typeof fuente !== 'object') continue;
+    const peso = PESOS_NIVEL[clave];
+    pesoDisponible += peso;
+    acumulado += peso * fraccionDeFuente(clave, fuente);
+  }
+  if (pesoDisponible === 0) return 0;
+  return limitarNivel((acumulado / pesoDisponible) * 100);
+}
+
+/**
+ * Normaliza lo que hay en `localStorage` a una lista de ids de guía.
+ *
+ * Acepta un array o el objeto versionado (`{ version: 1, guias: [...] }`).
+ * Descarta ids no enteros, repetidos y, si se pasa `idsValidos`, los que no
+ * pertenecen al conjunto publicado que conoce la página.
+ * @param {unknown} valor
+ * @param {Iterable<unknown> | null} [idsValidos]
+ * @returns {number[]}
+ */
+export function normalizarProgreso(valor, idsValidos = null) {
+  const datos = valor && typeof valor === 'object' ? /** @type {{ guias?: unknown }} */ (valor) : null;
+  const bruto = Array.isArray(valor) ? valor : datos && Array.isArray(datos.guias) ? datos.guias : [];
+  const permitidos = idsValidos == null
+    ? null
+    : new Set([...idsValidos].map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0));
+  const ids = new Set();
+  for (const item of bruto) {
+    const id = Number(item);
+    if (!Number.isInteger(id) || id <= 0) continue;
+    if (permitidos && !permitidos.has(id)) continue;
+    ids.add(id);
+  }
+  return [...ids].sort((a, b) => a - b);
+}
+
+/**
+ * Cuenta las guías completadas de una herramienta sin confiar en el orden ni
+ * en ids que ya no estén publicados.
+ * @param {Iterable<unknown>} ids
+ * @param {Array<{ id?: number }>} guias
+ * @returns {number}
+ */
+export function contarGuiasCompletadas(ids, guias) {
+  const completadas = new Set([...ids].map((id) => Number(id)));
+  let total = 0;
+  for (const guia of Array.isArray(guias) ? guias : []) {
+    if (completadas.has(Number(guia?.id))) total += 1;
+  }
+  return total;
 }
 
 /**
@@ -99,33 +190,4 @@ export function resumenEquipos(herramientas) {
     purple: media(grupos.purple),
     general: total ? Math.round(suma / total) : 0,
   };
-}
-
-/**
- * Valida lo que llega del formulario del planeta antes de guardarlo.
- *
- * Se usa en el cliente (antes de escribir en `localStorage`) y es la misma
- * validación que necesitará el endpoint cuando existan cuentas de comprador:
- * entero entre 0 y 100 y herramienta que exista de verdad.
- * @param {{ slug?: unknown, nivel?: unknown, slugsValidos?: string[] }} [datos]
- * @returns {{ ok: true, slug: string, nivel: number } | { ok: false, error: string }}
- */
-export function validarNivelHerramienta({ slug, nivel, slugsValidos } = {}) {
-  const herramienta = typeof slug === 'string' ? slug.trim() : '';
-  if (!herramienta) return { ok: false, error: 'Falta la herramienta.' };
-  if (Array.isArray(slugsValidos) && !slugsValidos.includes(herramienta)) {
-    return { ok: false, error: 'Esa herramienta no existe.' };
-  }
-
-  // Solo texto o número: `Number(true)` daría 1 y `Number([])` daría 0.
-  if (typeof nivel !== 'string' && typeof nivel !== 'number') {
-    return { ok: false, error: 'Falta el nivel.' };
-  }
-  const crudo = typeof nivel === 'string' ? nivel.trim() : nivel;
-  if (crudo === '') return { ok: false, error: 'Falta el nivel.' };
-  const numero = Number(crudo);
-  if (!Number.isInteger(numero) || numero < 0 || numero > NIVEL_MAX) {
-    return { ok: false, error: `El nivel debe ser un entero entre 0 y ${NIVEL_MAX}.` };
-  }
-  return { ok: true, slug: herramienta, nivel: numero };
 }

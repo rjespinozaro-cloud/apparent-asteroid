@@ -1,6 +1,7 @@
 ---
 import Guia from '../../layouts/Guia.astro';
 import AsistenteFlotante from '../../components/AsistenteFlotante.astro';
+import BotonProgreso from '../../components/BotonProgreso.astro';
 import TarjetaGuia from '../../components/TarjetaGuia.astro';
 import { getDatabase, guiasRelacionadas, guiasVecinas, listarSlugsGuiasPublicadas, obtenerGuiaPorSlug } from '../../lib/db.js';
 import { extraerIndice, markdownAHtml } from '../../lib/markdown.js';
@@ -109,6 +110,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
       jsonLdProducto={jsonLdProducto}
     >
       <span data-continua-guardar data-slug={guia.slug} data-titulo={guia.titulo} hidden></span>
+      <BotonProgreso slot="acciones" guiaId={guia.id} />
       <div class="markdown" set:html={html} />
 
       <nav class="guia__vecinas" aria-label="Navegación entre guías">
@@ -171,4 +173,5 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=600');
 
 <script>
   import '../../scripts/continua.js';
+  import '../../scripts/guia-progreso.js';
 </script>

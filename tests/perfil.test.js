@@ -3,12 +3,13 @@ import test from 'node:test';
 
 import {
   NIVEL_MAX,
+  contarGuiasCompletadas,
   equipoDe,
   etiquetaNivel,
   limitarNivel,
   nivelHerramienta,
+  normalizarProgreso,
   resumenEquipos,
-  validarNivelHerramienta,
 } from '../src/lib/perfil.js';
 import { nombreHerramienta } from '../src/lib/vocabulario.js';
 
@@ -25,22 +26,68 @@ test('limitarNivel: acota, redondea y no se rompe con basura', () => {
   assert.equal(limitarNivel(undefined), 0);
 });
 
-test('nivelHerramienta: sin progreso manda la autoevaluación', () => {
-  assert.equal(nivelHerramienta({ autoevaluacion: 70 }), 70);
-  // Hay guías publicadas pero ninguna completada: no se castiga al que empieza.
-  assert.equal(nivelHerramienta({ publicadas: 4, completadas: 0, autoevaluacion: 55 }), 55);
-  // Sin guías publicadas no hay progreso posible.
-  assert.equal(nivelHerramienta({ publicadas: 0, completadas: 0, autoevaluacion: 30 }), 30);
+test('nivelHerramienta: una fuente ausente no cuenta ni inventa nivel', () => {
+  assert.equal(nivelHerramienta(), 0);
+  assert.equal(nivelHerramienta({ guias: null, practicas: null, examen: null, juegos: null }), 0);
+  assert.equal(nivelHerramienta({ guias: { completadas: 0, publicadas: 0 } }), 0);
 });
 
-test('nivelHerramienta: con progreso pesa 60 % lecturas y 40 % autoevaluación', () => {
-  // 2 de 5 = 40 % → 0,6 * 40 + 0,4 * 50 = 44
-  assert.equal(nivelHerramienta({ publicadas: 5, completadas: 2, autoevaluacion: 50 }), 44);
-  // Todo leído y autoevaluación 100 → 100
-  assert.equal(nivelHerramienta({ publicadas: 3, completadas: 3, autoevaluacion: 100 }), 100);
-  // Completadas por encima del total: se acota al total, no se pasa de 100.
-  assert.equal(nivelHerramienta({ publicadas: 2, completadas: 9, autoevaluacion: 100 }), 100);
-  assert.equal(nivelHerramienta({ publicadas: -3, completadas: 1, autoevaluacion: 20 }), 20);
+test('nivelHerramienta: 0 % y 100 % son los extremos reales', () => {
+  assert.equal(nivelHerramienta({ guias: { completadas: 0, publicadas: 5 } }), 0);
+  assert.equal(nivelHerramienta({ guias: { completadas: 5, publicadas: 5 } }), 100);
+  assert.equal(nivelHerramienta({ guias: { completadas: 9, publicadas: 5 } }), 100);
+  assert.equal(nivelHerramienta({ guias: { completadas: -1, publicadas: 5 } }), 0);
+  assert.equal(nivelHerramienta({ juegos: { completadas: 3, disponibles: 3 } }), 100);
+  assert.equal(nivelHerramienta({ practicas: { completadas: 0, disponibles: 4 }, examen: { nota: 0 } }), 0);
+});
+
+test('nivelHerramienta: reparte el peso entre las fuentes disponibles', () => {
+  // Solo guías: la única fuente disponible pesa el 100 %.
+  assert.equal(nivelHerramienta({ guias: { completadas: 2, publicadas: 5 } }), 40);
+  assert.equal(nivelHerramienta({ guias: { completadas: 1, publicadas: 2 } }), 50);
+  // Guías 40 % + prácticas 50 %: (50*0,4 + 20*0,5) / 70 = 42,857 → 43.
+  assert.equal(nivelHerramienta({
+    guias: { completadas: 2, publicadas: 5 },
+    practicas: { completadas: 1, disponibles: 2 },
+  }), 43);
+  // Una fuente presente con 0 sí diluye; una ausente no.
+  assert.equal(nivelHerramienta({
+    guias: { completadas: 1, publicadas: 2 },
+    practicas: { completadas: 0, disponibles: 1 },
+  }), 36);
+
+  assert.equal(nivelHerramienta({
+    practicas: { completadas: 0, disponibles: 4 },
+    examen: { nota: 80 },
+  }), 40);
+  assert.equal(nivelHerramienta({
+    guias: { completadas: 2, publicadas: 5 },
+    practicas: { completadas: 1, disponibles: 2 },
+    examen: { nota: 100 },
+  }), 56);
+  // 50/100 + 10/20 + 60/20 + 5/10 = 52.
+  assert.equal(nivelHerramienta({
+    guias: { completadas: 1, publicadas: 2 },
+    practicas: { completadas: 1, disponibles: 2 },
+    examen: { nota: 60 },
+    juegos: { completadas: 1, disponibles: 2 },
+  }), 52);
+});
+
+test('normalizarProgreso: acepta el formato versionado y filtra ids inválidos', () => {
+  assert.deepEqual(normalizarProgreso(null), []);
+  assert.deepEqual(normalizarProgreso({ version: 1, guias: [3, 1, 3, '2', 0, -1, 1.5, 'x'] }), [1, 2, 3]);
+  assert.deepEqual(normalizarProgreso([4, 5], [2, 5]), [5]);
+  assert.deepEqual(normalizarProgreso({ guias: [1, 2] }, []), []);
+  assert.deepEqual(normalizarProgreso({ guias: 'no es una lista' }), []);
+  assert.deepEqual(normalizarProgreso({ niveles: { nmap: 80 } }), []);
+});
+
+test('contarGuiasCompletadas: solo cuenta ids que siguen en la herramienta', () => {
+  assert.equal(contarGuiasCompletadas([1, 3], [{ id: 1 }, { id: 2 }]), 1);
+  assert.equal(contarGuiasCompletadas(new Set([2, 9]), [{ id: 1 }, { id: 2 }]), 1);
+  assert.equal(contarGuiasCompletadas([], [{ id: 1 }]), 0);
+  assert.equal(contarGuiasCompletadas([1], []), 0);
 });
 
 test('equipoDe: rojo + azul es purple, y lo desconocido no inventa equipo', () => {
@@ -79,26 +126,6 @@ test('resumenEquipos: medias enteras por equipo y general', () => {
   assert.deepEqual(resumen, { red: 20, blue: 51, purple: 50, general: 52 });
   assert.deepEqual(resumenEquipos([]), { red: 0, blue: 0, purple: 0, general: 0 });
   assert.deepEqual(resumenEquipos(null), { red: 0, blue: 0, purple: 0, general: 0 });
-});
-
-test('validarNivelHerramienta: acepta enteros 0-100 y rechaza el resto', () => {
-  assert.deepEqual(validarNivelHerramienta({ slug: 'nmap', nivel: 0 }), { ok: true, slug: 'nmap', nivel: 0 });
-  assert.deepEqual(validarNivelHerramienta({ slug: ' nmap ', nivel: '100' }), { ok: true, slug: 'nmap', nivel: 100 });
-  assert.deepEqual(validarNivelHerramienta({ slug: 'nmap', nivel: 42, slugsValidos: ['nmap'] }), {
-    ok: true,
-    slug: 'nmap',
-    nivel: 42,
-  });
-
-  for (const nivel of [101, -1, 4.5, '4.5', 'abc', '', '  ', true, false, [], {}, null, undefined]) {
-    const resultado = validarNivelHerramienta({ slug: 'nmap', nivel });
-    assert.equal(resultado.ok, false, `debería rechazar ${JSON.stringify(nivel)}`);
-  }
-
-  assert.equal(validarNivelHerramienta({ slug: '', nivel: 10 }).ok, false);
-  assert.equal(validarNivelHerramienta({ nivel: 10 }).ok, false);
-  // La lista blanca de herramientas se respeta cuando se pasa.
-  assert.equal(validarNivelHerramienta({ slug: 'inventada', nivel: 10, slugsValidos: ['nmap'] }).ok, false);
 });
 
 test('nombreHerramienta: siglas, acentos y partes compuestas', () => {

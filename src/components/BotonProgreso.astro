@@ -1,0 +1,25 @@
+---
+/**
+ * Botón de progreso de una guía publicada.
+ *
+ * El id sale de D1 y la página solo renderiza la guía si está publicada. La
+ * escritura es local (`joanix:progreso:v1`); no hay endpoint ni cuenta.
+ */
+interface Props {
+  guiaId: number;
+}
+
+const { guiaId } = Astro.props;
+---
+
+<div class="guia__progreso">
+  <button
+    type="button"
+    class="boton boton--ghost guia__progreso-boton"
+    data-progreso-guia={guiaId}
+    aria-pressed="false"
+  >
+    Marcar como completada
+  </button>
+  <p class="guia__progreso-aviso" data-progreso-aviso hidden role="status"></p>
+</div>

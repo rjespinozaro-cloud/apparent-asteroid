@@ -1,9 +1,9 @@
 /**
  * Planeta de herramientas de /perfil/.
  *
- * El servidor entrega la lista accesible (botones y deslizadores) y el nivel
- * de cada herramienta; aquí solo se dibuja el canvas, se guardan los niveles
- * en `localStorage` y se conecta la selección con el panel.
+ * El servidor entrega la lista accesible (botones con nombre, progreso nativo y
+ * porcentaje); aquí solo se dibuja el canvas, se lee el progreso local de las
+ * guías y se conecta la selección con el panel. El nivel es de solo lectura.
  *
  * Reglas que se respetan a propósito:
  *   - Un único `requestAnimationFrame`, que se detiene con la pestaña oculta o
@@ -16,13 +16,12 @@
  *   - Sin `innerHTML`, sin `style=""` en el HTML y sin estilos inline: los
  *     valores dinámicos van por CSSOM (`element.style.width`) y por clases.
  */
-import { etiquetaNivel, nivelHerramienta, resumenEquipos, validarNivelHerramienta } from '../lib/perfil.js';
+import { contarGuiasCompletadas, etiquetaNivel, nivelHerramienta, resumenEquipos } from '../lib/perfil.js';
 import { INCLINACION } from './planeta-proyeccion.js';
 import { crearEscena } from './planeta-escena.js';
 import { crearTextura } from './planeta-textura.js';
+import { leerProgreso } from './progreso.js';
 
-/** Clave de almacenamiento. Lleva versión para poder migrar el formato. */
-const CLAVE = 'joanix:perfil:v1';
 const ORBITAS = {
   blue: { radio: 1.75, inclinacion: -0.25, achatado: 0.32, giro: 0.18 },
   red: { radio: 2.35, inclinacion: 0.2, achatado: 0.3, giro: -0.11 },
@@ -37,6 +36,8 @@ const GIRO_PLANETA = 0.012;
 const LADO_MIN = 256;
 const LADO_MAX = 640;
 const MUESTRAS = 120;
+/** Niveles de muestra deterministas del modo ejemplo (no se guardan). */
+const MUESTRA_NIVELES = [86, 62, 38, 14, 74, 50, 92, 0, 68, 44, 80, 32];
 
 /** @param {number} t segundos */
 function giroPlaneta(t) {
@@ -48,8 +49,9 @@ const raiz = document.querySelector('[data-planeta]');
 if (raiz instanceof HTMLElement) iniciar(raiz);
 
 /**
- * @typedef {{ slug: string, nombre: string, equipo: 'red'|'blue'|'purple'|null, guias: number,
- *             ruta: { slug: string, titulo: string } | null }} Herramienta
+ * @typedef {{ slug: string, nombre: string, equipo: 'red'|'blue'|'purple'|null,
+ *             guias: number, guiasLista: Array<{ id: number, slug: string, titulo: string }>,
+ *             rutas: Array<{ slug: string, titulo: string }> }} Herramienta
  */
 
 /** @typedef {{ halo: CanvasGradient, esfera: CanvasGradient, sombra: CanvasGradient }} GradientesV1 */
@@ -68,18 +70,19 @@ function iniciar(raiz) {
   const escenaEl = canvas.closest('.planeta-escena');
   const detalle = raiz.querySelector('[data-planeta-detalle]');
   const aviso = raiz.querySelector('[data-planeta-aviso]');
-  const ficha = raiz.querySelector('[data-planeta-ficha]');
-  const fichaNombre = raiz.querySelector('[data-ficha-nombre]');
-  const fichaDetalle = raiz.querySelector('[data-ficha-detalle]');
+  const ejemploBoton = raiz.querySelector('[data-ejemplo]');
+  const ejemploAviso = raiz.querySelector('[data-ejemplo-aviso]');
   const hud = raiz.querySelector('[data-planeta-hud]');
   const botonPng = raiz.querySelector('[data-planeta-png]');
   const general = raiz.querySelector('[data-planeta-general]');
-  const entradas = /** @type {HTMLInputElement[]} */ ([...raiz.querySelectorAll('[data-nivel]')]);
   const porSlug = new Map(herramientas.map((herramienta) => [herramienta.slug, herramienta]));
   const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
-  /** Niveles guardados (autoevaluación). @type {Map<string, number>} */
+  /** Ids de guía completadas que siguen publicadas. @type {Set<number>} */
+  const progreso = new Set();
+  /** Nivel calculado por herramienta para el modo actual. @type {Map<string, number>} */
   const niveles = new Map();
+  let ejemplo = false;
   /** @type {ReturnType<typeof crearEscena> | null} */
   let v2 = null;
   /** @type {Iluminacion | null} */
@@ -113,14 +116,28 @@ function iniciar(raiz) {
         const slug = typeof fila?.slug === 'string' ? fila.slug.trim() : '';
         if (!slug) return [];
         const equipo = fila.equipo === 'red' || fila.equipo === 'blue' || fila.equipo === 'purple' ? fila.equipo : null;
+        const guiasLista = Array.isArray(fila.guiasLista)
+          ? fila.guiasLista.flatMap((guia) => {
+              const id = Number(guia?.id);
+              const guiaSlug = typeof guia?.slug === 'string' ? guia.slug.trim() : '';
+              if (!Number.isInteger(id) || id <= 0 || !guiaSlug) return [];
+              return [{ id, slug: guiaSlug, titulo: String(guia.titulo ?? guiaSlug) }];
+            })
+          : [];
+        const rutas = Array.isArray(fila.rutas)
+          ? fila.rutas.flatMap((ruta) => {
+              const rutaSlug = typeof ruta?.slug === 'string' ? ruta.slug.trim() : '';
+              if (!rutaSlug) return [];
+              return [{ slug: rutaSlug, titulo: String(ruta.titulo ?? rutaSlug) }];
+            })
+          : [];
         return [{
           slug,
           nombre: String(fila.nombre ?? slug),
           equipo,
-          guias: Math.max(0, Number(fila.guias) || 0),
-          ruta: fila.ruta && typeof fila.ruta.slug === 'string'
-            ? { slug: fila.ruta.slug, titulo: String(fila.ruta.titulo ?? fila.ruta.slug) }
-            : null,
+          guias: guiasLista.length,
+          guiasLista,
+          rutas,
         }];
       }));
     } catch {
@@ -129,51 +146,52 @@ function iniciar(raiz) {
   }
 
   /**
-   * Nivel con el que se pinta una herramienta. Hoy no hay cuentas, así que
-   * solo hay autoevaluación; la fórmula deja sitio a las guías completadas.
+   * Nivel calculado para el modo actual (real o ejemplo). Se actualiza solo
+   * cuando cambia el progreso, no en cada fotograma.
    * @param {Herramienta} herramienta
    */
   function nivelDe(herramienta) {
-    return nivelHerramienta({
-      publicadas: herramienta.guias,
-      completadas: 0,
-      autoevaluacion: niveles.get(herramienta.slug) ?? 0,
+    return niveles.get(herramienta.slug) ?? 0;
+  }
+
+  /**
+   * @param {Herramienta} herramienta
+   * @returns {number}
+   */
+  function completadasDe(herramienta) {
+    const total = herramienta.guiasLista.length;
+    if (ejemplo) {
+      return total > 0 ? Math.min(total, Math.round((nivelDe(herramienta) / 100) * total)) : 0;
+    }
+    return contarGuiasCompletadas(progreso, herramienta.guiasLista);
+  }
+
+  function recalcularNiveles() {
+    herramientas.forEach((herramienta, indice) => {
+      const nivel = ejemplo
+        ? MUESTRA_NIVELES[indice % MUESTRA_NIVELES.length] ?? 0
+        : nivelHerramienta({
+            guias: {
+              completadas: contarGuiasCompletadas(progreso, herramienta.guiasLista),
+              publicadas: herramienta.guiasLista.length,
+            },
+          });
+      niveles.set(herramienta.slug, nivel);
     });
   }
 
-  // ── Persistencia ─────────────────────────────────────────────────────────
+  // ── Progreso local ───────────────────────────────────────────────────────
 
-  /** @returns {boolean} `false` si el navegador no permite almacenar. */
-  function cargar() {
-    try {
-      const crudo = localStorage.getItem(CLAVE);
-      if (!crudo) return true;
-      const datos = JSON.parse(crudo);
-      const guardados = datos && typeof datos === 'object' && datos.niveles && typeof datos.niveles === 'object'
-        ? datos.niveles
-        : {};
-      for (const [slug, valor] of Object.entries(guardados)) {
-        if (!porSlug.has(slug)) continue;
-        const numero = Number(valor);
-        if (Number.isInteger(numero) && numero >= 0 && numero <= 100) niveles.set(slug, numero);
-      }
-      return true;
-    } catch {
-      return false;
+  function cargarProgreso() {
+    const idsPublicados = [...new Set(herramientas.flatMap((herramienta) => (
+      herramienta.guiasLista.map((guia) => guia.id)
+    )))];
+    const ids = leerProgreso(idsPublicados);
+    if (ids === null) {
+      avisar('No se pudo leer el progreso guardado. Los niveles aparecerán a cero hasta que el navegador lo permita.');
+      return;
     }
-  }
-
-  function guardar() {
-    try {
-      localStorage.setItem(CLAVE, JSON.stringify({
-        version: 1,
-        actualizado: new Date().toISOString(),
-        niveles: Object.fromEntries(niveles),
-      }));
-      avisar('');
-    } catch {
-      avisar('No se pudo guardar en este navegador. El cambio se mantiene solo mientras la página esté abierta.');
-    }
+    for (const id of ids) progreso.add(id);
   }
 
   /** @param {string} texto */
@@ -181,6 +199,18 @@ function iniciar(raiz) {
     if (!(aviso instanceof HTMLElement)) return;
     aviso.textContent = texto;
     aviso.hidden = texto === '';
+  }
+
+  /** @param {boolean} activo */
+  function aplicarEjemplo(activo) {
+    ejemplo = activo;
+    if (ejemploBoton instanceof HTMLButtonElement) {
+      ejemploBoton.setAttribute('aria-pressed', String(activo));
+      ejemploBoton.textContent = activo ? 'Volver a mi progreso' : 'Ver ejemplo';
+    }
+    if (ejemploAviso instanceof HTMLElement) ejemploAviso.hidden = !activo;
+    actualizarPanel();
+    if (reducido) pintarQuieto();
   }
 
   // ── Tema y geometría ─────────────────────────────────────────────────────
@@ -702,49 +732,72 @@ function iniciar(raiz) {
     for (const equipo of EQUIPOS) {
       const relleno = raiz.querySelector(`[data-barra="${equipo}"]`);
       const valor = raiz.querySelector(`[data-barra-valor="${equipo}"]`);
+      const media = raiz.querySelector(`[data-media="${equipo}"]`);
       if (relleno instanceof HTMLElement) relleno.style.width = `${resumen[equipo]}%`;
       if (valor instanceof HTMLElement) valor.textContent = `${resumen[equipo]} %`;
+      if (media instanceof HTMLElement) media.textContent = `${resumen[equipo]} %`;
+    }
+
+    const mediaSinEquipo = raiz.querySelector('[data-media="neutral"]');
+    if (mediaSinEquipo instanceof HTMLElement) {
+      const sinEquipo = herramientas.filter((herramienta) => !herramienta.equipo);
+      const media = sinEquipo.length
+        ? Math.round(sinEquipo.reduce((total, herramienta) => total + nivelDe(herramienta), 0) / sinEquipo.length)
+        : 0;
+      mediaSinEquipo.textContent = `${media} %`;
     }
   }
 
-  /** @param {string} slug */
-  function actualizarSalida(slug) {
-    const nivel = niveles.get(slug) ?? 0;
-    const salida = raiz.querySelector(`[data-valor="${slug}"]`);
-    const entrada = raiz.querySelector(`[data-nivel="${slug}"]`);
-    if (salida instanceof HTMLElement) salida.textContent = `${nivel} %`;
-    if (entrada instanceof HTMLInputElement) entrada.setAttribute('aria-valuetext', `${nivel} %, ${etiquetaNivel(nivel)}`);
+  function pintarFilas() {
+    for (const herramienta of herramientas) {
+      const nivel = nivelDe(herramienta);
+      const barra = raiz.querySelector(`[data-progreso="${herramienta.slug}"]`);
+      const porcentaje = raiz.querySelector(`[data-valor="${herramienta.slug}"]`);
+      if (barra instanceof HTMLProgressElement) {
+        barra.value = nivel;
+        barra.setAttribute('aria-label', `Nivel de ${herramienta.nombre}: ${nivel} %`);
+      }
+      if (porcentaje instanceof HTMLElement) porcentaje.textContent = `${nivel} %`;
+    }
   }
 
   /**
-   * @param {string} etiqueta
    * @param {string} texto
-   * @param {number} tamano
+   * @param {string} [clase]
    */
-  function crearLinea(etiqueta, texto, tamano = 0.9) {
+  function crearParrafo(texto, clase = 'planeta-detalle__linea') {
     const parrafo = document.createElement('p');
-    if (etiqueta) {
-      const fuerte = document.createElement('strong');
-      fuerte.textContent = etiqueta;
-      parrafo.append(fuerte);
-    }
-    parrafo.append(document.createTextNode(texto));
-    parrafo.className = 'planeta-detalle__linea';
-    parrafo.style.fontSize = `${tamano}rem`;
+    parrafo.className = clase;
+    parrafo.textContent = texto;
     return parrafo;
   }
 
-  function pintarDetalle() {
+  /**
+   * @param {HTMLElement} lista
+   * @param {string} texto
+   * @param {string} href
+   */
+  function agregarEnlace(lista, texto, href) {
+    const elemento = document.createElement('li');
+    const enlace = document.createElement('a');
+    enlace.href = href;
+    enlace.textContent = texto;
+    elemento.append(enlace);
+    lista.append(elemento);
+  }
+
+  function pintarFicha() {
     if (!(detalle instanceof HTMLElement)) return;
     detalle.replaceChildren();
 
     const herramienta = seleccionSlug === null ? null : porSlug.get(seleccionSlug);
     if (!herramienta) {
-      const sinMarcar = herramientas.every((fila) => (niveles.get(fila.slug) ?? 0) === 0);
-      const texto = sinMarcar
-        ? 'Aún no has marcado ninguna herramienta. Elige una de la lista o toca un cuerpo del planeta para empezar.'
-        : 'Elige una herramienta de la lista para ver su nivel y el siguiente paso.';
-      detalle.append(crearLinea('', texto));
+      const texto = ejemplo
+        ? 'Estás viendo datos de ejemplo. Elige una herramienta para ver su nivel y cómo subirlo.'
+        : progreso.size === 0
+          ? 'Todavía no has completado ninguna guía. Abre una guía y usa «Marcar como completada» para empezar.'
+          : 'Elige una herramienta de la lista o toca un cuerpo del planeta para ver su nivel y cómo subirlo.';
+      detalle.append(crearParrafo(texto));
       return;
     }
 
@@ -764,51 +817,68 @@ function iniciar(raiz) {
         : herramienta.equipo === 'blue'
           ? 'Blue team · defensa'
           : 'Sin equipo asignado';
-    detalle.append(crearLinea('', equipo));
+    detalle.append(crearParrafo(equipo));
 
-    detalle.append(crearLinea(
-      '',
-      herramienta.guias > 0
-        ? `${herramienta.guias} ${herramienta.guias === 1 ? 'guía publicada' : 'guías publicadas'} de esta herramienta.`
-        : 'Todavía no hay guías publicadas de esta herramienta.',
-      0.85,
-    ));
+    const desglose = document.createElement('p');
+    desglose.className = 'perfil-ficha__desglose';
+    desglose.append(document.createTextNode('Guías '));
+    const hechas = document.createElement('strong');
+    hechas.textContent = String(completadasDe(herramienta));
+    const total = document.createElement('strong');
+    total.textContent = String(herramienta.guiasLista.length);
+    desglose.append(hechas, document.createTextNode(' de '), total);
+    detalle.append(desglose);
 
-    const enlace = document.createElement('a');
-    enlace.className = 'boton boton--ghost';
-    if (herramienta.ruta) {
-      enlace.href = `${base}rutas/${herramienta.ruta.slug}/`;
-      enlace.textContent = `Seguir la ruta «${herramienta.ruta.titulo}»`;
+    const titulo = document.createElement('h3');
+    titulo.className = 'ficha-pasos__titulo';
+    titulo.textContent = 'Cómo subir este nivel';
+    detalle.append(titulo);
+
+    const lista = document.createElement('ul');
+    lista.className = 'ficha-pasos';
+
+    if (herramienta.guiasLista.length > 0) {
+      for (const guia of herramienta.guiasLista) {
+        agregarEnlace(lista, `Guía: ${guia.titulo}`, `${base}guias/${guia.slug}/`);
+      }
     } else {
-      enlace.href = `${base}guias/?herramienta=${encodeURIComponent(herramienta.slug)}`;
-      enlace.textContent = herramienta.guias > 0 ? `Ver guías de ${herramienta.nombre}` : 'Ver el catálogo';
+      const elemento = document.createElement('li');
+      elemento.textContent = 'Guías: todavía no hay publicadas';
+      lista.append(elemento);
     }
-    detalle.append(enlace);
+
+    for (const ruta of herramienta.rutas) {
+      agregarEnlace(lista, `Ruta: ${ruta.titulo}`, `${base}rutas/${ruta.slug}/`);
+    }
+
+    for (const nombre of ['Prácticas', 'Examen', 'Juegos']) {
+      const elemento = document.createElement('li');
+      elemento.dataset.estado = 'pronto';
+      const etiquetaFutura = document.createElement('span');
+      etiquetaFutura.textContent = nombre;
+      const proximo = document.createElement('span');
+      proximo.className = 'ficha-pasos__pronto';
+      proximo.textContent = 'Próximamente';
+      elemento.append(etiquetaFutura, proximo);
+      lista.append(elemento);
+    }
+
+    if (herramienta.guiasLista.length === 0 && herramienta.rutas.length === 0) {
+      agregarEnlace(
+        lista,
+        'Ver el catálogo de guías',
+        `${base}guias/?herramienta=${encodeURIComponent(herramienta.slug)}`,
+      );
+    }
+
+    detalle.append(lista);
   }
 
-  /** Ficha flotante: duplica en la escena lo que anuncia el panel. */
-  function actualizarFicha() {
-    if (!(ficha instanceof HTMLElement)) return;
-    const herramienta = seleccionSlug === null ? null : porSlug.get(seleccionSlug);
-    if (!herramienta) {
-      ficha.hidden = true;
-      return;
-    }
-    const nivel = nivelDe(herramienta);
-    if (fichaNombre instanceof HTMLElement) fichaNombre.textContent = herramienta.nombre;
-    if (fichaDetalle instanceof HTMLElement) {
-      const equipo = herramienta.equipo === 'red'
-        ? 'Red team'
-        : herramienta.equipo === 'blue'
-          ? 'Blue team'
-          : herramienta.equipo === 'purple'
-            ? 'Purple team'
-            : 'Sin equipo';
-      fichaDetalle.textContent = `${nivel} % · ${etiquetaNivel(nivel)} · ${equipo}`;
-    }
-    if (herramienta.equipo) ficha.dataset.equipo = herramienta.equipo;
-    else delete ficha.dataset.equipo;
-    ficha.hidden = false;
+  function actualizarPanel() {
+    recalcularNiveles();
+    pintarFilas();
+    pintarResumen();
+    pintarFicha();
   }
 
   /** @param {string | null} slug */
@@ -823,14 +893,7 @@ function iniciar(raiz) {
         boton.setAttribute('aria-pressed', boton.dataset.elegir === seleccionSlug ? 'true' : 'false');
       }
     }
-    for (const fila of raiz.querySelectorAll('[data-fila]')) {
-      if (fila instanceof HTMLElement) {
-        if (fila.dataset.fila === seleccionSlug) fila.setAttribute('aria-current', 'true');
-        else fila.removeAttribute('aria-current');
-      }
-    }
-    pintarDetalle();
-    actualizarFicha();
+    pintarFicha();
     if (reducido) pintarQuieto();
   }
 
@@ -1015,21 +1078,8 @@ function iniciar(raiz) {
     if (herramienta) seleccionar(herramienta.slug);
   });
 
-  for (const entrada of entradas) {
-    entrada.addEventListener('input', () => {
-      const slug = entrada.dataset.nivel ?? '';
-      const validado = validarNivelHerramienta({ slug, nivel: entrada.value, slugsValidos: [...porSlug.keys()] });
-      if (!validado.ok) {
-        avisar(validado.error);
-        return;
-      }
-      niveles.set(validado.slug, validado.nivel);
-      actualizarSalida(validado.slug);
-      guardar();
-      pintarResumen();
-      actualizarFicha();
-      if (reducido) pintarQuieto();
-    });
+  if (ejemploBoton instanceof HTMLButtonElement) {
+    ejemploBoton.addEventListener('click', () => aplicarEjemplo(!ejemplo));
   }
 
   for (const boton of raiz.querySelectorAll('[data-elegir]')) {
@@ -1106,15 +1156,10 @@ function iniciar(raiz) {
   // ── Arranque ─────────────────────────────────────────────────────────────
 
   leerTema();
-  if (!cargar()) {
-    avisar('Este navegador no permite guardar datos. Los niveles funcionarán solo mientras la página esté abierta.');
-  }
+  cargarProgreso();
   prepararCuerpos();
   dimensionar();
-  for (const herramienta of herramientas) actualizarSalida(herramienta.slug);
-  pintarResumen();
-  pintarDetalle();
-  actualizarFicha();
+  actualizarPanel();
   pintarQuieto();
   programar();
   iniciarTextura();

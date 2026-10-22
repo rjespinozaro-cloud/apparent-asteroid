@@ -89,32 +89,69 @@ export async function listarHerramientasPlaneta(database) {
 }
 
 /**
- * Primera ruta publicada que contiene una guía de cada herramienta.
- * Sirve para que el panel del planeta enlace a la ruta real en lugar de al
- * catálogo genérico cuando existe un itinerario que la incluye.
+ * Guías publicadas agrupadas por herramienta.
+ *
+ * Consulta ligera: solo el id (para el progreso local), el slug y el título
+ * (para los enlaces de la ficha). No trae el cuerpo Markdown.
  * @param {D1Database} database
- * @returns {Promise<Map<string, { slug: string, titulo: string }>>}
+ * @returns {Promise<Map<string, Array<{ id: number, slug: string, titulo: string }>>>}
+ */
+export async function listarGuiasPublicadasParaPerfil(database) {
+  const resultado = await database
+    .prepare(
+      `SELECT id, slug, titulo, herramienta
+       FROM guias
+       WHERE publicada = 1
+       ORDER BY herramienta ASC, fecha DESC, id DESC`,
+    )
+    .all();
+
+  /** @type {Map<string, Array<{ id: number, slug: string, titulo: string }>>} */
+  const mapa = new Map();
+  for (const fila of resultado.results ?? []) {
+    const herramienta = String(fila.herramienta ?? '').trim();
+    const slug = String(fila.slug ?? '').trim();
+    const id = Number(fila.id);
+    if (!herramienta || !slug || !Number.isInteger(id) || id <= 0) continue;
+    const lista = mapa.get(herramienta) ?? [];
+    lista.push({ id, slug, titulo: String(fila.titulo ?? slug) });
+    mapa.set(herramienta, lista);
+  }
+  return mapa;
+}
+
+/**
+ * Rutas publicadas que contienen al menos una guía de cada herramienta.
+ * Devuelve todas las rutas de la herramienta, en su orden editorial, para que
+ * la ficha pueda enlazarlas sin inventar un catálogo genérico.
+ * @param {D1Database} database
+ * @returns {Promise<Map<string, Array<{ slug: string, titulo: string }>>>}
  */
 export async function listarRutasPorHerramienta(database) {
   const resultado = await database
     .prepare(
-      `SELECT g.herramienta AS herramienta,
+      `SELECT DISTINCT g.herramienta AS herramienta,
               r.slug AS slug,
               r.titulo AS titulo,
-              MIN(r.orden) AS orden
+              r.orden AS orden
        FROM rutas r
        JOIN ruta_pasos p ON p.ruta_id = r.id
        JOIN guias g ON g.id = p.guia_id AND g.publicada = 1
        WHERE r.publicada = 1
-       GROUP BY g.herramienta
-       ORDER BY orden ASC`,
+       ORDER BY r.orden ASC, r.slug ASC`,
     )
     .all();
 
-  return new Map(
-    (resultado.results ?? []).map((fila) => [
-      String(fila.herramienta),
-      { slug: String(fila.slug), titulo: String(fila.titulo) },
-    ]),
-  );
+  /** @type {Map<string, Array<{ slug: string, titulo: string }>>} */
+  const mapa = new Map();
+  for (const fila of resultado.results ?? []) {
+    const herramienta = String(fila.herramienta ?? '').trim();
+    const slug = String(fila.slug ?? '').trim();
+    if (!herramienta || !slug) continue;
+    const lista = mapa.get(herramienta) ?? [];
+    if (lista.some((ruta) => ruta.slug === slug)) continue;
+    lista.push({ slug, titulo: String(fila.titulo ?? slug) });
+    mapa.set(herramienta, lista);
+  }
+  return mapa;
 }

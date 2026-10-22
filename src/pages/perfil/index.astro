@@ -9,7 +9,7 @@
 import Base from '../../layouts/Base.astro';
 import Migas from '../../components/Migas.astro';
 import Planeta from '../../components/Planeta.astro';
-import { getDatabase, listarHerramientasPlaneta, listarRutasPorHerramienta } from '../../lib/db.js';
+import { getDatabase, listarGuiasPublicadasParaPerfil, listarHerramientasPlaneta, listarRutasPorHerramienta } from '../../lib/db.js';
 import { plural } from '../../lib/utils/texto.js';
 import { env } from 'cloudflare:workers';
 import '../../styles/perfil.css';
@@ -17,22 +17,28 @@ import '../../styles/perfil.css';
 export const prerender = false;
 
 const database = getDatabase(env);
-const [herramientasBase, rutas] = await Promise.all([
+const [herramientasBase, guiasPorHerramienta, rutasPorHerramienta] = await Promise.all([
   listarHerramientasPlaneta(database),
+  listarGuiasPublicadasParaPerfil(database),
   listarRutasPorHerramienta(database),
 ]);
 
-const herramientas = herramientasBase.map((herramienta) => ({
-  ...herramienta,
-  ruta: rutas.get(herramienta.slug) ?? null,
-}));
+const herramientas = herramientasBase.map((herramienta) => {
+  const guiasLista = guiasPorHerramienta.get(herramienta.slug) ?? [];
+  return {
+    ...herramienta,
+    guias: guiasLista.length,
+    guiasLista,
+    rutas: rutasPorHerramienta.get(herramienta.slug) ?? [],
+  };
+});
 
 const conGuias = herramientas.filter((herramienta) => herramienta.guias > 0).length;
 const base = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
 
 const descripcion = conGuias > 0
-  ? `Tu perfil de ciberseguridad como un sistema solar: ${plural(herramientas.length, 'herramienta', 'herramientas')} en órbita, ${conGuias} con guías publicadas.`
-  : 'Tu perfil de ciberseguridad como un sistema solar: marca tu nivel en cada herramienta y descubre por dónde seguir.';
+  ? `Tu perfil de ciberseguridad como un sistema solar: ${plural(herramientas.length, 'herramienta', 'herramientas')} en órbita y tu progreso real con las guías completadas.`
+  : 'Tu perfil de ciberseguridad como un sistema solar: descubre las herramientas y el nivel que dan tus guías completadas.';
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 ---
@@ -49,12 +55,13 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
 
     <p class="entradilla">
       Cada herramienta es un cuerpo en órbita. Azul defiende, rojo ataca y los de dos colores sirven a los dos
-      equipos. Cuanto más la dominas, más grande se ve.
+      equipos. Cuanto más avanzas en sus guías, más grande se ve.
     </p>
 
     <p class="perfil-nota">
-      Este perfil se guarda <strong>solo en este navegador</strong>. Todavía no hay cuentas de visitante, así que
-      no se envía nada al servidor: si cambias de dispositivo o borras los datos del navegador, el perfil empieza
+      Tu progreso se guarda <strong>solo en este navegador</strong>. El nivel de cada herramienta sale de las
+      guías que marques como completadas; prácticas, examen y juegos todavía no están disponibles. Todavía no
+      hay cuentas de visitante: si cambias de dispositivo o borras los datos del navegador, el progreso empieza
       de cero.
     </p>
 

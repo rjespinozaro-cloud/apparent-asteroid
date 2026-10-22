@@ -16,6 +16,7 @@ Todo lo que hay escrito sobre JOANIX, y para qué sirve cada cosa.
 | Documento | Contenido |
 |---|---|
 | [ARQUITECTURA-JOANIX.md](ARQUITECTURA-JOANIX.md) | Arquitectura: rutas, datos, autenticación, permisos, despliegue |
+| [PERFIL-PROGRESO-LOCAL.md](PERFIL-PROGRESO-LOCAL.md) | Perfil v3: fórmula del nivel, progreso local de guías, modo ejemplo y su límite de seguridad |
 | [arquitectura-ia.md](arquitectura-ia.md) | El asistente IA: proveedores, límites por minuto, cifrado de la clave y consumo |
 | [AUDITORIA-UI-SISTEMA.md](AUDITORIA-UI-SISTEMA.md) | Marca, huecos de CSS, deuda de interfaz y estado del flujo de pago |
 | [AUDITORIA-PLATAFORMA-TIENDA-2026-10-20.md](AUDITORIA-PLATAFORMA-TIENDA-2026-10-20.md) | Auditoría de plataforma, panel y tienda: hallazgos priorizados, plan por bloques y módulos pendientes |

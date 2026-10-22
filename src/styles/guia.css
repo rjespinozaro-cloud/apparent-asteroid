@@ -57,6 +57,40 @@
   max-width: 62ch;
 }
 
+/* Progreso local de la guía ---------------------------------------------- */
+
+.guia__progreso {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-xs);
+  margin-top: var(--espacio-2xs);
+}
+
+.guia__progreso-boton {
+  min-width: 0;
+}
+
+.guia__progreso-boton[aria-pressed='true'] {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+}
+
+.guia__progreso-boton:focus-visible {
+  outline: 2px solid var(--borde-enfoque);
+  outline-offset: 3px;
+}
+
+.guia__progreso-aviso {
+  color: var(--tinta-tenue);
+  font-size: var(--texto-sm);
+  margin: 0;
+}
+
+.guia__progreso-aviso[hidden] {
+  display: none;
+}
+
 /* Cuerpo en dos columnas -------------------------------------------------- */
 
 .guia__cuerpo {

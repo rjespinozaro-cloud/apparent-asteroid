@@ -12,7 +12,11 @@ import test from 'node:test';
 
 import { crearBaseDeDatosDePruebas } from './helpers/d1-mock.js';
 import { crearGuia } from '../src/lib/db/guias.js';
-import { listarHerramientasPlaneta, listarRutasPorHerramienta } from '../src/lib/db/perfil.js';
+import {
+  listarGuiasPublicadasParaPerfil,
+  listarHerramientasPlaneta,
+  listarRutasPorHerramienta,
+} from '../src/lib/db/perfil.js';
 
 const ESQUEMA = [
   '0001_esquema.sql',
@@ -90,7 +94,7 @@ test('el planeta lee las herramientas del catálogo y deduce el equipo de las gu
   assert.deepEqual(nombres, [...nombres].sort((a, b) => a.localeCompare(b, 'es')));
 });
 
-test('el planeta enlaza cada herramienta con la primera ruta publicada que la usa', async () => {
+test('el planeta enlaza la herramienta con todas sus rutas publicadas, en orden', async () => {
   const db = crearBase();
   await crearGuia(db, guia({ slug: 'blue/nmap-deteccion', herramienta: 'nmap', equipo: 'blue' }));
   const fila = await db.prepare('SELECT id FROM guias WHERE slug = ?').bind('blue/nmap-deteccion').first();
@@ -120,6 +124,23 @@ test('el planeta enlaza cada herramienta con la primera ruta publicada que la us
   }
 
   const rutas = await listarRutasPorHerramienta(db);
-  assert.deepEqual(rutas.get('nmap'), { slug: 'ruta-temprana', titulo: 'Ruta temprana' });
+  assert.deepEqual(rutas.get('nmap'), [
+    { slug: 'ruta-temprana', titulo: 'Ruta temprana' },
+    { slug: 'ruta-tardia', titulo: 'Ruta tardía' },
+  ]);
   assert.equal(rutas.size, 1);
+});
+
+test('las guías publicadas se agrupan por herramienta con id, slug y título', async () => {
+  const db = crearBase();
+  await crearGuia(db, guia({ slug: 'blue/nmap-deteccion', herramienta: 'nmap', equipo: 'blue' }));
+  await crearGuia(db, guia({ slug: 'red/nmap-ofensivo', herramienta: 'nmap', equipo: 'red' }));
+  await crearGuia(db, guia({ slug: 'red/wifi-borrador', herramienta: 'wifi', equipo: 'red', publicada: 0 }));
+
+  const mapa = await listarGuiasPublicadasParaPerfil(db);
+  const nmap = mapa.get('nmap') ?? [];
+  assert.deepEqual(nmap.map((fila) => fila.slug).sort(), ['blue/nmap-deteccion', 'red/nmap-ofensivo']);
+  assert.ok(nmap.every((fila) => Number.isInteger(fila.id) && fila.id > 0));
+  assert.ok(nmap.every((fila) => fila.titulo.length > 0));
+  assert.equal(mapa.has('wifi'), false, 'un borrador no debe entrar en el progreso');
 });

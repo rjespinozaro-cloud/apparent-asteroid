@@ -44,7 +44,11 @@ export {
   obtenerTipologiaRuta,
 } from './rutas.js';
 
-export { listarHerramientasPlaneta, listarRutasPorHerramienta } from './perfil.js';
+export {
+  listarGuiasPublicadasParaPerfil,
+  listarHerramientasPlaneta,
+  listarRutasPorHerramienta,
+} from './perfil.js';
 
 export {
   actualizarPasswordUsuario,

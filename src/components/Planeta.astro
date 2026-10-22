@@ -2,17 +2,31 @@
 /**
  * Planeta de herramientas.
  *
- * El servidor dibuja la lista accesible completa (botones + deslizadores) y el
- * script solo la mejora: añade el canvas, guarda los niveles y conecta la
- * selección. Sin JavaScript se sigue pudiendo leer el catálogo de
- * herramientas y sus equipos.
+ * El servidor dibuja la lista accesible completa (botones con nombre, progreso
+ * nativo y porcentaje) y el script solo la mejora: añade el canvas, lee el
+ * progreso local de las guías, conecta la selección y pinta la ficha. Sin
+ * JavaScript se sigue pudiendo leer el catálogo de herramientas y sus equipos.
+ *
+ * El nivel es de solo lectura: no hay sliders ni autoevaluación.
  */
+interface GuiaResumen {
+  id: number;
+  slug: string;
+  titulo: string;
+}
+
+interface RutaResumen {
+  slug: string;
+  titulo: string;
+}
+
 interface Herramienta {
   slug: string;
   nombre: string;
   equipo: 'red' | 'blue' | 'purple' | null;
   guias: number;
-  ruta: { slug: string; titulo: string } | null;
+  guiasLista: GuiaResumen[];
+  rutas: RutaResumen[];
 }
 
 interface Props {
@@ -33,11 +47,18 @@ const nombreEquipo = { red: 'Red team', blue: 'Blue team', purple: 'Purple team'
 const grupos = GRUPOS.map((grupo) => ({
   ...grupo,
   herramientas: herramientas.filter((herramienta) => herramienta.equipo === grupo.id),
-})).filter((grupo) => grupo.herramientas.length > 0);
+}));
 
 const sinEquipo = herramientas.filter((herramienta) => herramienta.equipo === null);
 const hayGuias = herramientas.some((herramienta) => herramienta.guias > 0);
-const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slug, nombre, equipo, guias, ruta }));
+const datos = herramientas.map(({ slug, nombre, equipo, guias, guiasLista, rutas }) => ({
+  slug,
+  nombre,
+  equipo,
+  guias,
+  guiasLista,
+  rutas,
+}));
 ---
 
 <section class="planeta contenedor" aria-labelledby="planeta-titulo" data-planeta data-herramientas={JSON.stringify(datos)}>
@@ -54,7 +75,7 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slu
         </a>
       </div>
     ) : (
-      <>
+      <div class="perfil-layout">
         <div class="planeta-escena">
           <canvas
             class="planeta__canvas"
@@ -70,12 +91,7 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slu
             <span class="eq-purple"><i aria-hidden="true"></i>Ambos equipos</span>
           </p>
 
-          <aside class="planeta-ficha" data-planeta-ficha hidden>
-            <strong data-ficha-nombre></strong>
-            <span data-ficha-detalle></span>
-          </aside>
-
-          <button type="button" class="planeta-descargar" data-planeta-png aria-label="Descargar mi planeta en PNG">
+          <button type="button" class="planeta-descargar" data-planeta-png>
             Descargar PNG
           </button>
 
@@ -84,9 +100,19 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slu
           )}
         </div>
 
-        <div class="planeta__panel">
-          <section class="planeta-tarjeta" aria-labelledby="planeta-resumen-titulo">
-            <h2 id="planeta-resumen-titulo">Tu dominio</h2>
+        <div class="perfil-lateral">
+          <section class="planeta-tarjeta" aria-labelledby="perfil-dominio-titulo">
+            <div class="perfil-tarjeta__cab">
+              <h2 id="perfil-dominio-titulo">Tu dominio</h2>
+              <button
+                type="button"
+                class="boton boton--ghost perfil-ejemplo__boton"
+                data-ejemplo
+                aria-pressed="false"
+              >
+                Ver ejemplo
+              </button>
+            </div>
             <p class="planeta-tarjeta__cifra">
               <span data-planeta-general>0</span><small> % de media</small>
             </p>
@@ -101,113 +127,106 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, ruta }) => ({ slu
                 </div>
               ))}
             </div>
+            <p class="perfil-aviso" data-ejemplo-aviso hidden role="status">
+              <strong>Datos de ejemplo</strong> · No se guardan; tu progreso real sigue intacto.
+            </p>
           </section>
 
-          <section class="planeta-tarjeta" aria-labelledby="planeta-detalle-titulo">
-            <h2 id="planeta-detalle-titulo">Herramienta seleccionada</h2>
+          <section class="planeta-tarjeta perfil-ficha" aria-labelledby="perfil-ficha-titulo">
+            <h2 id="perfil-ficha-titulo">Herramienta seleccionada</h2>
             <div data-planeta-detalle aria-live="polite">
-              <p data-planeta-detalle-texto>
-                Toca un cuerpo del planeta o elige una herramienta de la lista para ver su nivel y el siguiente paso.
+              <p class="planeta-detalle__linea">
+                Elige una herramienta de la lista o toca un cuerpo del planeta para ver su nivel y cómo subirlo.
               </p>
             </div>
             <p class="planeta-aviso" data-planeta-aviso hidden role="alert"></p>
           </section>
+        </div>
 
-          <section class="planeta-tarjeta" aria-labelledby="planeta-lista-titulo">
-            <h2 id="planeta-lista-titulo">Herramientas</h2>
-            <p>
-              {hayGuias
-                ? 'Ajusta tu nivel en cada herramienta. Se guarda solo en este navegador.'
-                : 'Aún no hay guías publicadas: marca tu nivel de partida y el planeta irá creciendo con el catálogo.'}
-            </p>
+        <section class="perfil-herramientas" aria-labelledby="planeta-titulo">
+          <div class="perfil-herramientas__cab">
+            <h2 id="planeta-titulo">Herramientas</h2>
+            <a class="boton boton--ghost perfil-herramientas__enlace" href={`${base}guias/`}>Ver las guías</a>
+          </div>
+          <p class="perfil-herramientas__nota">
+            {hayGuias
+              ? 'El nivel se calcula con las guías que marques como completadas. Prácticas, examen y juegos llegarán más adelante.'
+              : 'Todavía no hay guías publicadas de estas herramientas: el nivel empezará a calcularse cuando las haya.'}
+          </p>
 
+          <div class="perfil-equipos">
             {grupos.map((grupo) => (
-              <div class="planeta-grupo" data-equipo={grupo.id}>
-                <h3>
-                  <span class="planeta-punto" aria-hidden="true" />
-                  {grupo.titulo}
-                </h3>
-                <ul class="planeta-lista" role="list">
+              <section class="equipo" data-equipo={grupo.id} aria-labelledby={`equipo-${grupo.id}`}>
+                <header class="equipo__cab">
+                  <h3 class="equipo__titulo" id={`equipo-${grupo.id}`}>{grupo.titulo}</h3>
+                  <span class="equipo__media">Media <span data-media={grupo.id}>0 %</span></span>
+                </header>
+                <ul class="equipo__lista" role="list">
                   {grupo.herramientas.map((herramienta) => (
-                    <li
-                      class="planeta-fila"
-                      data-equipo={grupo.id}
-                      data-fila={herramienta.slug}
-                    >
+                    <li>
                       <button
                         type="button"
-                        class="planeta-fila__nombre"
+                        class="herr"
                         data-elegir={herramienta.slug}
                         aria-pressed="false"
                       >
-                        {herramienta.nombre}
-                        {herramienta.guias === 0 && <span class="planeta-fila__sin-guias">Sin guías</span>}
+                        <span class="herr__nombre">{herramienta.nombre}</span>
+                        <progress
+                          data-progreso={herramienta.slug}
+                          max="100"
+                          value="0"
+                          aria-label={`Nivel de ${herramienta.nombre}: 0 %`}
+                        ></progress>
+                        <span class="herr__pct" data-valor={herramienta.slug}>0 %</span>
                       </button>
-                      <input
-                        id={`nivel-${herramienta.slug}`}
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value="0"
-                        data-nivel={herramienta.slug}
-                        aria-label={`Nivel de ${herramienta.nombre}`}
-                      />
-                      <output for={`nivel-${herramienta.slug}`} data-valor={herramienta.slug}>
-                        0 %
-                      </output>
                     </li>
                   ))}
+                  {grupo.herramientas.length === 0 && (
+                    <li class="equipo__vacio">Todavía no hay herramientas en este equipo.</li>
+                  )}
                 </ul>
-              </div>
+              </section>
             ))}
 
             {sinEquipo.length > 0 && (
-              <div class="planeta-grupo">
-                <h3>Sin equipo asignado</h3>
-                <ul class="planeta-lista" role="list">
+              <section class="equipo" data-equipo="neutral" aria-labelledby="equipo-neutral">
+                <header class="equipo__cab">
+                  <h3 class="equipo__titulo" id="equipo-neutral">Sin equipo</h3>
+                  <span class="equipo__media">Media <span data-media="neutral">0 %</span></span>
+                </header>
+                <ul class="equipo__lista" role="list">
                   {sinEquipo.map((herramienta) => (
-                    <li class="planeta-fila" data-fila={herramienta.slug}>
+                    <li>
                       <button
                         type="button"
-                        class="planeta-fila__nombre"
+                        class="herr"
                         data-elegir={herramienta.slug}
                         aria-pressed="false"
                       >
-                        {herramienta.nombre}
+                        <span class="herr__nombre">{herramienta.nombre}</span>
+                        <progress
+                          data-progreso={herramienta.slug}
+                          max="100"
+                          value="0"
+                          aria-label={`Nivel de ${herramienta.nombre}: 0 %`}
+                        ></progress>
+                        <span class="herr__pct" data-valor={herramienta.slug}>0 %</span>
                       </button>
-                      <input
-                        id={`nivel-${herramienta.slug}`}
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value="0"
-                        data-nivel={herramienta.slug}
-                        aria-label={`Nivel de ${herramienta.nombre}`}
-                      />
-                      <output for={`nivel-${herramienta.slug}`} data-valor={herramienta.slug}>
-                        0 %
-                      </output>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </section>
             )}
-          </section>
-
-          <div class="planeta-acciones">
-            <a class="boton boton--ghost" href={`${base}guias/`}>Ver las guías</a>
           </div>
 
           <noscript>
             <p class="planeta-aviso">
-              El planeta necesita JavaScript para dibujarse. La lista de herramientas y sus equipos sigue
-              estando disponible arriba.
+              El planeta necesita JavaScript para dibujarse y leer tu progreso. La lista de herramientas, sus
+              equipos y sus barras de nivel siguen estando disponibles arriba.
             </p>
           </noscript>
-        </div>
-      </>
+        </section>
+      </div>
     )
   }
 </section>

@@ -114,6 +114,8 @@ const precio = compraVisible ? precioGuia(precioCentimos, moneda) : null;
       <p class="guia__aviso">
         Material educativo. Ejecuta los comandos solo en tu laboratorio o en sistemas para los que tengas autorización expresa.
       </p>
+
+      <slot name="acciones" />
     </header>
 
     <div class="guia__cuerpo">
