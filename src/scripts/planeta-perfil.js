@@ -1,6 +1,6 @@
 /**
  * Planeta TI — Motor de renderizado 3D (WebGL) para /perfil/.
- * Implementación Fase B: Etapa (b) Edificios y Servidores.
+ * Implementación Fase B: Etapa (c) Asteroides y Satélites.
  * CSP estricta: sin scripts ni estilos inline.
  */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -128,7 +128,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMat);
     scene.add(cloudsMesh);
 
-    // --- EDIFICIOS E INFRAESTRUCTURA (InstancedMesh) ---
     const buildingTypes = [
       { geo: new THREE.BoxGeometry(0.02, 0.1, 0.02), color: 0x888888, label: 'torre' },
       { geo: new THREE.BoxGeometry(0.04, 0.04, 0.04), color: 0x666666, label: 'bloque' },
@@ -138,23 +137,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const buildingInstances = buildingTypes.map(type => {
       const mesh = new THREE.InstancedMesh(type.geo, new THREE.MeshStandardMaterial({ color: type.color }), 500);
       mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
-
       const dummy = new THREE.Object3D();
       let count = 0;
-
       for (let i = 0; i < 2000 && count < 500; i++) {
         const phi = Math.random() * Math.PI * 2;
         const theta = Math.random() * Math.PI;
-
         const tx = (phi / (Math.PI * 2)) * 2048;
         const ty = (theta / Math.PI) * 1024;
         const pixel = planetMask.getContext('2d').getImageData(tx, ty, 1, 1).data;
-
         if (pixel[2] > 100) {
           const x = Math.sin(theta) * Math.cos(phi);
           const y = Math.cos(theta);
           const z = Math.sin(theta) * Math.sin(phi);
-
           dummy.position.set(x, y, z);
           dummy.lookAt(0, 0, 0);
           dummy.rotateX(Math.PI / 2);
@@ -168,6 +162,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       return mesh;
     });
 
+    // --- CUERPOS EN ÓRBITA (Etapa c) ---
+    const orbitalBodies = [];
+    const redGeo = new THREE.IcosahedronGeometry(0.05, 4);
+    const blueGeo = new THREE.BoxGeometry(0.04, 0.02, 0.02);
+    const purpleGeo = new THREE.SphereGeometry(0.04, 16, 16);
+
+    const redMat = new THREE.MeshStandardMaterial({ color: 0x441111, roughness: 0.9, metalness: 0.1 });
+    const blueMat = new THREE.MeshStandardMaterial({ color: 0x112244, roughness: 0.3, metalness: 0.8 });
+    const purpleMat = new THREE.MeshStandardMaterial({ color: 0x441144, roughness: 0.5, metalness: 0.5 });
+
+    herramientas.forEach((tool, i) => {
+      let geo, mat;
+      if (tool.equipo === 'red') { geo = redGeo; mat = redMat; }
+      else if (tool.equipo === 'blue') { geo = blueGeo; mat = blueMat; }
+      else { geo = purpleGeo; mat = purpleMat; }
+
+      const mesh = new THREE.Mesh(geo, mat);
+      const scale = 0.5 + (tool.nivel / 100);
+      mesh.scale.set(scale, scale, scale);
+      if (tool.nivel === 0) {
+        mat.transparent = true;
+        mat.opacity = 0.3;
+      }
+      scene.add(mesh);
+      orbitalBodies.push({
+        mesh,
+        tool,
+        a0: (herramientas.filter(x => x.equipo === tool.equipo).indexOf(tool) / Math.max(1, herramientas.filter(x => x.equipo === tool.equipo).length)) * 6.283 + ({ blue: 0, red: 1, purple: 2 })[tool.equipo ?? 'blue']
+      });
+    });
+
     const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
     sunLight.position.set(5, 3, 5);
     scene.add(sunLight);
@@ -178,10 +203,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     function animate(ms) {
       if (!rm) {
+        const t = ms / 1000;
         planetMesh.rotation.y += 0.002;
         cloudsMesh.rotation.y += 0.003;
-        // Edificios giran con el planeta ya que son hijos del mundo o rotan igual
         buildingInstances.forEach(m => m.rotation.y += 0.002);
+
+        orbitalBodies.forEach(b => {
+          const T = TEAM[b.tool.equipo] || TEAM.blue;
+          const a = b.a0 + T.sp * t;
+          const ex = T.orbit * Math.cos(a);
+          const ey = T.ry * T.// Correcting projection logic
+          const x = ex * Math.cos(T.tilt);
+          const y = ex * Math.sin(T.tilt);
+          const z = T.ry * T.orbit * Math.sin(a);
+          b.mesh.position.set(x, y, z);
+          b.mesh.rotation.y += 0.01;
+        });
       }
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
