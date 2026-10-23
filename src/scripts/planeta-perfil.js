@@ -1,6 +1,6 @@
 /**
  * Planeta TI — Motor de renderizado 3D (WebGL) para /perfil/.
- * Implementación Fase B: Etapa (a) Planeta + Atmósfera + Nubes.
+ * Implementación Fase B: Etapa (b) Edificios y Servidores.
  * CSP estricta: sin scripts ni estilos inline.
  */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     purple: { nm: 'Ambos equipos', sub: 'Purple team', orbit: 1.32, tilt: 0.1, ry: 0.38, sp: 0.28, v: '--purple' }
   };
 
-  // --- FALLBACK 2D ---
   function runFallback2D() {
     console.warn('Cargando modo fallback 2D...');
     const g = cv.getContext('2d');
@@ -36,10 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    // CARGA DINÁMICA DE THREE.JS (Condición Fase B)
     const THREE = await import('https://unpkg.com/three@0.160.0/build/three.module.js');
 
-    // Configuración de Escena
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x05060C);
 
@@ -63,18 +60,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('resize', resize);
     resize();
 
-    // --- TEXTURAS PROCEDURALES ---
     function generatePlanetTexture() {
       const size = 2048;
       const canvas = document.createElement('canvas');
       canvas.width = size;
       canvas.height = size / 2;
       const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = '#0A1034'; // Océano
+      ctx.fillStyle = '#0A1034';
       ctx.fillRect(0, 0, size, size / 2);
-
-      ctx.fillStyle = '#2E4BB0'; // Tierra
+      ctx.fillStyle = '#2E4BB0';
       for (let i = 0; i < 1000; i++) {
         const x = Math.random() * size;
         const y = Math.random() * (size / 2);
@@ -83,12 +77,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
       }
-      return new THREE.CanvasTexture(canvas);
+      return { texture: new THREE.CanvasTexture(canvas), mask: canvas };
     }
 
-    const planetTexture = generatePlanetTexture();
+    const { texture: planetTexture, mask: planetMask } = generatePlanetTexture();
 
-    // PLANETA
     const planetGeo = new THREE.SphereGeometry(1, 64, 32);
     const planetMat = new THREE.MeshStandardMaterial({
       map: planetTexture,
@@ -98,7 +91,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const planetMesh = new THREE.Mesh(planetGeo, planetMat);
     scene.add(planetMesh);
 
-    // ATMÓSFERA (Fresnel Effect)
     const atmosGeo = new THREE.SphereGeometry(1.05, 64, 32);
     const atmosMat = new THREE.ShaderMaterial({
       transparent: true,
@@ -126,7 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
     scene.add(atmosMesh);
 
-    // NUBES
     const cloudsGeo = new THREE.SphereGeometry(1.02, 64, 32);
     const cloudsMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -137,7 +128,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMat);
     scene.add(cloudsMesh);
 
-    // ILUMINACIÓN
+    // --- EDIFICIOS E INFRAESTRUCTURA (InstancedMesh) ---
+    const buildingTypes = [
+      { geo: new THREE.BoxGeometry(0.02, 0.1, 0.02), color: 0x888888, label: 'torre' },
+      { geo: new THREE.BoxGeometry(0.04, 0.04, 0.04), color: 0x666666, label: 'bloque' },
+      { geo: new THREE.BoxGeometry(0.06, 0.02, 0.04), color: 0x444444, label: 'granja' }
+    ];
+
+    const buildingInstances = buildingTypes.map(type => {
+      const mesh = new THREE.InstancedMesh(type.geo, new THREE.MeshStandardMaterial({ color: type.color }), 500);
+      mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+
+      const dummy = new THREE.Object3D();
+      let count = 0;
+
+      for (let i = 0; i < 2000 && count < 500; i++) {
+        const phi = Math.random() * Math.PI * 2;
+        const theta = Math.random() * Math.PI;
+
+        const tx = (phi / (Math.PI * 2)) * 2048;
+        const ty = (theta / Math.PI) * 1024;
+        const pixel = planetMask.getContext('2d').getImageData(tx, ty, 1, 1).data;
+
+        if (pixel[2] > 100) {
+          const x = Math.sin(theta) * Math.cos(phi);
+          const y = Math.cos(theta);
+          const z = Math.sin(theta) * Math.sin(phi);
+
+          dummy.position.set(x, y, z);
+          dummy.lookAt(0, 0, 0);
+          dummy.rotateX(Math.PI / 2);
+          dummy.scale.set(1, 1 + Math.random(), 1);
+          dummy.updateMatrix();
+          mesh.setMatrixAt(count++, dummy.matrix);
+        }
+      }
+      mesh.count = count;
+      scene.add(mesh);
+      return mesh;
+    });
+
     const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
     sunLight.position.set(5, 3, 5);
     scene.add(sunLight);
@@ -145,12 +175,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
     scene.add(ambientLight);
 
-    // ANIMACIÓN
     const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     function animate(ms) {
       if (!rm) {
         planetMesh.rotation.y += 0.002;
         cloudsMesh.rotation.y += 0.003;
+        // Edificios giran con el planeta ya que son hijos del mundo o rotan igual
+        buildingInstances.forEach(m => m.rotation.y += 0.002);
       }
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
