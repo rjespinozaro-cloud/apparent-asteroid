@@ -77,12 +77,15 @@
    los tokens del sitio. */
 
 :root {
+  /* Colores base del planeta */
   --pl-ocean-a: #0B1E5A; --pl-ocean-b: #030720;
   --pl-land: #0F3B6B; --pl-coast: #2FD0FF;
   --pl-city-warm: #FFC857; --pl-city-cool: #5FE7FF;
   --pl-circuit: #37E3FF; --pl-circuit-alt: #C06BFF;
   --pl-atmo: #5AA8FF; --pl-glow: #3B82F6;
   --pl-nebula-1: #1E2A78; --pl-nebula-2: #5B1F7A;
+
+  /* Colores de equipo (por defecto, se sobreescriben en .planeta-escena) */
   --pl-blue: #5B9DFF; --pl-red: #FF5470; --pl-purple: #B070FF;
   --pl-line: #2A3568; --pl-text: #E8ECFF;
 }
@@ -92,6 +95,18 @@
   --pl-blue: var(--blue);
   --pl-red: var(--red);
   --pl-purple: var(--purple);
+  /* Paleta propia del planeta: azul/cian algo más luminoso que el resto. */
+  --pl-ocean-a: #0C2B78;
+  --pl-ocean-b: #04112F;
+  --pl-land: #10537F;
+  --pl-coast: #4DE3FF;
+  --pl-atmo: #79CBFF;
+  --pl-glow: #2F9BFF;
+  /* Centro y radio reales del planeta. planeta.js los actualiza por CSSOM;
+     los valores de aquí son solo el respaldo sin JavaScript. */
+  --pl-cx: 50%;
+  --pl-cy: 50%;
+  --pl-r: 140px;
   position: relative; isolation: isolate; overflow: hidden;
   min-width: 0;
   border: 1px solid var(--pl-line); border-radius: 20px; color: var(--pl-text);
@@ -137,6 +152,531 @@
 .planeta-escena canvas {
   position: relative; z-index: 1; display: block;
   width: 100%; max-width: 100%; height: 100%;
+}
+
+/* Ambiente orbital decorativo ------------------------------------------------
+   Drones, satélites, marcadores y partículas son decoración: no reciben
+   punteros, no entran en el foco y no alteran los datos del canvas. La capa
+   "detras" lleva una máscara centrada en el planeta real (--pl-cx/cy/r), de
+   modo que el tráfico desaparece al cruzar el disco; la capa "frente" no
+   lleva máscara y cruza por delante. */
+
+.planeta-halo {
+  position: absolute;
+  z-index: 1;
+  left: var(--pl-cx);
+  top: var(--pl-cy);
+  width: calc(var(--pl-r) * 2);
+  height: calc(var(--pl-r) * 2);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: .62;
+  box-shadow:
+    0 0 calc(var(--pl-r) * .14) color-mix(in srgb, var(--pl-atmo) 40%, transparent),
+    0 0 calc(var(--pl-r) * .44) color-mix(in srgb, var(--pl-glow) 14%, transparent);
+}
+
+.planeta-ambiente {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+
+.planeta-ambiente--detras {
+  -webkit-mask-image: radial-gradient(circle at var(--pl-cx) var(--pl-cy), transparent calc(var(--pl-r) * 1.02), #000 calc(var(--pl-r) * 1.18));
+          mask-image: radial-gradient(circle at var(--pl-cx) var(--pl-cy), transparent calc(var(--pl-r) * 1.02), #000 calc(var(--pl-r) * 1.18));
+}
+
+.planeta-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.planeta-orbita {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+.planeta-orbita__linea {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--color, var(--pl-blue)) 34%, transparent);
+  box-shadow: 0 0 16px -6px color-mix(in srgb, var(--color, var(--pl-blue)) 62%, transparent);
+  opacity: .85;
+}
+
+.planeta-orbita__giro {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: planeta-orbita-giro var(--dur, 18s) linear infinite;
+  animation-direction: var(--dir, normal);
+  will-change: transform;
+}
+
+.planeta-orbita--cian {
+  z-index: 1;
+  width: 104%;
+  height: 70%;
+  transform: translate(-50%, -50%) rotateX(64deg) rotateZ(8deg);
+  --color: var(--pl-coast);
+  --dur: 34s;
+  --dir: reverse;
+}
+
+.planeta-orbita--roja {
+  z-index: 2;
+  width: 88%;
+  height: 72%;
+  transform: translate(-50%, -50%) rotateX(58deg) rotateZ(28deg);
+  --color: var(--pl-red);
+  --dur: 18s;
+  --dir: reverse;
+}
+
+.planeta-orbita--azul {
+  z-index: 3;
+  width: 72%;
+  height: 56%;
+  transform: translate(-50%, -50%) rotateX(58deg) rotateZ(-22deg);
+  --color: var(--pl-blue);
+  --dur: 23s;
+}
+
+.planeta-orbita--violeta {
+  z-index: 4;
+  width: 54%;
+  height: 42%;
+  transform: translate(-50%, -50%) rotateX(52deg) rotateZ(-46deg);
+  --color: var(--pl-purple);
+  --dur: 14s;
+}
+
+.planeta-orbita--frente {
+  z-index: 5;
+  width: 78%;
+  height: 58%;
+  transform: translate(-50%, -50%) rotateX(62deg) rotateZ(-34deg);
+  --color: var(--pl-purple);
+  --dur: 20s;
+}
+
+/* Orbitas de herramientas ----------------------------------------------------- */
+.planeta-orbitas-herramientas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.planeta-orbita-herramienta {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  z-index: 10;
+}
+
+.planeta-orbita-herramienta__linea {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  box-shadow: 0 0 16px -6px currentColor;
+  opacity: .6;
+}
+
+.planeta-orbita-herramienta__giro {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: planeta-orbita-giro var(--dur, 20s) linear infinite;
+  animation-direction: var(--dir, normal);
+  will-change: transform;
+}
+
+.planeta-orbita-herramienta__estela {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3rem;
+  height: 1px;
+  border-radius: 99px;
+  transform: translate(-100%, -50%);
+  background: linear-gradient(90deg, transparent, currentColor 72%, transparent);
+  opacity: .4;
+  filter: blur(.3px);
+  pointer-events: none;
+}
+
+.planeta-dron-herramienta {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: currentColor;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.planeta-dron-herramienta__cuerpo {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: planeta-dron-flotar 3s ease-in-out infinite alternate;
+}
+
+.planeta-dron-herramienta svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.planeta-dron-herramienta__faro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow: 0 0 8px 2px currentColor;
+  animation: planeta-faro 1.8s ease-in-out infinite alternate;
+}
+
+.planeta-dron-herramienta--rojo { color: var(--pl-red); }
+.planeta-dron-herramienta--azul { color: var(--pl-blue); }
+.planeta-dron-herramienta--purple { color: var(--pl-purple); }
+
+.planeta-orbita--frente .planeta-orbita__linea {
+  display: none;
+}
+
+.planeta-orbita__estela {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4rem;
+  height: 2px;
+  border-radius: 99px;
+  transform: translate(-100%, -50%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color, var(--pl-blue)) 72%, transparent));
+  opacity: .34;
+  filter: blur(.3px);
+  pointer-events: none;
+}
+
+.planeta-orbita--roja .planeta-orbita__estela,
+.planeta-orbita--cian .planeta-orbita__estela {
+  transform: translate(0, -50%) scaleX(-1);
+}
+
+.planeta-orbita--frente .planeta-orbita__estela {
+  display: none;
+}
+
+.planeta-dron,
+.planeta-satelite {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color, var(--pl-blue));
+  pointer-events: none;
+}
+
+.planeta-dron {
+  width: 2.8rem;
+  height: 1.8rem;
+}
+
+.planeta-dron--grande {
+  width: 3.4rem;
+  height: 2.15rem;
+}
+
+.planeta-dron--pequeno {
+  width: 2.2rem;
+  height: 1.4rem;
+}
+
+.planeta-dron__cuerpo {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: planeta-dron-flotar 3.4s ease-in-out infinite alternate;
+}
+
+.planeta-dron svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.planeta-dron__faro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow: 0 0 8px 2px currentColor;
+  animation: planeta-faro 1.8s ease-in-out infinite alternate;
+}
+
+.planeta-satelite {
+  width: 4.2rem;
+  height: 2.4rem;
+}
+
+.planeta-satelite__cuerpo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: planeta-satelite-giro 26s linear infinite;
+}
+
+.planeta-satelite svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.planeta-marcador {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color, var(--pl-blue));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.planeta-marcador svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.planeta-marcador::before {
+  content: '';
+  position: absolute;
+  inset: -.35rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0;
+  animation: planeta-marcador-onda 2.8s ease-out infinite;
+}
+
+.planeta-marcador--defensa {
+  top: 8%;
+  left: 76%;
+}
+
+.planeta-marcador--defensa.planeta-marcador--b {
+  top: 70%;
+  left: 96%;
+}
+
+.planeta-marcador--amenaza {
+  top: 92%;
+  left: 28%;
+}
+
+.planeta-marcador--amenaza.planeta-marcador--b {
+  top: 22%;
+  left: 4%;
+}
+
+.planeta-orbita__pulso {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color, var(--pl-blue));
+  box-shadow: 0 0 8px 2px var(--color, var(--pl-blue));
+  pointer-events: none;
+  opacity: .6;
+  animation: planeta-pulso 4.2s ease-in-out infinite;
+}
+
+.planeta-orbita__pulso--a {
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
+  animation-delay: -1.3s;
+}
+
+.planeta-orbita__pulso--b {
+  top: 50%;
+  left: 100%;
+  transform: translate(-50%, -50%);
+  animation-delay: -3.1s;
+}
+
+.planeta-particulas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.planeta-particula {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #9BEFFF;
+  box-shadow: 0 0 5px #4DD8FF;
+  opacity: .45;
+  animation: planeta-particula 5s ease-in-out infinite alternate;
+}
+
+.planeta-particula:nth-child(1) { left: 12%; top: 18%; animation-delay: -.4s; }
+.planeta-particula:nth-child(2) { left: 24%; top: 72%; animation-delay: -1.8s; }
+.planeta-particula:nth-child(3) { left: 38%; top: 12%; animation-delay: -2.7s; }
+.planeta-particula:nth-child(4) { left: 66%; top: 8%; animation-delay: -.9s; }
+.planeta-particula:nth-child(5) { left: 84%; top: 28%; animation-delay: -3.4s; }
+.planeta-particula:nth-child(6) { left: 78%; top: 76%; animation-delay: -2.1s; }
+.planeta-particula:nth-child(7) { left: 56%; top: 88%; animation-delay: -1.2s; }
+.planeta-particula:nth-child(8) { left: 8%; top: 52%; animation-delay: -4.2s; }
+
+@keyframes planeta-orbita-giro {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes planeta-dron-flotar {
+  from { transform: translateY(-2px); }
+  to { transform: translateY(2px); }
+}
+
+@keyframes planeta-faro {
+  from { opacity: .35; }
+  to { opacity: 1; }
+}
+
+@keyframes planeta-satelite-giro {
+  from { transform: rotate(-8deg); }
+  to { transform: rotate(352deg); }
+}
+
+@keyframes planeta-marcador-onda {
+  0% { opacity: .55; transform: scale(.55); }
+  70%, 100% { opacity: 0; transform: scale(1.7); }
+}
+
+@keyframes planeta-pulso {
+  0%, 100% { opacity: .25; }
+  50% { opacity: .85; }
+}
+
+@keyframes planeta-particula {
+  from { opacity: .18; translate: 0 0; }
+  to { opacity: .7; translate: 0 -3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planeta-orbita__giro {
+    animation: none;
+  }
+
+  .planeta-orbita--cian .planeta-orbita__giro { transform: rotate(24deg); }
+  .planeta-orbita--roja .planeta-orbita__giro { transform: rotate(198deg); }
+  .planeta-orbita--azul .planeta-orbita__giro { transform: rotate(128deg); }
+  .planeta-orbita--violeta .planeta-orbita__giro { transform: rotate(310deg); }
+  .planeta-orbita--frente .planeta-orbita__giro { transform: rotate(72deg); }
+}
+
+/* Ocultar las órbitas decorativas originales cuando hay herramientas */
+.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--cian,
+.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--roja,
+.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--azul,
+.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--violeta,
+.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--frente {
+  display: none;
+}
+
+  .planeta-orbita__estela,
+  .planeta-orbita__pulso,
+  .planeta-dron__cuerpo,
+  .planeta-dron__faro,
+  .planeta-satelite__cuerpo,
+  .planeta-marcador::before,
+  .planeta-particula {
+    animation: none;
+  }
+
+  .planeta-marcador::before { opacity: .35; }
+  .planeta-particula { opacity: .35; }
+}
+
+@media (max-width: 560px) {
+  .planeta-ambiente--frente,
+  .planeta-orbita--cian,
+  .planeta-particulas {
+    display: none;
+  }
+
+  .planeta-orbita--roja {
+    width: 94%;
+    height: 78%;
+  }
+
+  .planeta-orbita--azul {
+    width: 78%;
+    height: 62%;
+  }
+
+  .planeta-orbita--violeta {
+    width: 60%;
+    height: 48%;
+  }
+
+  .planeta-dron {
+    width: 2rem;
+    height: 1.35rem;
+  }
+
+  .planeta-dron--grande {
+    width: 2.4rem;
+    height: 1.55rem;
+  }
+
+  .planeta-satelite {
+    width: 3rem;
+    height: 1.8rem;
+  }
+
+  .planeta-marcador {
+    width: .8rem;
+    height: .8rem;
+  }
 }
 
 /* Leyenda superior */

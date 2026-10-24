@@ -198,8 +198,18 @@ export function crearTextura({ colores = {}, alListo, alProgreso } = {}) {
       doble.set(base.subarray(origen, origen + ANCHO_TEXTO), y * anchoDoble + ANCHO_TEXTO);
     }
     // El canvas intermedio ya no hace falta: se libera su memoria.
+    contexto.clearRect(0, 0, lienzo.width, lienzo.height);
     lienzo.width = 0;
     lienzo.height = 0;
+    // Nulificar el contexto para evitar fugas de memoria
+    Object.keys(contexto).forEach(key => {
+      try {
+        delete contexto[key];
+      } catch (e) {
+        // Ignorar errores al intentar borrar propiedades no propias
+      }
+    });
+
     alListo?.({
       pixeles: doble,
       anchoBase: ANCHO_TEXTO,

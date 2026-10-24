@@ -131,10 +131,20 @@ export function crearFlujos(hubs, inclinacion) {
 
 /** @param {{ x: number, y: number, z: number }} a @param {{ x: number, y: number, z: number }} b */
 function distancia(a, b) {
-  const dx = a.x - b.x;
-  const dy = a.y - b.y;
-  const dz = a.z - b.z;
-  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  // Calcular distancia considerando el camino más corto en una esfera
+  const dx = Math.abs(a.x - b.x);
+  const dy = Math.abs(a.y - b.y);
+  const dz = Math.abs(a.z - b.z);
+
+  // Distancia euclidiana estándar
+  const distEuclidiana = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+  // Distancia angular (para objetos en superficie de esfera)
+  const angulo = Math.acos(Math.max(-1, Math.min(1, a.x * b.x + a.y * b.y + a.z * b.z)));
+  const distAngular = angulo; // radio = 1
+
+  // Usar la más conservadora (mínimo)
+  return Math.min(distEuclidiana, distAngular);
 }
 
 /** @param {number} x @param {number} y @param {number} z */

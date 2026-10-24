@@ -112,35 +112,68 @@ function iniciar(raiz) {
     try {
       const lista = JSON.parse(crudo || '[]');
       if (!Array.isArray(lista)) return [];
-      return /** @type {Herramienta[]} */ (lista.flatMap((fila) => {
+
+      const herramientasValidadas = [];
+      for (const fila of lista) {
+        // Validación básica
+        if (!fila || typeof fila !== 'object') continue;
+
+        // Validar slug
         const slug = typeof fila?.slug === 'string' ? fila.slug.trim() : '';
-        if (!slug) return [];
+        if (!slug || slug.length < 1 || slug.length > 100) continue;
+
+        // Validar equipo
         const equipo = fila.equipo === 'red' || fila.equipo === 'blue' || fila.equipo === 'purple' ? fila.equipo : null;
-        const guiasLista = Array.isArray(fila.guiasLista)
-          ? fila.guiasLista.flatMap((guia) => {
-              const id = Number(guia?.id);
-              const guiaSlug = typeof guia?.slug === 'string' ? guia.slug.trim() : '';
-              if (!Number.isInteger(id) || id <= 0 || !guiaSlug) return [];
-              return [{ id, slug: guiaSlug, titulo: String(guia.titulo ?? guiaSlug) }];
-            })
-          : [];
-        const rutas = Array.isArray(fila.rutas)
-          ? fila.rutas.flatMap((ruta) => {
-              const rutaSlug = typeof ruta?.slug === 'string' ? ruta.slug.trim() : '';
-              if (!rutaSlug) return [];
-              return [{ slug: rutaSlug, titulo: String(ruta.titulo ?? rutaSlug) }];
-            })
-          : [];
-        return [{
+
+        // Validar guías
+        const guiasLista = [];
+        if (Array.isArray(fila.guiasLista)) {
+          for (const guia of fila.guiasLista) {
+            if (!guia || typeof guia !== 'object') continue;
+            const id = Number(guia?.id);
+            const guiaSlug = typeof guia?.slug === 'string' ? guia.slug.trim() : '';
+            if (!Number.isInteger(id) || id <= 0 || id > 999999 || !guiaSlug || guiaSlug.length < 1) continue;
+
+            // Validar título
+            const titulo = String(guia.titulo ?? guiaSlug);
+            if (titulo.length > 200) continue;
+
+            guiasLista.push({ id, slug: guiaSlug, titulo });
+          }
+        }
+
+        // Validar rutas
+        const rutas = [];
+        if (Array.isArray(fila.rutas)) {
+          for (const ruta of fila.rutas) {
+            if (!ruta || typeof ruta !== 'object') continue;
+            const rutaSlug = typeof ruta?.slug === 'string' ? ruta.slug.trim() : '';
+            if (!rutaSlug || rutaSlug.length < 1 || rutaSlug.length > 100) continue;
+
+            const titulo = String(ruta.titulo ?? rutaSlug);
+            if (titulo.length > 200) continue;
+
+            rutas.push({ slug: rutaSlug, titulo });
+          }
+        }
+
+        // Validar nombre
+        const nombre = String(fila.nombre ?? slug);
+        if (nombre.length < 1 || nombre.length > 100) continue;
+
+        herramientasValidadas.push({
           slug,
-          nombre: String(fila.nombre ?? slug),
+          nombre,
           equipo,
           guias: guiasLista.length,
           guiasLista,
-          rutas,
-        }];
-      }));
-    } catch {
+          rutas
+        });
+      }
+
+      return herramientasValidadas;
+    } catch (error) {
+      console.warn('Error al parsear datos del planeta:', error);
       return [];
     }
   }
@@ -362,14 +395,25 @@ function iniciar(raiz) {
 
   /** @param {number} t segundos */
   function posicionar(t) {
+    // Precalcular valores que no cambian por ciclo
+    const orbitasCalculadas = {};
+    for (const [equipo, orbita] of Object.entries(ORBITAS)) {
+      orbitasCalculadas[equipo] = {
+        ...orbita,
+        cosI: Math.cos(orbita.inclinacion),
+        sinI: Math.sin(orbita.inclinacion)
+      };
+    }
+
     for (const cuerpo of cuerpos) {
-      const orbita = ORBITAS[cuerpo.equipo];
+      const orbita = orbitasCalculadas[cuerpo.equipo];
       const angulo = cuerpo.a0 + orbita.giro * t;
-      const ex = orbita.radio * R * Math.cos(angulo);
-      const ey = orbita.achatado * orbita.radio * R * Math.sin(angulo);
-      const profundidad = Math.sin(angulo);
-      cuerpo.x = cx + ex * Math.cos(orbita.inclinacion) - ey * Math.sin(orbita.inclinacion);
-      cuerpo.y = cy + ex * Math.sin(orbita.inclinacion) + ey * Math.cos(orbita.inclinacion);
+      const trig = getCachedTrig(angulo);
+      const ex = orbita.radio * R * trig.cos;
+      const ey = orbita.achatado * orbita.radio * R * trig.sin;
+      const profundidad = trig.sin;
+      cuerpo.x = cx + ex * orbita.cosI - ey * orbita.sinI;
+      cuerpo.y = cy + ex * orbita.sinI + ey * orbita.cosI;
       cuerpo.d = profundidad;
       cuerpo.s = 0.85 + 0.2 * profundidad;
       cuerpo.nivel = nivelDe(herramientas[cuerpo.indice]);
@@ -498,15 +542,24 @@ function iniciar(raiz) {
     destino.arc(cx, cy, R, 0, Math.PI * 2);
     destino.clip();
 
+    // Cache de elementos estáticos para rendimiento
+    if (!dibujarPlanetaV1.cache) {
+      dibujarPlanetaV1.cache = {
+        elipses: Array(6).fill(0).map((_, i) => i * Math.PI / 6),
+        latitudes: Array(5).fill(0).map((_, i) => i - 2)
+      };
+    }
+
     destino.strokeStyle = 'rgba(130, 210, 255, 0.28)';
     destino.lineWidth = 1;
     for (let indice = 0; indice < 6; indice += 1) {
-      const fase = t * 0.35 + (indice * Math.PI) / 6;
+      const fase = t * 0.35 + dibujarPlanetaV1.cache.elipses[indice];
+      const trig = getCachedTrig(fase);
       destino.beginPath();
-      destino.ellipse(cx, cy, Math.abs(Math.cos(fase)) * R, R, 0, 0, Math.PI * 2);
+      destino.ellipse(cx, cy, Math.abs(trig.cos) * R, R, 0, 0, Math.PI * 2);
       destino.stroke();
     }
-    for (let indice = -2; indice <= 2; indice += 1) {
+    for (const indice of dibujarPlanetaV1.cache.latitudes) {
       const y = cy + indice * R * 0.32;
       destino.beginPath();
       destino.moveTo(cx - R, y);
@@ -904,6 +957,16 @@ function iniciar(raiz) {
   let visible = true;
   const medir = hud instanceof HTMLElement;
 
+  // Cache de trigonometría para optimizar rendimiento
+  const trigCache = new Map();
+  function getCachedTrig(ángulo) {
+    if (trigCache.has(ángulo)) return trigCache.get(ángulo);
+    const cos = Math.cos(ángulo);
+    const sin = Math.sin(ángulo);
+    trigCache.set(ángulo, { cos, sin });
+    return { cos, sin };
+  }
+
   function bucle(ms) {
     raf = 0;
     if (document.hidden || !visible) return;
@@ -1031,6 +1094,17 @@ function iniciar(raiz) {
     cx = W / 2;
     cy = H / 2;
     R = Math.min(W / 5.2, H / 3.2);
+    // La capa ambiental (halo y máscara de profundidad) vive fuera del canvas:
+    // recibe el centro y el radio reales por CSSOM, sin estilos inline en HTML.
+    if (escenaEl instanceof HTMLElement) {
+      try {
+        escenaEl.style.setProperty('--pl-cx', `${cx}px`);
+        escenaEl.style.setProperty('--pl-cy', `${cy}px`);
+        escenaEl.style.setProperty('--pl-r', `${R}px`);
+      } catch (e) {
+        console.warn('Error al actualizar variables CSS del planeta:', e);
+      }
+    }
     gradientes = crearGradientes(contexto);
     medirEtiquetas();
     posicionar(tActual);
@@ -1039,6 +1113,22 @@ function iniciar(raiz) {
       iluminacion = v2.prepararIluminacion(contexto);
       programarLado();
     }
+
+    // Actualizar posición de las órbitas de herramientas
+    actualizarOrbitasHerramientas();
+  }
+
+  function actualizarOrbitasHerramientas() {
+    const contenedor = raiz.querySelector('#orbitas-herramientas');
+    if (!contenedor || herramientas.length === 0) return;
+
+    // Actualizar posicionamiento de las órbitas
+    const orbitas = contenedor.querySelectorAll('.planeta-orbita-herramienta');
+    orbitas.forEach(orbita => {
+      // La posición se maneja mediante transform en CSS
+      // Solo aseguramos que esté visible
+      orbita.style.display = 'block';
+    });
   }
 
   // ── Eventos ──────────────────────────────────────────────────────────────
@@ -1142,6 +1232,31 @@ function iniciar(raiz) {
   });
   observadorTamano.observe(canvas);
 
+  // Cleanup observers al finalizar
+  function cleanup() {
+    // Limpiar órbitas de herramientas
+    const contenedor = raiz.querySelector('#orbitas-herramientas');
+    if (contenedor) {
+      contenedor.innerHTML = '';
+    }
+
+    if (observadorTamano) observadorTamano.disconnect();
+    if (observador) observador.disconnect();
+    if (raf !== 0) cancelAnimationFrame(raf);
+    if (programado) {
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(programado);
+      } else if (typeof window.clearTimeout === 'function') {
+        window.clearTimeout(programado);
+      }
+    }
+  }
+
+  // Agregar cleanup al lifecycle
+  raiz.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cleanup();
+  }, { once: true });
+
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
     leerTema();
     medirEtiquetas();
@@ -1153,14 +1268,159 @@ function iniciar(raiz) {
     pintarQuieto();
   });
 
+  // ── Crear órbitas para cada herramienta ─────────────────────────────────────
+
+  function crearOrbitasHerramientas() {
+    const contenedor = raiz.querySelector('#orbitas-herramientas');
+    if (!contenedor || herramientas.length === 0) return;
+
+    // Limpiar órbitas existentes
+    contenedor.innerHTML = '';
+
+    // Configuración de órbitas por equipo
+    const configEquipos = {
+      red: {
+        radio: 1.75,
+        inclinacion: -0.25,
+        achatado: 0.32,
+        giro: 0.18,
+        duracion: 18,
+        sentido: 'reverse',
+        tamano: 'normal'
+      },
+      blue: {
+        radio: 2.35,
+        inclinacion: 0.2,
+        achatado: 0.3,
+        giro: -0.11,
+        duracion: 23,
+        sentido: 'normal',
+        tamano: 'grande'
+      },
+      purple: {
+        radio: 1.32,
+        inclinacion: 0.1,
+        achatado: 0.38,
+        giro: 0.28,
+        duracion: 14,
+        sentido: 'normal',
+        tamano: 'pequeno'
+      }
+    };
+
+    // Agrupar herramientas por equipo
+    const porEquipo = { red: [], blue: [], purple: [] };
+    herramientas.forEach(herramienta => {
+      if (herramienta.equipo) porEquipo[herramienta.equipo].push(herramienta);
+    });
+
+    // Crear órbita para cada equipo
+    Object.entries(porEquipo).forEach(([equipo, listaHerramientas]) => {
+      if (listaHerramientas.length === 0) return;
+
+      const config = configEquipos[equipo];
+
+      // Crear órbita para el equipo
+      const orbita = document.createElement('div');
+      orbita.className = `planeta-orbita-herramienta planeta-orbita-herramienta--${equipo}`;
+      orbita.style.width = `${config.radio * 200}%`;
+      orbita.style.height = `${config.achatado * config.radio * 200}%`;
+      orbita.style.transform = `translate(-50%, -50%) rotateX(${config.inclinacion * 180 / Math.PI}deg) rotateZ(${
+        (equipo === 'red' ? 28 : equipo === 'blue' ? -22 : -46
+      )}deg)`;
+
+      // Línea de órbita
+      const linea = document.createElement('span');
+      linea.className = 'planeta-orbita-herramienta__linea';
+      orbita.appendChild(linea);
+
+      // Contenedor de giro
+      const giro = document.createElement('div');
+      giro.className = 'planeta-orbita-herramienta__giro';
+      giro.style.setProperty('--dur', `${config.duracion}s`);
+      giro.style.setProperty('--dir', config.sentido);
+
+      // Estela
+      const estela = document.createElement('span');
+      estela.className = 'planeta-orbita-herramienta__estela';
+      if (equipo === 'red' || equipo === 'blue') {
+        estela.style.transform = 'translate(0, -50%) scaleX(-1)';
+      }
+      giro.appendChild(estela);
+
+      // Crear drones para cada herramienta
+      listaHerramientas.forEach((herramienta, indice) => {
+        const dron = crearDronHerramienta(herramienta, indice, listaHerramientas.length);
+        giro.appendChild(dron);
+      });
+
+      orbita.appendChild(giro);
+      contenedor.appendChild(orbita);
+    });
+  }
+
+  function crearDronHerramienta(herramienta, indice, total) {
+    const equipo = herramienta.equipo || 'neutral';
+    const anguloInicial = (indice / total) * Math.PI * 2;
+
+    // Contenedor del dron
+    const dron = document.createElement('span');
+    dron.className = `planeta-dron-herramienta planeta-dron-herramienta--${equipo}`;
+    dron.dataset.herramienta = herramienta.slug;
+    dron.style.transform = `rotate(${anguloInicial}rad) translateX(40%)`;
+    dron.setAttribute('role', 'button');
+    dron.setAttribute('aria-label', `Herramienta: ${herramienta.nombre}`);
+    dron.setAttribute('tabindex', '0');
+
+    // Cuerpo del dron
+    const cuerpo = document.createElement('span');
+    cuerpo.className = 'planeta-dron-herramienta__cuerpo';
+
+    // SVG del dron
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '-26 -16 52 32');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#planeta-dron');
+    svg.appendChild(use);
+
+    // Faro
+    const faro = document.createElement('span');
+    faro.className = 'planeta-dron-herramienta__faro';
+
+    cuerpo.appendChild(svg);
+    cuerpo.appendChild(faro);
+    dron.appendChild(cuerpo);
+
+    // Evento clic
+    dron.addEventListener('click', () => seleccionar(herramienta.slug));
+
+    // Evento teclado
+    dron.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        seleccionar(herramienta.slug);
+      }
+    });
+
+    return dron;
+  }
+
   // ── Arranque ─────────────────────────────────────────────────────────────
 
   leerTema();
   cargarProgreso();
   prepararCuerpos();
   dimensionar();
+  crearOrbitasHerramientas();
   actualizarPanel();
   pintarQuieto();
   programar();
   iniciarTextura();
+
+  // Manejo de limpieza cuando la página se descarga o el componente se destruye
+  window.addEventListener('beforeunload', cleanup);
+  raiz.addEventListener('unmount', cleanup);
 }

@@ -38,7 +38,7 @@ body::before {
   inset: 0;
   z-index: -2;
   pointer-events: none;
-  background: url("../hero/fondo.png") center/cover no-repeat;
+  background: url("/hero/fondo.png") center/cover no-repeat;
   opacity: 0.55;
 }
 
