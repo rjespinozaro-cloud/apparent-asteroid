@@ -408,10 +408,11 @@ function iniciar(raiz) {
     for (const cuerpo of cuerpos) {
       const orbita = orbitasCalculadas[cuerpo.equipo];
       const angulo = cuerpo.a0 + orbita.giro * t;
-      const trig = getCachedTrig(angulo);
-      const ex = orbita.radio * R * trig.cos;
-      const ey = orbita.achatado * orbita.radio * R * trig.sin;
-      const profundidad = trig.sin;
+      const cos = Math.cos(angulo);
+      const sin = Math.sin(angulo);
+      const ex = orbita.radio * R * cos;
+      const ey = orbita.achatado * orbita.radio * R * sin;
+      const profundidad = sin;
       cuerpo.x = cx + ex * orbita.cosI - ey * orbita.sinI;
       cuerpo.y = cy + ex * orbita.sinI + ey * orbita.cosI;
       cuerpo.d = profundidad;
@@ -554,9 +555,9 @@ function iniciar(raiz) {
     destino.lineWidth = 1;
     for (let indice = 0; indice < 6; indice += 1) {
       const fase = t * 0.35 + dibujarPlanetaV1.cache.elipses[indice];
-      const trig = getCachedTrig(fase);
+      const cos = Math.cos(fase);
       destino.beginPath();
-      destino.ellipse(cx, cy, Math.abs(trig.cos) * R, R, 0, 0, Math.PI * 2);
+      destino.ellipse(cx, cy, Math.abs(cos) * R, R, 0, 0, Math.PI * 2);
       destino.stroke();
     }
     for (const indice of dibujarPlanetaV1.cache.latitudes) {
@@ -957,16 +958,6 @@ function iniciar(raiz) {
   let visible = true;
   const medir = hud instanceof HTMLElement;
 
-  // Cache de trigonometría para optimizar rendimiento
-  const trigCache = new Map();
-  function getCachedTrig(ángulo) {
-    if (trigCache.has(ángulo)) return trigCache.get(ángulo);
-    const cos = Math.cos(ángulo);
-    const sin = Math.sin(ángulo);
-    trigCache.set(ángulo, { cos, sin });
-    return { cos, sin };
-  }
-
   function bucle(ms) {
     raf = 0;
     if (document.hidden || !visible) return;
@@ -1113,22 +1104,6 @@ function iniciar(raiz) {
       iluminacion = v2.prepararIluminacion(contexto);
       programarLado();
     }
-
-    // Actualizar posición de las órbitas de herramientas
-    actualizarOrbitasHerramientas();
-  }
-
-  function actualizarOrbitasHerramientas() {
-    const contenedor = raiz.querySelector('#orbitas-herramientas');
-    if (!contenedor || herramientas.length === 0) return;
-
-    // Actualizar posicionamiento de las órbitas
-    const orbitas = contenedor.querySelectorAll('.planeta-orbita-herramienta');
-    orbitas.forEach(orbita => {
-      // La posición se maneja mediante transform en CSS
-      // Solo aseguramos que esté visible
-      orbita.style.display = 'block';
-    });
   }
 
   // ── Eventos ──────────────────────────────────────────────────────────────
@@ -1232,31 +1207,6 @@ function iniciar(raiz) {
   });
   observadorTamano.observe(canvas);
 
-  // Cleanup observers al finalizar
-  function cleanup() {
-    // Limpiar órbitas de herramientas
-    const contenedor = raiz.querySelector('#orbitas-herramientas');
-    if (contenedor) {
-      contenedor.innerHTML = '';
-    }
-
-    if (observadorTamano) observadorTamano.disconnect();
-    if (observador) observador.disconnect();
-    if (raf !== 0) cancelAnimationFrame(raf);
-    if (programado) {
-      if (typeof window.cancelIdleCallback === 'function') {
-        window.cancelIdleCallback(programado);
-      } else if (typeof window.clearTimeout === 'function') {
-        window.clearTimeout(programado);
-      }
-    }
-  }
-
-  // Agregar cleanup al lifecycle
-  raiz.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') cleanup();
-  }, { once: true });
-
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
     leerTema();
     medirEtiquetas();
@@ -1268,159 +1218,14 @@ function iniciar(raiz) {
     pintarQuieto();
   });
 
-  // ── Crear órbitas para cada herramienta ─────────────────────────────────────
-
-  function crearOrbitasHerramientas() {
-    const contenedor = raiz.querySelector('#orbitas-herramientas');
-    if (!contenedor || herramientas.length === 0) return;
-
-    // Limpiar órbitas existentes
-    contenedor.innerHTML = '';
-
-    // Configuración de órbitas por equipo
-    const configEquipos = {
-      red: {
-        radio: 1.75,
-        inclinacion: -0.25,
-        achatado: 0.32,
-        giro: 0.18,
-        duracion: 18,
-        sentido: 'reverse',
-        tamano: 'normal'
-      },
-      blue: {
-        radio: 2.35,
-        inclinacion: 0.2,
-        achatado: 0.3,
-        giro: -0.11,
-        duracion: 23,
-        sentido: 'normal',
-        tamano: 'grande'
-      },
-      purple: {
-        radio: 1.32,
-        inclinacion: 0.1,
-        achatado: 0.38,
-        giro: 0.28,
-        duracion: 14,
-        sentido: 'normal',
-        tamano: 'pequeno'
-      }
-    };
-
-    // Agrupar herramientas por equipo
-    const porEquipo = { red: [], blue: [], purple: [] };
-    herramientas.forEach(herramienta => {
-      if (herramienta.equipo) porEquipo[herramienta.equipo].push(herramienta);
-    });
-
-    // Crear órbita para cada equipo
-    Object.entries(porEquipo).forEach(([equipo, listaHerramientas]) => {
-      if (listaHerramientas.length === 0) return;
-
-      const config = configEquipos[equipo];
-
-      // Crear órbita para el equipo
-      const orbita = document.createElement('div');
-      orbita.className = `planeta-orbita-herramienta planeta-orbita-herramienta--${equipo}`;
-      orbita.style.width = `${config.radio * 200}%`;
-      orbita.style.height = `${config.achatado * config.radio * 200}%`;
-      orbita.style.transform = `translate(-50%, -50%) rotateX(${config.inclinacion * 180 / Math.PI}deg) rotateZ(${
-        (equipo === 'red' ? 28 : equipo === 'blue' ? -22 : -46
-      )}deg)`;
-
-      // Línea de órbita
-      const linea = document.createElement('span');
-      linea.className = 'planeta-orbita-herramienta__linea';
-      orbita.appendChild(linea);
-
-      // Contenedor de giro
-      const giro = document.createElement('div');
-      giro.className = 'planeta-orbita-herramienta__giro';
-      giro.style.setProperty('--dur', `${config.duracion}s`);
-      giro.style.setProperty('--dir', config.sentido);
-
-      // Estela
-      const estela = document.createElement('span');
-      estela.className = 'planeta-orbita-herramienta__estela';
-      if (equipo === 'red' || equipo === 'blue') {
-        estela.style.transform = 'translate(0, -50%) scaleX(-1)';
-      }
-      giro.appendChild(estela);
-
-      // Crear drones para cada herramienta
-      listaHerramientas.forEach((herramienta, indice) => {
-        const dron = crearDronHerramienta(herramienta, indice, listaHerramientas.length);
-        giro.appendChild(dron);
-      });
-
-      orbita.appendChild(giro);
-      contenedor.appendChild(orbita);
-    });
-  }
-
-  function crearDronHerramienta(herramienta, indice, total) {
-    const equipo = herramienta.equipo || 'neutral';
-    const anguloInicial = (indice / total) * Math.PI * 2;
-
-    // Contenedor del dron
-    const dron = document.createElement('span');
-    dron.className = `planeta-dron-herramienta planeta-dron-herramienta--${equipo}`;
-    dron.dataset.herramienta = herramienta.slug;
-    dron.style.transform = `rotate(${anguloInicial}rad) translateX(40%)`;
-    dron.setAttribute('role', 'button');
-    dron.setAttribute('aria-label', `Herramienta: ${herramienta.nombre}`);
-    dron.setAttribute('tabindex', '0');
-
-    // Cuerpo del dron
-    const cuerpo = document.createElement('span');
-    cuerpo.className = 'planeta-dron-herramienta__cuerpo';
-
-    // SVG del dron
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '-26 -16 52 32');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('focusable', 'false');
-
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttribute('href', '#planeta-dron');
-    svg.appendChild(use);
-
-    // Faro
-    const faro = document.createElement('span');
-    faro.className = 'planeta-dron-herramienta__faro';
-
-    cuerpo.appendChild(svg);
-    cuerpo.appendChild(faro);
-    dron.appendChild(cuerpo);
-
-    // Evento clic
-    dron.addEventListener('click', () => seleccionar(herramienta.slug));
-
-    // Evento teclado
-    dron.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        seleccionar(herramienta.slug);
-      }
-    });
-
-    return dron;
-  }
-
   // ── Arranque ─────────────────────────────────────────────────────────────
 
   leerTema();
   cargarProgreso();
   prepararCuerpos();
   dimensionar();
-  crearOrbitasHerramientas();
   actualizarPanel();
   pintarQuieto();
   programar();
   iniciarTextura();
-
-  // Manejo de limpieza cuando la página se descarga o el componente se destruye
-  window.addEventListener('beforeunload', cleanup);
-  raiz.addEventListener('unmount', cleanup);
 }

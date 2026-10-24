@@ -274,98 +274,6 @@
   --dur: 20s;
 }
 
-/* Orbitas de herramientas ----------------------------------------------------- */
-.planeta-orbitas-herramientas {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.planeta-orbita-herramienta {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border-radius: 50%;
-  pointer-events: none;
-  transform-style: preserve-3d;
-  z-index: 10;
-}
-
-.planeta-orbita-herramienta__linea {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid currentColor;
-  box-shadow: 0 0 16px -6px currentColor;
-  opacity: .6;
-}
-
-.planeta-orbita-herramienta__giro {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  animation: planeta-orbita-giro var(--dur, 20s) linear infinite;
-  animation-direction: var(--dir, normal);
-  will-change: transform;
-}
-
-.planeta-orbita-herramienta__estela {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 3rem;
-  height: 1px;
-  border-radius: 99px;
-  transform: translate(-100%, -50%);
-  background: linear-gradient(90deg, transparent, currentColor 72%, transparent);
-  opacity: .4;
-  filter: blur(.3px);
-  pointer-events: none;
-}
-
-.planeta-dron-herramienta {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: currentColor;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.planeta-dron-herramienta__cuerpo {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  animation: planeta-dron-flotar 3s ease-in-out infinite alternate;
-}
-
-.planeta-dron-herramienta svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 4px currentColor);
-}
-
-.planeta-dron-herramienta__faro {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff;
-  box-shadow: 0 0 8px 2px currentColor;
-  animation: planeta-faro 1.8s ease-in-out infinite alternate;
-}
-
-.planeta-dron-herramienta--rojo { color: var(--pl-red); }
-.planeta-dron-herramienta--azul { color: var(--pl-blue); }
-.planeta-dron-herramienta--purple { color: var(--pl-purple); }
-
 .planeta-orbita--frente .planeta-orbita__linea {
   display: none;
 }
@@ -611,15 +519,6 @@
   .planeta-orbita--azul .planeta-orbita__giro { transform: rotate(128deg); }
   .planeta-orbita--violeta .planeta-orbita__giro { transform: rotate(310deg); }
   .planeta-orbita--frente .planeta-orbita__giro { transform: rotate(72deg); }
-}
-
-/* Ocultar las órbitas decorativas originales cuando hay herramientas */
-.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--cian,
-.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--roja,
-.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--azul,
-.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--violeta,
-.planeta-orbitas-herramientas:not(:empty) + .planeta-ambiente .planeta-orbita--frente {
-  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
