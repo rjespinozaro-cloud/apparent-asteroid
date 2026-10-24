@@ -622,6 +622,7 @@
   display: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
   .planeta-orbita__estela,
   .planeta-orbita__pulso,
   .planeta-dron__cuerpo,
