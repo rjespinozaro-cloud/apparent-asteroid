@@ -46,7 +46,23 @@ function giroPlaneta(t) {
 }
 
 const raiz = document.querySelector('[data-planeta]');
-if (raiz instanceof HTMLElement) iniciar(raiz);
+if (raiz instanceof HTMLElement) {
+  iniciar(raiz).catch((error) => console.warn('No se pudo iniciar el planeta:', error));
+}
+
+/** Comprueba WebGL sin dejar un contexto vivo. */
+function soportaWebGL() {
+  try {
+    const prueba = document.createElement('canvas');
+    const contexto = prueba.getContext('webgl2') || prueba.getContext('webgl');
+    if (!contexto) return false;
+    const extension = contexto.getExtension('WEBGL_lose_context');
+    if (extension) extension.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * @typedef {{ slug: string, nombre: string, equipo: 'red'|'blue'|'purple'|null,
@@ -59,7 +75,7 @@ if (raiz instanceof HTMLElement) iniciar(raiz);
  *             terminador: CanvasGradient, curvatura: CanvasGradient, borde: CanvasGradient }} Iluminacion */
 
 /** @param {HTMLElement} raiz */
-function iniciar(raiz) {
+async function iniciar(raiz) {
   const herramientas = leerDatos(raiz.dataset.herramientas);
   if (herramientas.length === 0) return;
 
@@ -104,6 +120,9 @@ function iniciar(raiz) {
   let resaltado = null;
   let tActual = 0;
   let raf = 0;
+  const consultaMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let reducido = consultaMovimiento.matches;
+  let arrancado2D = false;
 
   // ── Datos ────────────────────────────────────────────────────────────────
 
@@ -243,6 +262,7 @@ function iniciar(raiz) {
     }
     if (ejemploAviso instanceof HTMLElement) ejemploAviso.hidden = !activo;
     actualizarPanel();
+    notificar();
     if (reducido) pintarQuieto();
   }
 
@@ -589,6 +609,7 @@ function iniciar(raiz) {
   }
 
   /**
+   * Dibuja un dron en lugar de los marcadores anteriores
    * @param {CanvasRenderingContext2D} destino
    * @param {{ indice: number, equipo: 'blue'|'red'|'purple', x: number, y: number, r: number,
    *           s: number, d: number, nivel: number }} cuerpo
@@ -601,56 +622,73 @@ function iniciar(raiz) {
     destino.translate(cuerpo.x, cuerpo.y);
     destino.scale(cuerpo.s, cuerpo.s);
     destino.globalAlpha = 0.55 + 0.45 * (cuerpo.nivel / 100);
-    destino.lineWidth = 2;
+    destino.lineWidth = 1.5;
     destino.strokeStyle = color;
 
-    if (cuerpo.equipo === 'red') {
-      const forma = formas[cuerpo.indice];
-      destino.beginPath();
-      forma.forEach((factor, indice) => {
-        const angulo = (indice / forma.length) * Math.PI * 2;
-        const px = Math.cos(angulo) * cuerpo.r * factor;
-        const py = Math.sin(angulo) * cuerpo.r * factor;
-        if (indice === 0) destino.moveTo(px, py);
-        else destino.lineTo(px, py);
-      });
-      destino.closePath();
-      destino.fillStyle = '#3A1620';
-      destino.fill();
-      destino.stroke();
-    } else if (cuerpo.equipo === 'blue') {
-      destino.fillStyle = '#12306F';
-      destino.fillRect(-cuerpo.r * 2.1, -cuerpo.r * 0.35, cuerpo.r * 1.1, cuerpo.r * 0.7);
-      destino.fillRect(cuerpo.r, -cuerpo.r * 0.35, cuerpo.r * 1.1, cuerpo.r * 0.7);
-      destino.beginPath();
-      if (typeof destino.roundRect === 'function') {
-        destino.roundRect(-cuerpo.r, -cuerpo.r, cuerpo.r * 2, cuerpo.r * 2, cuerpo.r * 0.35);
-      } else {
-        destino.rect(-cuerpo.r, -cuerpo.r, cuerpo.r * 2, cuerpo.r * 2);
-      }
-      destino.fill();
-      destino.stroke();
-    } else {
-      destino.fillStyle = colores.blue;
-      destino.fillRect(-cuerpo.r * 2.1, -cuerpo.r * 0.3, cuerpo.r * 1.1, cuerpo.r * 0.6);
-      destino.fillStyle = colores.red;
-      destino.fillRect(cuerpo.r, -cuerpo.r * 0.3, cuerpo.r * 1.1, cuerpo.r * 0.6);
-      destino.beginPath();
-      destino.arc(0, 0, cuerpo.r, Math.PI / 2, Math.PI * 1.5);
-      destino.fillStyle = colores.blue;
-      destino.fill();
-      destino.beginPath();
-      destino.arc(0, 0, cuerpo.r, -Math.PI / 2, Math.PI / 2);
-      destino.fillStyle = colores.red;
-      destino.fill();
-    }
+    // Dibujar dron
+    const dronSize = cuerpo.r * 2.4; // 3 veces más grande que el tamaño anterior (0.8 * 3 = 2.4)
+
+    // Cuerpo principal
+    destino.fillStyle = color;
+    destino.globalAlpha = 0.9;
+    destino.beginPath();
+    destino.ellipse(0, 0, dronSize * 0.8, dronSize * 0.3, 0, 0, Math.PI * 2);
+    destino.fill();
+
+    // Hélices (brazos con círculos)
+    destino.globalAlpha = 0.7;
+    destino.fillStyle = color;
+    destino.strokeStyle = color;
+
+    // Brazo superior izquierdo
+    destino.beginPath();
+    destino.moveTo(-dronSize * 0.4, -dronSize * 0.1);
+    destino.lineTo(-dronSize * 0.8, -dronSize * 0.4);
+    destino.stroke();
+    destino.beginPath();
+    destino.arc(-dronSize * 0.8, -dronSize * 0.4, dronSize * 0.15, 0, Math.PI * 2);
+    destino.fill();
+
+    // Brazo superior derecho
+    destino.beginPath();
+    destino.moveTo(dronSize * 0.4, -dronSize * 0.1);
+    destino.lineTo(dronSize * 0.8, -dronSize * 0.4);
+    destino.stroke();
+    destino.beginPath();
+    destino.arc(dronSize * 0.8, -dronSize * 0.4, dronSize * 0.15, 0, Math.PI * 2);
+    destino.fill();
+
+    // Brazo inferior izquierdo
+    destino.beginPath();
+    destino.moveTo(-dronSize * 0.4, dronSize * 0.1);
+    destino.lineTo(-dronSize * 0.8, dronSize * 0.4);
+    destino.stroke();
+    destino.beginPath();
+    destino.arc(-dronSize * 0.8, dronSize * 0.4, dronSize * 0.15, 0, Math.PI * 2);
+    destino.fill();
+
+    // Brazo inferior derecho
+    destino.beginPath();
+    destino.moveTo(dronSize * 0.4, dronSize * 0.1);
+    destino.lineTo(dronSize * 0.8, dronSize * 0.4);
+    destino.stroke();
+    destino.beginPath();
+    destino.arc(dronSize * 0.8, dronSize * 0.4, dronSize * 0.15, 0, Math.PI * 2);
+    destino.fill();
+
+    // Cámara/visor central
+    destino.globalAlpha = 0.6;
+    destino.fillStyle = color;
+    destino.beginPath();
+    destino.arc(0, 0, dronSize * 0.2, 0, Math.PI * 2);
+    destino.fill();
 
     if (elegido || resaltado === cuerpo.indice) {
       destino.globalAlpha = 1;
       destino.strokeStyle = colores.texto;
       destino.lineWidth = 1.5;
       destino.beginPath();
-      destino.arc(0, 0, cuerpo.r * 1.9, 0, Math.PI * 2);
+      destino.arc(0, 0, dronSize * 1.5, 0, Math.PI * 2);
       destino.stroke();
     }
 
@@ -948,13 +986,82 @@ function iniciar(raiz) {
       }
     }
     pintarFicha();
+    notificar();
     if (reducido) pintarQuieto();
+  }
+
+  // ── Núcleo compartido con el renderer ──────────────────────────────────
+
+  const oyentes = new Set();
+
+  /** @param {() => void} fn */
+  function suscribir(fn) {
+    oyentes.add(fn);
+    return () => oyentes.delete(fn);
+  }
+
+  function notificar() {
+    for (const fn of oyentes) {
+      try {
+        fn();
+      } catch (error) {
+        console.warn('Un renderer del planeta falló al actualizarse:', error);
+      }
+    }
+  }
+
+  const nucleo = {
+    raiz,
+    escenaEl,
+    canvas,
+    herramientas,
+    porSlug,
+    niveles,
+    nivelDe,
+    completadasDe,
+    seleccionar,
+    aplicarEjemplo,
+    actualizarPanel,
+    avisar,
+    suscribir,
+    get seleccionSlug() { return seleccionSlug; },
+    get seleccionIndice() { return seleccionIndice; },
+    get ejemplo() { return ejemplo; },
+    get reducido() { return reducido; },
+    base,
+  };
+
+  /**
+   * Intenta arrancar el renderer 3D. Si no hay WebGL o falla, devuelve false
+   * para que el 2D siga siendo el respaldo.
+   */
+  async function intentar3D() {
+    if (!soportaWebGL()) {
+      avisar('Tu navegador no admite WebGL; se muestra la versión 2D.');
+      return false;
+    }
+    try {
+      const { crearPlaneta3D } = await import('./planeta-3d.js');
+      const control = crearPlaneta3D({
+        nucleo,
+        alFallar: (motivo) => {
+          if (escenaEl instanceof HTMLElement) escenaEl.classList.remove('planeta-escena--3d');
+          avisar(motivo || 'El planeta 3D no está disponible; se muestra la versión 2D.');
+          arrancar2D();
+        },
+      });
+      if (!control) return false;
+      if (escenaEl instanceof HTMLElement) escenaEl.classList.add('planeta-escena--3d');
+      return true;
+    } catch (error) {
+      console.warn('No se pudo iniciar el planeta 3D; se usa el 2D:', error);
+      avisar('No se pudo iniciar el planeta 3D; se muestra la versión 2D.');
+      return false;
+    }
   }
 
   // ── Animación ────────────────────────────────────────────────────────────
 
-  const consultaMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let reducido = consultaMovimiento.matches;
   let visible = true;
   const medir = hud instanceof HTMLElement;
 
@@ -1069,6 +1176,7 @@ function iniciar(raiz) {
   }
 
   function pintarQuieto() {
+    if (!arrancado2D) return;
     // Con movimiento reducido no se pinta el planeta provisional: se espera a
     // la textura y se muestra un único fotograma.
     if (reducido && !v2) return;
@@ -1106,42 +1214,7 @@ function iniciar(raiz) {
     }
   }
 
-  // ── Eventos ──────────────────────────────────────────────────────────────
-
-  /** @param {PointerEvent} evento */
-  function golpe(evento) {
-    const caja = canvas.getBoundingClientRect();
-    const x = evento.clientX - caja.left;
-    const y = evento.clientY - caja.top;
-    for (let indice = cuerpos.length - 1; indice >= 0; indice -= 1) {
-      const cuerpo = cuerpos[indice];
-      if (Math.hypot(cuerpo.x - x, cuerpo.y - y) < cuerpo.r * cuerpo.s * 1.9 + 6) return cuerpo.indice;
-    }
-    return null;
-  }
-
-  canvas.addEventListener('pointermove', (evento) => {
-    if (evento.pointerType !== 'mouse') return;
-    const indice = golpe(evento);
-    canvas.style.cursor = indice === null ? 'default' : 'pointer';
-    if (indice === resaltado) return;
-    resaltado = indice;
-    if (reducido) pintarQuieto();
-  });
-
-  canvas.addEventListener('pointerleave', () => {
-    if (resaltado === null) return;
-    resaltado = null;
-    canvas.style.cursor = 'default';
-    if (reducido) pintarQuieto();
-  });
-
-  canvas.addEventListener('click', (evento) => {
-    const indice = golpe(evento);
-    if (indice === null) return;
-    const herramienta = herramientas[indice];
-    if (herramienta) seleccionar(herramienta.slug);
-  });
+  // ── Eventos del núcleo ──────────────────────────────────────────────────
 
   if (ejemploBoton instanceof HTMLButtonElement) {
     ejemploBoton.addEventListener('click', () => aplicarEjemplo(!ejemplo));
@@ -1153,70 +1226,126 @@ function iniciar(raiz) {
     });
   }
 
-  if (botonPng instanceof HTMLButtonElement) {
-    botonPng.addEventListener('click', () => {
-      const escala = 2;
-      const lienzo = document.createElement('canvas');
-      lienzo.width = Math.max(1, Math.round(W * escala));
-      lienzo.height = Math.max(1, Math.round(H * escala));
-      const salida = lienzo.getContext('2d');
-      if (!salida) return;
-      // Fondo opaco a tamaño de dispositivo: cubre también la última fila.
-      salida.fillStyle = '#040716';
-      salida.fillRect(0, 0, lienzo.width, lienzo.height);
-      const ilumSalida = v2 ? v2.prepararIluminacion(salida) : crearGradientes(salida);
-      dibujar(tActual, salida, escala, true, ilumSalida);
-      lienzo.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const enlace = document.createElement('a');
-        enlace.href = url;
-        enlace.download = 'mi-planeta-joanix.png';
-        enlace.click();
-        URL.revokeObjectURL(url);
-      }, 'image/png');
+  // ── Renderer 2D de respaldo ──────────────────────────────────────────────
+
+  function arrancar2D() {
+    if (arrancado2D) return;
+    arrancado2D = true;
+    // El 3D pudo cambiar la preferencia mientras estaba activo: el 2D debe
+    // arrancar con el valor actual, no con el que había al cargar la página.
+    reducido = consultaMovimiento.matches;
+    if (escenaEl instanceof HTMLElement) {
+      escenaEl.classList.remove('planeta-escena--3d');
+      for (const sobrante of escenaEl.querySelectorAll('[data-planeta-canvas-3d], .planeta-etiquetas')) {
+        sobrante.remove();
+      }
+    }
+
+    /** @param {PointerEvent} evento */
+    function golpe(evento) {
+      const caja = canvas.getBoundingClientRect();
+      const x = evento.clientX - caja.left;
+      const y = evento.clientY - caja.top;
+      for (let indice = cuerpos.length - 1; indice >= 0; indice -= 1) {
+        const cuerpo = cuerpos[indice];
+        if (Math.hypot(cuerpo.x - x, cuerpo.y - y) < cuerpo.r * cuerpo.s * 1.9 + 6) return cuerpo.indice;
+      }
+      return null;
+    }
+
+    canvas.addEventListener('pointermove', (evento) => {
+      if (evento.pointerType !== 'mouse') return;
+      const indice = golpe(evento);
+      canvas.style.cursor = indice === null ? 'default' : 'pointer';
+      if (indice === resaltado) return;
+      resaltado = indice;
+      if (reducido) pintarQuieto();
     });
-  }
 
-  consultaMovimiento.addEventListener('change', (evento) => {
-    reducido = evento.matches;
-    if (reducido) {
-      if (raf !== 0) cancelAnimationFrame(raf);
-      raf = 0;
+    canvas.addEventListener('pointerleave', () => {
+      if (resaltado === null) return;
+      resaltado = null;
+      canvas.style.cursor = 'default';
+      if (reducido) pintarQuieto();
+    });
+
+    canvas.addEventListener('click', (evento) => {
+      const indice = golpe(evento);
+      if (indice === null) return;
+      const herramienta = herramientas[indice];
+      if (herramienta) seleccionar(herramienta.slug);
+    });
+
+    if (botonPng instanceof HTMLButtonElement) {
+      botonPng.addEventListener('click', () => {
+        const escala = 2;
+        const lienzo = document.createElement('canvas');
+        lienzo.width = Math.max(1, Math.round(W * escala));
+        lienzo.height = Math.max(1, Math.round(H * escala));
+        const salida = lienzo.getContext('2d');
+        if (!salida) return;
+        // Fondo opaco a tamaño de dispositivo: cubre también la última fila.
+        salida.fillStyle = '#040716';
+        salida.fillRect(0, 0, lienzo.width, lienzo.height);
+        const ilumSalida = v2 ? v2.prepararIluminacion(salida) : crearGradientes(salida);
+        dibujar(tActual, salida, escala, true, ilumSalida);
+        lienzo.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const enlace = document.createElement('a');
+          enlace.href = url;
+          enlace.download = 'mi-planeta-joanix.png';
+          enlace.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      });
+    }
+
+    consultaMovimiento.addEventListener('change', (evento) => {
+      reducido = evento.matches;
+      if (reducido) {
+        if (raf !== 0) cancelAnimationFrame(raf);
+        raf = 0;
+        pintarQuieto();
+      } else {
+        programar();
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) programar();
+    });
+
+    const observador = new IntersectionObserver((entradasVisibles) => {
+      for (const entrada of entradasVisibles) visible = entrada.isIntersecting;
+      if (visible) programar();
+    }, { threshold: 0.02 });
+    observador.observe(canvas);
+
+    const observadorTamano = new ResizeObserver(() => {
+      dimensionar();
+      // Redimensionar vacía el canvas: se repinta un fotograma aunque el bucle
+      // esté parado (fuera de pantalla o con movimiento reducido).
       pintarQuieto();
-    } else {
-      programar();
-    }
-  });
+    });
+    observadorTamano.observe(canvas);
 
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) programar();
-  });
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      leerTema();
+      medirEtiquetas();
+      gradientes = crearGradientes(contexto);
+      if (v2) {
+        v2.actualizarColores(colores);
+        iluminacion = v2.prepararIluminacion(contexto);
+      }
+      pintarQuieto();
+    });
 
-  const observador = new IntersectionObserver((entradasVisibles) => {
-    for (const entrada of entradasVisibles) visible = entrada.isIntersecting;
-    if (visible) programar();
-  }, { threshold: 0.02 });
-  observador.observe(canvas);
-
-  const observadorTamano = new ResizeObserver(() => {
     dimensionar();
-    // Redimensionar vacía el canvas: se repinta un fotograma aunque el bucle
-    // esté parado (fuera de pantalla o con movimiento reducido).
     pintarQuieto();
-  });
-  observadorTamano.observe(canvas);
-
-  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-    leerTema();
-    medirEtiquetas();
-    gradientes = crearGradientes(contexto);
-    if (v2) {
-      v2.actualizarColores(colores);
-      iluminacion = v2.prepararIluminacion(contexto);
-    }
-    pintarQuieto();
-  });
+    programar();
+    iniciarTextura();
+  }
 
   // ── Arranque ─────────────────────────────────────────────────────────────
 
@@ -1225,7 +1354,5 @@ function iniciar(raiz) {
   prepararCuerpos();
   dimensionar();
   actualizarPanel();
-  pintarQuieto();
-  programar();
-  iniciarTextura();
+  if (!(await intentar3D())) arrancar2D();
 }

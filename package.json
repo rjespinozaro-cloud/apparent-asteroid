@@ -24,6 +24,7 @@
     "@fontsource/jetbrains-mono": "^5.3.0",
     "astro": "^7.3.5",
     "marked": "^18.0.14",
+    "three": "0.186.1",
     "typescript": "^6.0.3",
     "wrangler": "^4.145.0"
   },
@@ -31,6 +32,5 @@
     "esbuild": true
   },
   "description": "Plataforma de guías de ciberseguridad RED y BLUE sobre Astro + Cloudflare Workers + D1",
-  "private": true,
-  "devDependencies": {}
+  "private": true
 }

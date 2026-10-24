@@ -1,8 +1,45 @@
 # Plan Fase A — Planeta 3D realista (WebGL)
 
-> **Estado: SOLO PLAN.** No se ha modificado código, no se ha instalado `three` y no se ha
-> hecho push ni deploy. Este documento fija la arquitectura, las medidas y los criterios de
-> aceptación para que la Fase B se ejecute sin improvisar.
+> **Estado: FASE B IMPLEMENTADA EN LOCAL (24 oct 2026).** El planeta 3D está funcionando en
+> `/perfil/` con `three@0.186.1`, respaldo 2D, etiquetas HTML, Raycaster, PNG, pausa y tests.
+> **No se ha hecho commit, push ni deploy.** Este documento conserva el plan original y añade
+> al final el estado real, las medidas y las desviaciones aceptadas.
+
+## Estado real de la Fase B
+
+| Comprobación | Resultado |
+|---|---|
+| Rama / HEAD | `main` / `b20fa73`, todo sin commitear |
+| `npm test` | **152/152** (9 tests nuevos de `planeta-3d-math`) |
+| `npm run check` | **0 errores**, 6 hints preexistentes |
+| `npm run build` | OK |
+| `PAGES_BUILD=1 npm run build` | OK |
+| Chunk 3D | `planeta-3d.DQuuyg-d.js`: 583.830 B (146.948 B gzip) |
+| Carga del chunk | Solo `/perfil/`; ninguna otra ruta lo referencia |
+| Draw calls | **85** (objetivo < 120) |
+| Triángulos | **39.316** (objetivo < 40.000) |
+| p50 / p95 | 0,7–2,6 ms / 1,1–2,6 ms (Intel Iris Xe, `devicePixelRatio` 1) |
+| Texturas en GPU | 7; mapas procedurales 8,5 MB; generación 329–520 ms en carga limpia (hasta ~985 ms con CPU cargada) |
+| Texturas | Color/normal/roughness/emissive **1024×512**; nubes **512×256** |
+| Respaldo | WebGL ausente, import/renderer con error o `webglcontextlost` → 2D |
+| Movimiento reducido | Un fotograma estático; sin bucle (`stats().fotogramas === 0`) |
+| Pausa | `visibilitychange` e `IntersectionObserver`; reanuda con `Timer` |
+| PNG | Descarga real verificada (184–187 KB, fondo oscuro, sin etiquetas HTML) |
+
+**Desviaciones principales respecto al plan:**
+
+- No se extrajeron `planeta-nucleo.js` ni `planeta-2d.js`: el núcleo y el 2D siguen dentro de
+  `planeta.js`, y `planeta-3d.js` es el único chunk dinámico. Se priorizó no romper el 2D.
+- Texturas a **1024×512** (no 2048×1024) y nubes a **512×256**: menos memoria y arranque más
+  rápido; la pérdida de detalle no se aprecia al tamaño real del canvas.
+- Esfera de **96×48** segmentos (9.216 triángulos) para cumplir el presupuesto de < 40k.
+- Drones fusionados con `mergeGeometries` en 3 mallas (azul/rojo) o 4 (purple), no 6.
+- Rayos con `LineSegments` aditivo, no `Line2`/`LineSegments2`.
+- Generación de texturas síncrona (sin `requestIdleCallback`): 329–520 ms en carga limpia;
+  con CPU cargada se midió 985 ms. El troceado queda como siguiente mejora si se confirma
+  en dispositivos lentos.
+- `THREE.Timer` en lugar de `THREE.Clock` (evita el aviso de deprecación).
+- `stats()` incluye `fotogramas` para validar pausa/movimiento reducido en DEV.
 
 ## 0. Reglas de la fase
 
@@ -180,35 +217,40 @@ accesible, los mismos `aria-pressed`, los mismos porcentajes y capturas equivale
 - `outputColorSpace = SRGBColorSpace`, `toneMapping = ACESFilmicToneMapping`,
   `toneMappingExposure` ajustable (1,0–1,2), `setClearColor(0x040716, 1)`.
 - Sin sombras (`renderer.shadowMap.enabled = false`): caras y innecesarias.
-- `PerspectiveCamera` 38–42°, posición inicial ~`(0, 0, 7,5)`, `lookAt(0,0,0)`.
+- `PerspectiveCamera` 40°, posición inicial `(0, 0.22, 7,2)`, `lookAt(0,0,0)`; `encuadrar()`
+  ajusta la distancia entre 6,6 y ~9,3 según el aspecto.
 - `encuadrar()` calcula la distancia para que quepan las órbitas (radio máximo 2,35) con
   margen, según `aspect`. Se recalcula en resize; en 360 px no hay recorte ni overflow.
 
 ### 4.2 Esfera y mapas PBR
 
-- `SphereGeometry(1, 128, 64)` → 16.384 triángulos. Una sola malla.
-- Mapas 2048×1024 generados por código, con el mismo `hash`/`ruido`/`fbm` para continentes,
-  costas cian y circuitos:
+- `SphereGeometry(1, 96, 48)` → 9.216 triángulos. Una sola malla. (El plan inicial
+  proponía 128×64; se bajó para cumplir el presupuesto de < 40k triángulos).
+- Mapas **1024×512** generados por código (decisión final de Fase B; el plan inicial decía
+  2048×1024), con el mismo `hash`/`ruido`/`fbm` para continentes, costas cian y circuitos:
   - **Color**: océano profundo, tierra, costas cian, circuitos.
   - **Normal**: derivado de la altura (Sobel), con corrección de longitud (`1/cos(lat)`) para
     que los polos no se deformen. Si el coste se dispara, `bumpMap` como alternativa.
   - **Roughness**: océano brillante (~0,15), tierra mate (~0,9).
   - **Emissive**: luces de ciudad ámbar/cian y venas de circuito; negro en el resto.
-  - **Nubes**: 1024×512, canal alfa (R8); ahorra ~6 MB frente a 2048×1024.
-- Formato:
-  - `CanvasTexture` para color, normal y emissive (RGBA).
-  - `DataTexture` R8 para roughness y nubes.
-  - Color/emissive en `SRGBColorSpace`; normal/roughness en lineal.
-  - `anisotropy = min(4, maxAnisotropy)`; mipmaps activos.
-- Generación por trozos:
-  - 16 filas por defecto, `requestIdleCallback` con `setTimeout` de respaldo.
-  - Se mide cada trozo y se guarda el p95; si supera 40 ms, se baja a 8 filas.
+  - **Nubes**: **512×256**, canal alfa en RGBA; ahorra ~6 MB frente a 2048×1024.
+- Formato implementado:
+  - `CanvasTexture` para color, normal, roughness, emissive y nubes.
+  - Color/emissive en `SRGBColorSpace`; normal/roughness/nubes en lineal.
+  - `anisotropy = 4`; mipmaps activos (filtro por defecto).
+  - El plan inicial proponía `DataTexture` R8 para roughness/nubes; no se usó porque
+    `CanvasTexture` simplifica la generación y el coste medido es aceptable.
+- Generación **síncrona** en Fase B (sin trozos ni `requestIdleCallback`): `crearMapas()` tarda
+  ~350–520 ms medidos y bloquea el hilo principal una sola vez. Se midió el coste y se aceptó
+  para reducir complejidad; si en un dispositivo lento supera 700 ms, se troceará en una
+  migración posterior.
   - La primera pasada calcula `fbm` una vez por píxel y escribe color/altura/roughness/emissive;
     la segunda deriva el normal del buffer de altura.
   - Placeholder CSS mientras tanto: `.planeta-escena` ya tiene fondo oscuro y rejilla.
-- Memoria: tras `renderer.initTexture(texture)`, liberar la copia CPU (reducir el canvas a
-  1×1 o anular `image`), dejando solo la textura GPU. Si esto diera problemas, se mantiene
-  `CanvasTexture` y se acepta el coste (estimado abajo).
+- Memoria: **no se libera la copia CPU** de los canvas; se mantiene `CanvasTexture` y se
+  acepta el coste. `memoriaMapasMB` calcula 8,5 MB teóricos de píxeles (1024×512×4×4 +
+  512×256×4), pero los canvas de origen siguen vivos. Liberarlos a 1×1 o anular `image`
+  queda como optimización posterior si se mide presión de memoria.
 
 ### 4.3 Iluminación
 
@@ -276,7 +318,9 @@ accesible, los mismos `aria-pressed`, los mismos porcentajes y capturas equivale
   procedural, antena parabólica, propulsor con luz azul y LEDs de estado.
 - `MeshStandardMaterial` metálico (`metalness` ~0,8, `roughness` ~0,35).
 - Para no multiplicar draw calls: fusionar por material con `mergeGeometries` (addon) en
-  ~3 mallas por cuerpo (metal, paneles, emisivo). ~1.200–1.500 triángulos.
+  **3 mallas** por dron azul/rojo (metal, paneles, núcleo) y **4** en purple (los paneles
+  tienen colores distintos). ~1.200–1.500 triángulos. Implementado: el metal fusiona cuerpo,
+  antena y plato; los paneles azul/rojo se fusionan en una sola malla.
 - Rejilla de paneles: textura pequeña generada una vez y compartida.
 
 ### 5.3 Purple team
@@ -288,7 +332,10 @@ accesible, los mismos `aria-pressed`, los mismos porcentajes y capturas equivale
 
 - `escala = 0.7 + 0.6 * nivel / 100` sobre un radio base; interpolación suave con `dt` al
   cambiar el nivel.
-- Nivel 0 = material fantasma compartido: `transparent`, `opacity 0.35`, `depthWrite: false`.
+- Nivel 0 = material fantasma **por equipo** (azul/rojo/purple): `transparent`,
+  `opacity 0.58`, `depthWrite: false`, con emisivo tenue para que los cuerpos sigan
+  visibles cuando el nivel es 0. (El plan inicial decía un único material a 0,35; se
+  subió para que los fantasmas no desaparecieran sobre el fondo oscuro).
 - Órbitas e inclinaciones iguales al 2D:
   - blue 1,75 / −0,25 / 0,32; red 2,35 / 0,20 / 0,30; purple 1,32 / 0,10 / 0,38.
 - Grupos por equipo inclinados; cada cuerpo recorre su circunferencia con la misma velocidad
@@ -298,8 +345,9 @@ accesible, los mismos `aria-pressed`, los mismos porcentajes y capturas equivale
 ### 5.5 Rayos, halo y selección
 
 - Rayos al seleccionar: del cuerpo elegido a los cuerpos del equipo contrario (purple: a los
-  dos). Buffer preasignado de `LineSegments2` + `LineMaterial` (addon) actualizado **en sitio**
-  cada fotograma; blending aditivo para el brillo. Respaldo: `LineSegments` aditivo de 1 px.
+  dos). Implementado con **`LineSegments` + `LineBasicMaterial` aditivo** de 1 px, buffer
+  preasignado actualizado **en sitio** cada fotograma. No se usó `Line2`/`LineSegments2`:
+  el efecto se lee bien y se evita el addon de líneas.
 - Halo: un único `Sprite` aditivo con degradado radial generado una vez; se mueve y escala al
   cuerpo seleccionado/resaltado. `depthWrite: false`.
 - Raycaster: esferas envolventes matemáticas (no mallas). `raycaster.ray.intersectSphere` por
@@ -325,6 +373,7 @@ accesible, los mismos `aria-pressed`, los mismos porcentajes y capturas equivale
 ### 6.1 Presupuesto
 
 - 60 fps en gráficos integrados; objetivo de draw calls < 120 y < 40k triángulos.
+  **Medido en Fase B: 85 draw calls y 39.316 triángulos** (esfera 96×48).
 - `devicePixelRatio` máximo 1,5.
 - Autoajuste: si el promedio móvil de fotograma supera 18 ms durante 2 s, bajar a ratio 1.
   Función pura `ajustarPixelRatio` con histéresis (solo baja; nunca por debajo de 1 ni por
@@ -351,7 +400,9 @@ accesible, los mismos `aria-pressed`, los mismos porcentajes y capturas equivale
 
 ### 6.4 Memoria
 
-Estimación con los mapas propuestos:
+**Medido en Fase B:** 7 texturas en GPU y **8,5 MB** de mapas procedurales
+(`memoriaMapasMB`); 17 geometrías y 39.316 triángulos. La tabla siguiente es la estimación
+original con 2048×1024 y queda como referencia; la implementación usa 1024×512.
 
 | Recurso | Estimación |
 |---|---:|
@@ -457,7 +508,9 @@ Por debajo de 120 MB. En Fase B se mide con `renderer.info.memory` (texturas/geo
 ### 9.1 API de depuración (solo DEV)
 
 `window.__planeta3d = { enfoque(slug), angulo(rad), exposicion(x), render(), stats() }`,
-disponible solo con `import.meta.env.DEV`. Permite preparar las capturas sin añadir UI.
+disponible solo con `import.meta.env.DEV`. `stats()` incluye `p50`, `p95`, `fotogramas`,
+`drawCalls`, `triangulos`, `pixelRatio`, `texturas`, `geometrias`, `gpu`, `mapasMs` y
+`memoriaMapasMB`. Permite preparar capturas y validar pausa/movimiento reducido sin añadir UI.
 
 ### 9.2 Capturas requeridas
 
@@ -520,15 +573,18 @@ Cada paso termina con `npm run check`, `npm test` y los dos builds; si algo fall
 
 ## 12. Archivos que se tocarán y que no
 
-Se tocarán:
+Se tocaron finalmente:
 
-- `package.json`, `package-lock.json` (solo `three`).
-- `src/scripts/planeta.js` (orquestador), `planeta-nucleo.js`, `planeta-2d.js`,
-  `planeta-3d.js`, `planeta-3d-math.js`.
-- `src/components/Planeta.astro` (overlay de etiquetas y clases; sin `style=""`).
-- `src/styles/perfil.css` (overlay, apilado de canvas).
-- `tests/planeta-3d-math.test.js` y, si hace falta, ajustes mínimos en `tests/perfil.test.js`.
-- Documentación de la fase.
+- `package.json`, `package-lock.json` (`three@0.186.1` exacto).
+- `src/scripts/planeta.js` (orquestador + núcleo + 2D; no se separaron en dos módulos).
+- `src/scripts/planeta-3d.js` (escena WebGL y addon `mergeGeometries`).
+- `src/scripts/planeta-3d-math.js` (funciones puras).
+- `src/components/Planeta.astro` (clases/overlay; sin `style=""`).
+- `src/styles/perfil.css` (canvas 3D, overlay de etiquetas, ocultación del 2D).
+- `tests/planeta-3d-math.test.js` (9 tests nuevos).
+- `docs/PLAN-FASE-A-PLANETA-3D.md` (este documento).
+- `AGENTS.md` y `src/data/camino.js`: cambios locales previos del usuario, no forman parte
+  del 3D y no se revierten.
 
 No se tocarán:
 
@@ -536,3 +592,43 @@ No se tocarán:
 - `src/pages/guias/**`, `src/layouts/Guia.astro`, `src/scripts/progreso.js` (salvo lectura).
 - Cualquier otra página o layout.
 - El comportamiento del 2D actual (solo se mueve de sitio y se adapta al núcleo).
+
+## 13. Verificación ejecutada (Fase B)
+
+Comandos y resultados:
+
+```text
+npm test                        152/152 OK
+npm run check                   0 errores, 6 hints preexistentes
+npm run build                   OK
+PAGES_BUILD=1 npm run build     OK
+```
+
+Comprobaciones de navegador (Electron/Chromium, `http://localhost:4321`):
+
+- `/perfil/` crea el canvas 3D, 28 etiquetas HTML (10–13 visibles según colisión) y oculta
+  el canvas 2D con `.planeta-escena--3d`.
+- Selección desde la lista y clic en el canvas (Raycaster) actualizan `aria-pressed`, la ficha
+  `aria-live`, la etiqueta opaca, los rayos y el halo.
+- «Ver ejemplo» cambia a niveles de muestra (general 53 %), redibuja los cuerpos y vuelve al
+  progreso real sin escribir en `localStorage`.
+- «Descargar PNG» genera un archivo real de 184–187 KB con fondo oscuro; las etiquetas HTML
+  no se incluyen (son overlay, no canvas).
+- Resize real por `ResizeObserver`: 721×541 → 480×360 → 721×541; por debajo de 520 px solo
+  queda visible la etiqueta seleccionada.
+- `visibilitychange` con `document.hidden` pausa el bucle (`fotogramas` deja de crecer) y lo
+  reanuda al volver. `IntersectionObserver` también lo pausa fuera de pantalla.
+- `prefers-reduced-motion` forzado: `stats().fotogramas === 0` y un único render estático.
+- `WEBGL_lose_context`: se elimina el canvas 3D, se muestra el aviso `role="alert"`, se
+  destruye la escena y arranca el 2D sin errores de consola.
+- WebGL forzado a ausente: canvas 2D visible, aviso «Tu navegador no admite WebGL; se muestra
+  la versión 2D.», sin errores.
+- `?planeta-medir`: HUD con `p50 1.6 · p95 1.6 ms · draw 85 · tri 39316 · 1.00x · texturas 7`.
+- Consola: solo el aviso de CSP de Electron en desarrollo; sin violaciones CSP de la página.
+
+Pendiente antes de commit:
+
+- Revisar el diff completo y decidir si se commitea (hoy no se ha commiteado nada).
+- Lighthouse/360 px reales si se quiere cerrar también la parte de accesibilidad visual.
+  (El comportamiento de etiquetas a 360 px ya se validó por CSSOM/ResizeObserver.)
+- No hay webhook de pago ni cuentas de alumno: fuera del alcance de esta fase.

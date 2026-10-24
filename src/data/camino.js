@@ -49,7 +49,7 @@ export const NIVELES_ORDEN = ['tronco', 'basico', 'intermedio', 'avanzado', 'cie
 export const CURRICULO = [
   // Tronco común -----------------------------------------------------------
   { id: 'fund-redes', tramo: 'tronco', nivel: 'tronco', titulo: 'Redes', descripcion: 'OSI y TCP/IP, subneteo, DNS/DHCP/HTTP y lectura básica con Wireshark.', icono: 'redes', cobertura: { equipo: null, herramienta: 'redes', nivel: 'basico' } },
-  { id: 'fund-linux', tramo: 'tronco', nivel: 'tronco', titulo: 'Linux', descripcion: 'Shell, permisos, procesos y servicios, logs, Bash y SSH.', icono: 'terminal', cobertura: { equipo: null, herramienta: 'linux', nivel: 'basico' } },
+  { id: 'fund-linux', tramo: 'tronco', nivel: 'tronco', titulo: 'Linux', descripcion: 'Shell, permisos, procesos y servicios, logs, línea de comandos y SSH.', icono: 'terminal', cobertura: { equipo: null, herramienta: 'linux', nivel: 'basico' } },
   { id: 'fund-windows', tramo: 'tronco', nivel: 'tronco', titulo: 'Windows y Active Directory', descripcion: 'Dominios, OU y GPO, PowerShell básico y Visor de eventos.', icono: 'ventana', cobertura: { equipo: null, herramienta: 'windows', nivel: 'basico' } },
   { id: 'fund-seguridad', tramo: 'tronco', nivel: 'tronco', titulo: 'Seguridad base', descripcion: 'Tríada CIA, Kill Chain, intro a MITRE ATT&CK y criptografía básica.', icono: 'escudo', cobertura: { equipo: null, herramienta: 'seguridad', nivel: 'basico' } },
   // RED · básico ------------------------------------------------------------
