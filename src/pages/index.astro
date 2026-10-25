@@ -15,6 +15,8 @@
 
 export const prerender = true;
 
+import PlanetaCyber from '../components/PlanetaCyber.astro';
+
 const baseBruto = import.meta.env.BASE_URL;
 // BASE_URL puede venir sin barra final ('/apparent-asteroid'): se normaliza
 // una vez para que `${base}ruta` siempre genere '/base/ruta' (o '/ruta').
@@ -209,6 +211,7 @@ const imagenOg = new URL(`${base}brand/og-image.png`, origen).href;
         }
       }
 
+      
       .grid {
         background-image:
           linear-gradient(rgba(150, 180, 255, 0.07) 1px, transparent 1px),
@@ -1170,6 +1173,7 @@ const imagenOg = new URL(`${base}brand/og-image.png`, origen).href;
   <body>
     <main class="cover" id="cover">
       <div class="cover__bg" aria-hidden="true">
+        <PlanetaCyber class="planeta-cyber" />
         <i class="aurora aurora--red"></i>
         <i class="aurora aurora--blue"></i>
         <i class="grid"></i>
@@ -1252,6 +1256,8 @@ const imagenOg = new URL(`${base}brand/og-image.png`, origen).href;
 
     <script>
       // @ts-nocheck — micro-script progresivo verificado en navegador; el tipado estricto vive en src/.
+      import * as THREE from 'three';
+
       (function () {
         var coverNode = document.getElementById('cover');
         var enterNode = document.getElementById('enter');
@@ -1395,6 +1401,158 @@ const imagenOg = new URL(`${base}brand/og-image.png`, origen).href;
         document.addEventListener('visibilitychange', function () {
           if (document.hidden) pararRayo();
         });
+
+                const planetaCanvas = document.getElementById('planeta-canvas');
+        if (planetaCanvas instanceof HTMLCanvasElement) {
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+          const renderer = new THREE.WebGLRenderer({
+            canvas: planetaCanvas,
+            antialias: true,
+            alpha: true
+          });
+
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+          // Geometría del planeta
+          const geometry = new THREE.SphereGeometry(2, 64, 64);
+
+          // Material con gradientes personalizados
+          const material = new THREE.ShaderMaterial({
+            uniforms: {
+              time: { value: 0 },
+              redColor: { value: new THREE.Color('#ff2e4d') },
+              blueColor: { value: new THREE.Color('#2e8bff') },
+              purpleColor: { value: new THREE.Color('#a855f7') },
+            },
+            vertexShader: `
+              varying vec2 vUv;
+              varying vec3 vPosition;
+              varying vec3 vNormal;
+
+              void main() {
+                vUv = uv;
+                vPosition = position;
+                vNormal = normal;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+              }
+            `,
+            fragmentShader: `
+              uniform float time;
+              uniform vec3 redColor;
+              uniform vec3 blueColor;
+              uniform vec3 purpleColor;
+              varying vec2 vUv;
+              varying vec3 vPosition;
+              varying vec3 vNormal;
+
+              void main() {
+                vec3 color;
+                float edge = 0.02;
+
+                // Mitad roja (izquierda) y mitad azul (derecha)
+                if (vUv.x < 0.5) {
+                  color = mix(redColor, purpleColor, smoothstep(0.48, 0.52, vUv.x));
+                } else {
+                  color = mix(purpleColor, blueColor, smoothstep(0.48, 0.52, vUv.x));
+                }
+
+                // Efecto de pulso en la línea divisoria
+                float pulse = sin(time * 2.0) * 0.1 + 0.9;
+                if (abs(vUv.x - 0.5) < edge) {
+                  color = purpleColor * pulse;
+                }
+
+                // Añadir brillo sutil
+                float fresnel = pow(1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                color += fresnel * 0.1;
+
+                gl_FragColor = vec4(color, 1.0);
+              }
+            `
+          });
+
+          const planeta = new THREE.Mesh(geometry, material);
+          scene.add(planeta);
+
+          // Posicionar cámara
+          camera.position.z = 5;
+
+          // Partículas orbitantes
+          const particlesGeometry = new THREE.BufferGeometry();
+          const particlesCount = 500;
+          const posArray = new Float32Array(particlesCount * 3);
+
+          for (let i = 0; i < particlesCount * 3; i++) {
+            const radius = 3 + Math.random() * 2;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+
+            posArray[i] = radius * Math.sin(phi) * Math.cos(theta);
+            posArray[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            posArray[i + 2] = radius * Math.cos(phi);
+          }
+
+          particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+          const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            color: new THREE.Color('#a855f7'),
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+          });
+
+          const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+          scene.add(particlesMesh);
+
+          // Variables para interacción
+          let mouseX = 0;
+          let mouseY = 0;
+
+          document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+          });
+
+          // Animación del planeta
+          function animatePlaneta() {
+            requestAnimationFrame(animatePlaneta);
+
+            const time = Date.now() * 0.001;
+
+            // Rotación del planeta
+            planeta.rotation.y += 0.005;
+            planeta.rotation.x = mouseY * 0.1;
+            planeta.rotation.y += mouseX * 0.005;
+
+            // Actualizar shader
+            material.uniforms.time.value = time;
+
+            // Animar partículas
+            particlesMesh.rotation.y += 0.001;
+
+            renderer.render(scene, camera);
+          }
+
+          animatePlaneta();
+
+          // Manejo de resize
+          const handleResize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          };
+
+          window.addEventListener('resize', handleResize);
+
+          // Cleanup al salir
+          window.addEventListener('beforeunload', () => {
+            window.removeEventListener('resize', handleResize);
+            renderer.dispose();
+          });
+        }
 
         /**
          * @param {CanvasRenderingContext2D} c

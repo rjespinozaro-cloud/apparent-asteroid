@@ -1,0 +1,74 @@
+---
+/**
+ * Planeta 3D interactivo para JOANIX - Cybersecurity Knowledge Lab
+ * 
+ * Componente reutilizable que muestra un planeta con:
+ * - Mitad roja (RED Team) y mitad azul (BLUE Team)
+ * - Línea divisoria púrpula con efecto de pulso
+ * - Partículas orbitantes representando tráfico de red
+ * - Interacción con mouse
+ * - Optimizado para rendimiento
+ */
+interface Props {
+  className?: string;
+  redColor?: string;
+  blueColor?: string;
+  purpleColor?: string;
+  particleCount?: number;
+  planetSize?: number;
+}
+
+const { 
+  className = "", 
+  redColor = "#ff2e4d", 
+  blueColor = "#2e8bff", 
+  purpleColor = "#a855f7",
+  particleCount = 300,
+  planetSize = 2
+} = Astro.props;
+---
+
+<div class={`planeta-cyber ${className}`}>
+  <canvas id="planeta-canvas"></canvas>
+  <div class="planeta-cyber__overlay"></div>
+</div>
+
+<style>
+  .planeta-cyber {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    opacity: 0.8;
+  }
+
+  .planeta-cyber canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .planeta-cyber__overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(5, 6, 12, 0.4) 0%, rgba(5, 6, 12, 0.9) 100%);
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  import { initPlaneta3D } from "/src/lib/three/planeta-cyber.js";
+
+  onMount(() => {
+    const canvas = document.getElementById("planeta-canvas");
+    if (canvas instanceof HTMLCanvasElement) {
+      initPlaneta3D(canvas, {
+        redColor,
+        blueColor,
+        purpleColor,
+        particleCount,
+        planetSize
+      });
+    }
+  });
+</script>
