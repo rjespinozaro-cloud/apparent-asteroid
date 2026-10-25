@@ -3,6 +3,7 @@
   "main": "@astrojs/cloudflare/entrypoints/server",
   "name": "ciberguias",
   "compatibility_date": "2026-10-01",
+  "workers_dev": true,
   "d1_databases": [
     {
       "binding": "DB",
