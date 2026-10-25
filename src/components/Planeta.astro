@@ -1,4 +1,6 @@
 ---
+import DronEquipo from './DronEquipo.astro';
+
 /**
  * Planeta de herramientas.
  *
@@ -231,6 +233,18 @@ const datos = herramientas.map(({ slug, nombre, equipo, guias, guiasLista, rutas
                   </span>
                 </span>
               </div>
+            </div>
+          </div>
+
+          <div class="planeta-drones" data-planeta-drones aria-hidden="true">
+            <div class="planeta-drones__item" data-dron-equipo="red">
+              <DronEquipo equipo="red" />
+            </div>
+            <div class="planeta-drones__item" data-dron-equipo="blue">
+              <DronEquipo equipo="blue" />
+            </div>
+            <div class="planeta-drones__item" data-dron-equipo="purple">
+              <DronEquipo equipo="purple" />
             </div>
           </div>
 

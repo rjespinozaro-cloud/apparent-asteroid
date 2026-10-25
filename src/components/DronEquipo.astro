@@ -1,0 +1,511 @@
+---
+/**
+ * Dron HTML/CSS por equipo, basado en `dron/dron-v2.html`.
+ *
+ * Se usa como decoración orbitando el planeta 3D de /perfil/. El tamaño se
+ * controla con `--dron-size` desde el contenedor; todo lo demás escala con em.
+ * Sin `style=""`: las variantes van por clase y el movimiento por CSS.
+ */
+interface Props {
+  equipo: 'red' | 'blue' | 'purple';
+}
+
+const { equipo } = Astro.props;
+const etiqueta = equipo === 'red' ? 'Red team' : equipo === 'blue' ? 'Blue team' : 'Purple team';
+---
+
+<div class={`drone drone--${equipo}`} role="img" aria-label={`Dron del ${etiqueta}`}>
+  <div class="drone__float">
+    <div class="arm arm--far arm--left"></div>
+    <div class="arm arm--far arm--right"></div>
+    <div class="rotor rotor--far rotor--left">
+      <span class="rotor__ring"></span><span class="rotor__blades"></span><span class="rotor__hub"></span>
+    </div>
+    <div class="rotor rotor--far rotor--right">
+      <span class="rotor__ring"></span><span class="rotor__blades"></span><span class="rotor__hub"></span>
+    </div>
+
+    <div class="arm arm--near arm--left"></div>
+    <div class="arm arm--near arm--right"></div>
+    <div class="gimbal"></div>
+    <div class="leg leg--left"></div>
+    <div class="leg leg--right"></div>
+    <div class="skid skid--left"></div>
+    <div class="skid skid--right"></div>
+    <div class="antenna"></div>
+
+    <div class="body">
+      <span class="body__canopy"></span>
+      <span class="body__visor"></span>
+      <span class="sensor sensor--left"></span>
+      <span class="sensor sensor--right"></span>
+      <span class="body__stripe"></span>
+      <span class="body__vent body__vent--left"></span>
+      <span class="body__vent body__vent--right"></span>
+    </div>
+
+    <div class="camera">
+      <span class="camera__bezel"></span>
+      <span class="camera__lens"></span>
+    </div>
+
+    <div class="rotor rotor--near rotor--left">
+      <span class="rotor__ring"></span><span class="rotor__blades"></span><span class="rotor__hub"></span>
+    </div>
+    <div class="rotor rotor--near rotor--right">
+      <span class="rotor__ring"></span><span class="rotor__blades"></span><span class="rotor__hub"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .drone {
+    --size: var(--dron-size, 110px);
+    --metal: #4a638c;
+    --accent: var(--blue);
+    --accent-2: #8fe7ff;
+    --accent-soft: rgb(91 157 255 / 0.28);
+    --accent-glow: rgb(91 157 255 / 0.65);
+    position: relative;
+    width: var(--size);
+    aspect-ratio: 10 / 7;
+    font-size: calc(var(--size) / 100);
+    filter: saturate(1.2) brightness(1.8) drop-shadow(0 0 0.12em var(--accent-glow));
+  }
+  .drone--blue {
+    --accent: #5b9dff;
+    --accent-2: #8fe7ff;
+    --accent-soft: rgb(91 157 255 / 0.28);
+    --accent-glow: rgb(91 157 255 / 0.65);
+  }
+  .drone--red {
+    --accent: #ff5470;
+    --accent-2: #ffb0bd;
+    --accent-soft: rgb(255 84 112 / 0.26);
+    --accent-glow: rgb(255 84 112 / 0.62);
+  }
+  .drone--purple {
+    --accent: #b070ff;
+    --accent-2: #e0c8ff;
+    --accent-soft: rgb(176 112 255 / 0.27);
+    --accent-glow: rgb(176 112 255 / 0.62);
+  }
+  .drone * {
+    position: absolute;
+  }
+
+  .drone__float {
+    inset: 0;
+    transform-origin: 50% 45%;
+    animation: float 4.2s ease-in-out infinite;
+  }
+
+  .arm {
+    height: 2.6em;
+    border-radius: 1.3em;
+    transform-origin: 0 50%;
+    background: linear-gradient(180deg, #4a648f 0%, #223957 45%, #0b1628 100%);
+    box-shadow:
+      inset 0 0.22em 0.2em rgb(255 255 255 / 0.16),
+      inset 0 -0.22em 0.24em rgb(0 0 0 / 0.55),
+      0 0.3em 0.45em rgb(0 0 0 / 0.5);
+  }
+  .arm::after {
+    content: '';
+    position: absolute;
+    left: 9%;
+    right: 9%;
+    top: 50%;
+    height: 0.13em;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent), transparent);
+    opacity: 0.68;
+    filter: blur(0.04em);
+  }
+  .arm--far {
+    filter: brightness(0.76) saturate(0.9);
+  }
+  .arm--near.arm--left {
+    left: 38em;
+    top: 36.9em;
+    width: 26.4em;
+    transform: rotate(204.6deg);
+  }
+  .arm--near.arm--right {
+    left: 62em;
+    top: 36.9em;
+    width: 26.4em;
+    transform: rotate(-24.6deg);
+  }
+  .arm--far.arm--left {
+    left: 44em;
+    top: 32.9em;
+    width: 22.6em;
+    transform: rotate(225deg);
+  }
+  .arm--far.arm--right {
+    left: 56em;
+    top: 32.9em;
+    width: 22.6em;
+    transform: rotate(-45deg);
+  }
+
+  .rotor {
+    width: 28em;
+    height: 4.8em;
+    overflow: hidden;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    filter: drop-shadow(0 0 1em var(--accent-soft));
+  }
+  .rotor::before {
+    content: '';
+    position: absolute;
+    inset: 18% 2%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 30%, transparent), color-mix(in srgb, var(--accent) 8%, transparent) 48%, transparent 72%);
+  }
+  .rotor--far {
+    width: 22em;
+    height: 3.8em;
+    filter: brightness(0.8) drop-shadow(0 0 0.6em var(--accent-soft));
+  }
+  .rotor--near.rotor--left {
+    left: 14em;
+    top: 22.2em;
+  }
+  .rotor--near.rotor--right {
+    left: 86em;
+    top: 22.2em;
+  }
+  .rotor--far.rotor--left {
+    left: 28em;
+    top: 13.8em;
+  }
+  .rotor--far.rotor--right {
+    left: 72em;
+    top: 13.8em;
+  }
+  .rotor__ring {
+    inset: 0;
+    border-radius: 50%;
+    border: 0.34em solid color-mix(in srgb, var(--accent) 82%, white 6%);
+    box-shadow:
+      0 0 1.4em var(--accent-soft),
+      inset 0 0 1em var(--accent-soft);
+  }
+  .rotor__blades {
+    inset: 13% 4%;
+    border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, transparent 0 14deg, color-mix(in srgb, var(--accent-2) 62%, transparent) 15deg 29deg, transparent 30deg 60deg);
+    filter: blur(0.06em);
+    opacity: 0.82;
+    animation: spin 1.15s linear infinite;
+  }
+  .rotor--far .rotor__blades {
+    animation-duration: 1.45s;
+    opacity: 0.58;
+  }
+  .rotor__hub {
+    left: 50%;
+    top: 50%;
+    width: 2.6em;
+    height: 1.7em;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f4fbff, var(--accent-2) 16%, var(--metal) 46%, #0a1226 76%);
+    box-shadow: 0 0 0.8em var(--accent-glow);
+  }
+
+  .body {
+    left: 50em;
+    top: 37.5em;
+    width: 32em;
+    height: 16.5em;
+    transform: translate(-50%, -50%);
+    clip-path: polygon(6% 0, 94% 0, 100% 34%, 86% 100%, 14% 100%, 0 34%);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.34) 0, rgb(255 255 255 / 0.08) 2.6%, transparent 5%),
+      radial-gradient(72% 88% at 50% 0%, color-mix(in srgb, var(--accent) 42%, transparent), transparent 62%),
+      linear-gradient(180deg, #3b5682 0%, #1b2d4e 40%, #0d182b 78%, #070d1c 100%);
+    filter:
+      drop-shadow(0 0 0.16em color-mix(in srgb, var(--accent-2) 78%, white 8%))
+      drop-shadow(0 0 1.4em var(--accent-soft))
+      drop-shadow(0 0.5em 0.55em rgb(0 0 0 / 0.6));
+  }
+  .body::after {
+    content: '';
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    bottom: 2.2%;
+    height: 0.12em;
+    border-radius: 99px;
+    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
+    opacity: 0.55;
+    filter: blur(0.02em);
+  }
+  .body__canopy {
+    left: 14%;
+    top: 6%;
+    width: 72%;
+    height: 37%;
+    overflow: hidden;
+    border-radius: 50% 50% 44% 44% / 74% 74% 26% 26%;
+    background:
+      radial-gradient(52% 92% at 31% 7%, rgb(255 255 255 / 0.68), transparent 42%),
+      linear-gradient(180deg, color-mix(in srgb, var(--accent-2) 68%, transparent), color-mix(in srgb, var(--accent) 24%, transparent) 52%, rgb(4 9 20 / 0.78));
+    border: 0.1em solid color-mix(in srgb, var(--accent-2) 74%, white 8%);
+    box-shadow:
+      inset 0 0.4em 0.8em rgb(255 255 255 / 0.3),
+      inset 0 -0.45em 0.8em rgb(0 0 0 / 0.55),
+      0 0 1.1em var(--accent-soft);
+  }
+  .body__canopy::after {
+    content: '';
+    position: absolute;
+    left: 13%;
+    top: 17%;
+    width: 40%;
+    height: 8%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.9), transparent);
+    transform: rotate(-8deg);
+    filter: blur(0.03em);
+  }
+  .body__visor {
+    left: 17%;
+    top: 47%;
+    width: 66%;
+    height: 22%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, transparent, rgb(3 8 18 / 0.97) 7%, rgb(3 8 18 / 0.97) 93%, transparent);
+    border-top: 0.08em solid color-mix(in srgb, var(--accent-2) 44%, transparent);
+    border-bottom: 0.08em solid rgb(0 0 0 / 0.6);
+  }
+  .body__visor::after {
+    content: '';
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    top: 50%;
+    height: 0.08em;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 62%, transparent), transparent);
+    opacity: 0.8;
+  }
+  .sensor {
+    top: 58%;
+    width: 2.4em;
+    height: 2.4em;
+    transform: translate(-50%, -50%);
+    border: 0.08em solid rgb(255 255 255 / 0.35);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, var(--accent-2) 28%, var(--accent) 62%, #0a1226 100%);
+    box-shadow:
+      0 0 1em var(--accent-glow),
+      0 0 2.4em var(--accent-soft);
+    animation: sensor 2.6s ease-in-out infinite alternate;
+  }
+  .sensor--left {
+    left: 32%;
+  }
+  .sensor--right {
+    left: 68%;
+    animation-delay: -1.3s;
+  }
+  .body__stripe {
+    left: 24%;
+    bottom: 14%;
+    width: 52%;
+    height: 0.26em;
+    border-radius: 99px;
+    background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent), transparent);
+    opacity: 0.95;
+    filter: blur(0.03em);
+  }
+  .body__vent {
+    top: 56%;
+    width: 5.6em;
+    height: 3.6em;
+    opacity: 0.6;
+    background: repeating-linear-gradient(0deg, transparent 0 0.34em, color-mix(in srgb, var(--accent-2) 34%, transparent) 0.34em 0.44em);
+  }
+  .body__vent--left {
+    left: 5%;
+  }
+  .body__vent--right {
+    right: 5%;
+  }
+
+  .gimbal {
+    left: 50em;
+    top: 48em;
+    width: 2.8em;
+    height: 6.5em;
+    transform: translateX(-50%);
+    border-radius: 0.7em;
+    background: linear-gradient(180deg, #3b5682, #0b1425);
+    box-shadow:
+      inset 0 0.1em 0.2em rgb(255 255 255 / 0.18),
+      0 0 0.6em var(--accent-soft);
+  }
+  .camera {
+    left: 50em;
+    top: 53.5em;
+    width: 11.4em;
+    height: 11.4em;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 0.22em solid color-mix(in srgb, var(--accent) 70%, white 8%);
+    background: radial-gradient(circle at 35% 28%, #5d7fab, #12213d 48%, #040914 80%);
+    box-shadow:
+      0 0 2em var(--accent-soft),
+      0 0 0.28em color-mix(in srgb, var(--accent) 72%, transparent),
+      inset 0 0 1.1em rgb(0 0 0 / 0.7);
+  }
+  .camera__bezel {
+    inset: 15%;
+    border-radius: 50%;
+    border: 0.2em solid color-mix(in srgb, var(--accent) 48%, transparent);
+    background: radial-gradient(circle at 38% 30%, #22385d, #050912 72%);
+  }
+  .camera__lens {
+    inset: 30%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 28%, #f4fcff 0%, #a8eaff 12%, #4aa8ff 26%, #173a6e 50%, #02040c 100%);
+    box-shadow:
+      inset 0 0 0.35em rgb(255 255 255 / 0.35),
+      0 0 1em var(--accent-soft);
+  }
+  .camera__lens::after {
+    content: '';
+    position: absolute;
+    left: 27%;
+    top: 23%;
+    width: 0.9em;
+    height: 0.9em;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.92);
+    filter: blur(0.06em);
+  }
+
+  .leg {
+    top: 47em;
+    width: 1.3em;
+    height: 13em;
+    border-radius: 0.65em;
+    transform-origin: 50% 0;
+    background: linear-gradient(180deg, #3b5682, #0b1425);
+    box-shadow:
+      inset 0 0.1em 0.2em rgb(255 255 255 / 0.18),
+      0 0 0.35em var(--accent-soft);
+  }
+  .leg--left {
+    left: 42em;
+    transform: rotate(14deg);
+  }
+  .leg--right {
+    left: 58em;
+    transform: rotate(-14deg);
+  }
+  .skid {
+    top: 59.5em;
+    width: 14em;
+    height: 1.3em;
+    border-radius: 0.65em;
+    background: linear-gradient(90deg, #172741, #3b5682 50%, #172741);
+    box-shadow:
+      inset 0 0.15em 0.15em rgb(255 255 255 / 0.14),
+      0 0.25em 0.4em rgb(0 0 0 / 0.5);
+  }
+  .skid::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 0.55em;
+    height: 0.55em;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0.6em var(--accent-glow);
+  }
+  .skid--left {
+    left: 50em;
+    transform: translateX(-100%);
+  }
+  .skid--right {
+    left: 50em;
+  }
+  .skid--left::after {
+    right: -0.1em;
+  }
+  .skid--right::after {
+    left: -0.1em;
+  }
+
+  .antenna {
+    left: 58em;
+    top: 24.5em;
+    width: 0.55em;
+    height: 5.6em;
+    border-radius: 0.3em;
+    background: linear-gradient(180deg, #5d7fab, #0b1425);
+    box-shadow: 0 0 0.3em var(--accent-soft);
+  }
+  .antenna::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -0.7em;
+    width: 1.4em;
+    height: 1.4em;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow:
+      0 0 1em var(--accent-glow),
+      0 0 2em var(--accent-soft);
+    animation: sensor 1.9s ease-in-out infinite alternate;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-0.45deg);
+    }
+    50% {
+      transform: translateY(-2.2em) rotate(0.45deg);
+    }
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes sensor {
+    0% {
+      opacity: 0.55;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drone__float,
+    .rotor__blades,
+    .sensor,
+    .antenna::after,
+    .camera__lens::after {
+      animation: none;
+    }
+    .rotor__blades {
+      transform: rotate(18deg);
+      opacity: 0.18;
+    }
+    .drone__float {
+      transform: none;
+    }
+  }
+</style>

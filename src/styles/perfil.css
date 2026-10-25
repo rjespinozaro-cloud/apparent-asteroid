@@ -175,10 +175,55 @@
   display: none;
 }
 
+/* Drones HTML/CSS que orbitan la Tierra 3D. Solo se muestran cuando la
+   escena 3D está activa; el 2D conserva sus propios drones ambientales. */
+.planeta-drones {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.planeta-escena--3d .planeta-drones {
+  display: block;
+}
+
+.planeta-drones__item {
+  --dron-size: clamp(80px, 20vw, 170px);
+  --dron-glow: var(--pl-glow);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--dron-size);
+  height: calc(var(--dron-size) * 0.7);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--dron-glow) 55%, #060b1a) 0%,
+    color-mix(in srgb, var(--dron-glow) 25%, #060b1a) 50%,
+    transparent 76%
+  );
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / .45));
+}
+
+.planeta-drones__item[data-dron-equipo='red'] { --dron-glow: var(--pl-red); }
+.planeta-drones__item[data-dron-equipo='blue'] { --dron-glow: var(--pl-blue); }
+.planeta-drones__item[data-dron-equipo='purple'] { --dron-glow: var(--pl-purple); }
+
+.planeta-drones__item--activo {
+  filter:
+    drop-shadow(0 0 16px var(--dron-glow))
+    drop-shadow(0 12px 18px rgb(0 0 0 / .45));
+}
+
 .planeta-etiquetas {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 5;
   overflow: hidden;
   pointer-events: none;
 }
@@ -643,7 +688,7 @@
 
 /* Leyenda superior */
 .planeta-leyenda {
-  position: absolute; top: 12px; left: 12px; z-index: 3;
+  position: absolute; top: 12px; left: 12px; z-index: 6;
   display: flex; flex-wrap: wrap; gap: 6px; margin: 0;
 }
 .planeta-leyenda span {
@@ -658,7 +703,7 @@
 
 /* Botón de descarga */
 .planeta-descargar {
-  position: absolute; right: 12px; bottom: 12px; z-index: 3; cursor: pointer;
+  position: absolute; right: 12px; bottom: 12px; z-index: 6; cursor: pointer;
   padding: 6px 12px; border-radius: 99px; font: inherit; font-size: .82rem; color: var(--pl-text);
   background: color-mix(in srgb, #0A1030 78%, transparent);
   border: 1px solid color-mix(in srgb, var(--pl-glow) 50%, transparent);
@@ -668,7 +713,7 @@
 
 /* Medidor de desarrollo (?planeta-medir solo en `astro dev`) */
 .planeta-hud {
-  position: absolute; top: 12px; right: 12px; z-index: 3; margin: 0; pointer-events: none;
+  position: absolute; top: 12px; right: 12px; z-index: 6; margin: 0; pointer-events: none;
   padding: 4px 8px; border-radius: 8px; white-space: pre;
   font: 600 .7rem/1.4 var(--fuente-mono, ui-monospace, monospace);
   color: var(--pl-text); background: rgb(4 7 22 / .82); border: 1px solid var(--pl-line);

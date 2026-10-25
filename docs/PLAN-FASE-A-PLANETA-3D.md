@@ -632,3 +632,34 @@ Pendiente antes de commit:
 - Lighthouse/360 px reales si se quiere cerrar también la parte de accesibilidad visual.
   (El comportamiento de etiquetas a 360 px ya se validó por CSSOM/ResizeObserver.)
 - No hay webhook de pago ni cuentas de alumno: fuera del alcance de esta fase.
+
+## 14. Fase C — Tierra real y drones HTML (24 oct 2026)
+
+Cambios posteriores a la Fase B:
+
+- El planeta usa texturas reales de Tierra en `public/textures/earth/` (día, noche, nubes,
+  normales y especular). Se cargan antes de crear el canvas; si fallan, se mantiene el 2D.
+- `MeshPhongMaterial` con mapa de día, normales, especular y emisivo nocturno; las nubes
+  siguen siendo una esfera aparte con `alphaMap`.
+- Se añadió `src/components/DronEquipo.astro`, basado en `dron/dron-v2.html`: un dron HTML/CSS
+  por equipo (red, blue y purple), con animaciones y `prefers-reduced-motion`.
+- Los tres drones se proyectan desde anclas 3D a pantalla, escalan con la profundidad, se
+  ocultan si el planeta los tapa y resaltan cuando se selecciona una herramienta de su equipo.
+- Las órbitas 3D viven en el plano XZ y se inclinan alrededor de X. Así el radio 3D es
+  constante, ningún cuerpo entra dentro de la esfera y el achatado aparente sale de la cámara.
+- Las etiquetas que caen sobre un dron se ocultan para no taparlo; la etiqueta seleccionada
+  siempre se respeta.
+- El PNG sigue capturando solo el canvas 3D: los drones y las etiquetas son DOM y no salen en
+  la imagen descargada.
+
+Verificación local de esta fase:
+
+```text
+npm run build                   OK
+npm run check                   8 errores preexistentes (PlanetaCyber/index.astro), 0 propios
+npm test                        151/152; fallo preexistente de tests/ia-seguridad.test.js
+```
+
+Comprobado en navegador: tres drones visibles y completos dentro de la escena, planeta con
+texturas reales, selección de equipo con resaltado, sin errores de consola. Pendiente validar
+en 360 px real y con `prefers-reduced-motion` forzado antes de cerrar la fase.

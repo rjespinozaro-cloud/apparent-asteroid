@@ -1042,7 +1042,7 @@ async function iniciar(raiz) {
     }
     try {
       const { crearPlaneta3D } = await import('./planeta-3d.js');
-      const control = crearPlaneta3D({
+      const control = await crearPlaneta3D({
         nucleo,
         alFallar: (motivo) => {
           if (escenaEl instanceof HTMLElement) escenaEl.classList.remove('planeta-escena--3d');

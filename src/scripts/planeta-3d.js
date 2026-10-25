@@ -17,31 +17,60 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import {
-  ajustarPixelRatio,
-  alturaTierra,
-  desplazarAsteroide,
-  escalaNivel,
-  mascaraTierra,
-  puntoEsfera,
-} from './planeta-3d-math.js';
+import { ajustarPixelRatio, desplazarAsteroide, escalaNivel } from './planeta-3d-math.js';
 
 const DOS_PI = Math.PI * 2;
 const GIRO_PLANETA = 0.012;
-const ANCHO_MAPA = 1024;
-const ALTO_MAPA = 512;
-const ANCHO_NUBES = 512;
-const ALTO_NUBES = 256;
-const UMBRAL_TIERRA = 0.56;
-const OPCIONES_MASCARA = { semilla: 20261021, escala: 3.1, umbral: UMBRAL_TIERRA };
 const MASCARA_MOVIMIENTO = '(prefers-reduced-motion: reduce)';
-const UP = new THREE.Vector3(0, 1, 0);
 
+// La órbita vive en el plano XZ (horizontal) y se inclina alrededor de X.
+// Así el radio 3D es constante y ningún cuerpo entra dentro del planeta; el
+// aspecto achatado sale de la inclinación y de la cámara.
 const ORBITAS = {
-  blue: { radio: 1.75, inclinacion: -0.25, achatado: 0.32, giro: 0.18, offset: 0 },
-  red: { radio: 2.35, inclinacion: 0.2, achatado: 0.3, giro: -0.11, offset: 2.1 },
-  purple: { radio: 1.32, inclinacion: 0.1, achatado: 0.38, giro: 0.28, offset: 4.2 },
+  blue: { radio: 1.75, inclinacion: -0.33, giro: 0.18, offset: 0 },
+  red: { radio: 2.35, inclinacion: 0.31, giro: -0.11, offset: 2.1 },
+  purple: { radio: 1.32, inclinacion: 0.39, giro: 0.28, offset: 1.15 },
 };
+
+const BASE_URL = `${(import.meta.env.BASE_URL || '/').replace(/\/+$/, '')}/`;
+const RUTA_TEXTURAS_TIERRA = `${BASE_URL}textures/earth/`;
+
+/**
+ * Carga una textura de la Tierra. Las de color van en sRGB; los mapas de
+ * normales, especular y alfa son datos lineales.
+ * @param {THREE.TextureLoader} cargador
+ * @param {string} archivo
+ * @param {boolean} srgb
+ */
+function cargarTextura(cargador, archivo, srgb) {
+  return new Promise((resolve, reject) => {
+    cargador.load(
+      `${RUTA_TEXTURAS_TIERRA}${archivo}`,
+      (textura) => {
+        textura.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+        textura.wrapS = THREE.RepeatWrapping;
+        textura.wrapT = THREE.ClampToEdgeWrapping;
+        textura.anisotropy = 4;
+        textura.needsUpdate = true;
+        resolve(textura);
+      },
+      undefined,
+      () => reject(new Error(`No se pudo cargar la textura ${archivo}`)),
+    );
+  });
+}
+
+async function cargarTexturasTierra() {
+  const cargador = new THREE.TextureLoader();
+  const [dia, noche, nubes, normal, specular] = await Promise.all([
+    cargarTextura(cargador, 'earth_atmos_2048.jpg', true),
+    cargarTextura(cargador, 'earth_lights_2048.png', true),
+    cargarTextura(cargador, 'earth_clouds_1024.png', false),
+    cargarTextura(cargador, 'earth_normal_2048.jpg', false),
+    cargarTextura(cargador, 'earth_specular_2048.jpg', false),
+  ]);
+  return { dia, noche, nubes, normal, specular };
+}
 
 /** @param {string} valor @param {string} alterno */
 function color(valor, alterno) {
@@ -50,18 +79,6 @@ function color(valor, alterno) {
   } catch {
     return new THREE.Color(alterno);
   }
-}
-
-/** @param {THREE.Color} c @returns {[number, number, number]} */
-function rgb(c) {
-  return [Math.round(c.r * 255), Math.round(c.g * 255), Math.round(c.b * 255)];
-}
-
-/** @param {number} x @param {number} y @param {number} semilla */
-function azarPixel(x, y, semilla) {
-  let n = (Math.imul(x, 374761393) + Math.imul(y, 668265263) + semilla) | 0;
-  n = Math.imul(n ^ (n >>> 13), 1274126177);
-  return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
 }
 
 /** @param {number} semilla */
@@ -77,237 +94,6 @@ function azar(semilla) {
 /** @param {number} valor @param {number} minimo @param {number} maximo */
 function limitar(valor, minimo, maximo) {
   return valor < minimo ? minimo : valor > maximo ? maximo : valor;
-}
-
-/** @param {number} valor */
-function suave(valor) {
-  const v = limitar(valor, 0, 1);
-  return v * v * (3 - 2 * v);
-}
-
-/** @param {number} x @param {number} y */
-function envolverPixel(x, y, ancho, alto) {
-  return [((x % ancho) + ancho) % ancho, limitar(y, 0, alto - 1)];
-}
-
-/** @param {CanvasRenderingContext2D} ctx @param {number} x0 @param {number} y0 @param {number} x1 @param {number} y1 */
-function trazarLinea(ctx, x0, y0, x1, y1) {
-  ctx.beginPath();
-  ctx.moveTo(x0, y0);
-  ctx.lineTo(x1, y1);
-  ctx.stroke();
-}
-
-/**
- * Textura procedural completa: color, normal, rugosidad, emisivo y nubes.
- * La máscara de tierra es la misma que usan los edificios.
- */
-function crearMapas() {
-  const inicio = performance.now();
-  const colorCanvas = document.createElement('canvas');
-  colorCanvas.width = ANCHO_MAPA;
-  colorCanvas.height = ALTO_MAPA;
-  const colorCtx = colorCanvas.getContext('2d');
-  const normalCanvas = document.createElement('canvas');
-  normalCanvas.width = ANCHO_MAPA;
-  normalCanvas.height = ALTO_MAPA;
-  const normalCtx = normalCanvas.getContext('2d');
-  const roughCanvas = document.createElement('canvas');
-  roughCanvas.width = ANCHO_MAPA;
-  roughCanvas.height = ALTO_MAPA;
-  const roughCtx = roughCanvas.getContext('2d');
-  const emisivoCanvas = document.createElement('canvas');
-  emisivoCanvas.width = ANCHO_MAPA;
-  emisivoCanvas.height = ALTO_MAPA;
-  const emisivoCtx = emisivoCanvas.getContext('2d');
-  if (!colorCtx || !normalCtx || !roughCtx || !emisivoCtx) throw new Error('Canvas 2D no disponible');
-
-  const colorImg = colorCtx.createImageData(ANCHO_MAPA, ALTO_MAPA);
-  const normalImg = normalCtx.createImageData(ANCHO_MAPA, ALTO_MAPA);
-  const roughImg = roughCtx.createImageData(ANCHO_MAPA, ALTO_MAPA);
-  const emisivoImg = emisivoCtx.createImageData(ANCHO_MAPA, ALTO_MAPA);
-  const altura = new Float32Array(ANCHO_MAPA * ALTO_MAPA);
-  const tierra = new Uint8Array(ANCHO_MAPA * ALTO_MAPA);
-  const paleta = leerPaleta();
-  const ocA = rgb(color(paleta.oceanoA, '#0C2B78'));
-  const ocB = rgb(color(paleta.oceanoB, '#04112F'));
-  const tie = rgb(color(paleta.tierra, '#10537F'));
-  const cos = rgb(color(paleta.costa, '#4DE3FF'));
-  const calido = rgb(color(paleta.ciudadCalida, '#FFC857'));
-  const frio = rgb(color(paleta.ciudadFria, '#5FE7FF'));
-  const circuito = rgb(color(paleta.circuito, '#37E3FF'));
-  const circuitoAlt = rgb(color(paleta.circuitoAlt, '#C06BFF'));
-
-  for (let y = 0; y < ALTO_MAPA; y += 1) {
-    const lat = (0.5 - (y + 0.5) / ALTO_MAPA) * Math.PI;
-    const senLat = Math.sin(lat);
-    const polo = 0.72 + 0.28 * (1 - Math.abs(senLat));
-    for (let x = 0; x < ANCHO_MAPA; x += 1) {
-      const lon = ((x + 0.5) / ANCHO_MAPA) * DOS_PI - Math.PI;
-      const n = alturaTierra(lon, lat, OPCIONES_MASCARA);
-      const indice = y * ANCHO_MAPA + x;
-      const p = indice * 4;
-      altura[indice] = n;
-
-      if (n > UMBRAL_TIERRA) {
-        tierra[indice] = 1;
-        const t = limitar((n - UMBRAL_TIERRA) / (1 - UMBRAL_TIERRA), 0, 1);
-        const variacion = azarPixel(x, y, 3) * 10 - 5;
-        colorImg.data[p] = limitar(tie[0] + t * 42 + variacion, 0, 255);
-        colorImg.data[p + 1] = limitar(tie[1] + t * 48 + variacion, 0, 255);
-        colorImg.data[p + 2] = limitar(tie[2] + t * 40 + variacion, 0, 255);
-        roughImg.data[p] = 232;
-        roughImg.data[p + 1] = 232;
-        roughImg.data[p + 2] = 232;
-      } else {
-        const prof = limitar(n / UMBRAL_TIERRA, 0, 1);
-        const f = (0.2 + 0.8 * prof) * polo;
-        colorImg.data[p] = ocB[0] + (ocA[0] - ocB[0]) * f;
-        colorImg.data[p + 1] = ocB[1] + (ocA[1] - ocB[1]) * f;
-        colorImg.data[p + 2] = ocB[2] + (ocA[2] - ocB[2]) * f;
-        roughImg.data[p] = 42;
-        roughImg.data[p + 1] = 42;
-        roughImg.data[p + 2] = 42;
-      }
-      colorImg.data[p + 3] = 255;
-
-      const borde = Math.abs(n - UMBRAL_TIERRA);
-      if (borde < 0.014) {
-        const f = borde < 0.005 ? 1 - borde / 0.005 : 0.3 * (1 - (borde - 0.005) / 0.009);
-        colorImg.data[p] += (cos[0] - colorImg.data[p]) * f;
-        colorImg.data[p + 1] += (cos[1] - colorImg.data[p + 1]) * f;
-        colorImg.data[p + 2] += (cos[2] - colorImg.data[p + 2]) * f;
-        roughImg.data[p] = 120;
-        roughImg.data[p + 1] = 120;
-        roughImg.data[p + 2] = 120;
-      }
-      roughImg.data[p + 3] = 255;
-      normalImg.data[p + 3] = 255;
-
-      const azar = azarPixel(x, y, 7);
-      if (tierra[indice] && azar > 0.999) {
-        emisivoImg.data[p] = circuito[0];
-        emisivoImg.data[p + 1] = circuito[1];
-        emisivoImg.data[p + 2] = circuito[2];
-      } else if (tierra[indice] && azar > 0.996) {
-        emisivoImg.data[p] = calido[0];
-        emisivoImg.data[p + 1] = calido[1];
-        emisivoImg.data[p + 2] = calido[2];
-      } else if (tierra[indice] && azar > 0.992) {
-        emisivoImg.data[p] = frio[0];
-        emisivoImg.data[p + 1] = frio[1];
-        emisivoImg.data[p + 2] = frio[2];
-      }
-      emisivoImg.data[p + 3] = 255;
-    }
-  }
-
-  for (let y = 0; y < ALTO_MAPA; y += 1) {
-    const lat = (0.5 - (y + 0.5) / ALTO_MAPA) * Math.PI;
-    const correccion = 1 / Math.max(0.2, Math.cos(lat));
-    for (let x = 0; x < ANCHO_MAPA; x += 1) {
-      const p = (y * ANCHO_MAPA + x) * 4;
-      const xm = x > 0 ? x - 1 : ANCHO_MAPA - 1;
-      const xp = x < ANCHO_MAPA - 1 ? x + 1 : 0;
-      const ym = y > 0 ? y - 1 : 0;
-      const yp = y < ALTO_MAPA - 1 ? y + 1 : ALTO_MAPA - 1;
-      const dx = (altura[y * ANCHO_MAPA + xp] - altura[y * ANCHO_MAPA + xm]) * 34 * correccion;
-      const dy = (altura[yp * ANCHO_MAPA + x] - altura[ym * ANCHO_MAPA + x]) * 34;
-      const longitud = Math.hypot(dx, dy, 1);
-      normalImg.data[p] = Math.round((-dx / longitud * 0.5 + 0.5) * 255);
-      normalImg.data[p + 1] = Math.round((-dy / longitud * 0.5 + 0.5) * 255);
-      normalImg.data[p + 2] = Math.round((1 / longitud * 0.5 + 0.5) * 255);
-      normalImg.data[p + 3] = 255;
-    }
-  }
-
-  const rng = azar(20261021 + 9);
-  const hubs = [];
-  let intentos = 0;
-  while (hubs.length < 9 && intentos < 6000) {
-    intentos += 1;
-    const lon = rng() * DOS_PI - Math.PI;
-    const lat = (rng() * 2 - 1) * 1.3;
-    if (!mascaraTierra(lon, lat, OPCIONES_MASCARA)) continue;
-    if (hubs.some((hub) => Math.abs(hub.lon - lon) < 0.24 && Math.abs(hub.lat - lat) < 0.18)) continue;
-    hubs.push({ lon, lat });
-  }
-  if (hubs.length === 0) hubs.push({ lon: 0, lat: 0 });
-
-  colorCtx.putImageData(colorImg, 0, 0);
-  normalCtx.putImageData(normalImg, 0, 0);
-  roughCtx.putImageData(roughImg, 0, 0);
-  emisivoCtx.putImageData(emisivoImg, 0, 0);
-
-  emisivoCtx.save();
-  for (const hub of hubs) {
-    const px = ((hub.lon + Math.PI) / DOS_PI) * ANCHO_MAPA;
-    const py = (0.5 - hub.lat / Math.PI) * ALTO_MAPA;
-    for (let i = 0; i < 10; i += 1) {
-      const dx = (rng() + rng() + rng() - 1.5) * 16;
-      const dy = (rng() + rng() + rng() - 1.5) * 12;
-      const [x, y] = envolverPixel(Math.round(px + dx), Math.round(py + dy), ANCHO_MAPA, ALTO_MAPA);
-      emisivoCtx.fillStyle = rng() > 0.35 ? `rgb(${calido[0]},${calido[1]},${calido[2]})` : `rgb(${frio[0]},${frio[1]},${frio[2]})`;
-      emisivoCtx.globalAlpha = 0.55 + rng() * 0.4;
-      emisivoCtx.fillRect(x, y, rng() > 0.65 ? 2 : 1, 2);
-    }
-  }
-  emisivoCtx.globalAlpha = 0.35;
-  emisivoCtx.lineWidth = 1;
-  for (let i = 0; i < hubs.length; i += 1) {
-    const a = hubs[i];
-    const b = hubs[(i + 1) % hubs.length];
-    emisivoCtx.strokeStyle = `rgb(${circuito[0]},${circuito[1]},${circuito[2]})`;
-    trazarLinea(
-      emisivoCtx,
-      ((a.lon + Math.PI) / DOS_PI) * ANCHO_MAPA,
-      (0.5 - a.lat / Math.PI) * ALTO_MAPA,
-      ((b.lon + Math.PI) / DOS_PI) * ANCHO_MAPA,
-      (0.5 - b.lat / Math.PI) * ALTO_MAPA,
-    );
-    if (i % 3 === 0) {
-      emisivoCtx.strokeStyle = `rgb(${circuitoAlt[0]},${circuitoAlt[1]},${circuitoAlt[2]})`;
-      trazarLinea(
-        emisivoCtx,
-        ((a.lon + Math.PI) / DOS_PI) * ANCHO_MAPA,
-        (0.5 - a.lat / Math.PI) * ALTO_MAPA,
-        ((b.lon + Math.PI) / DOS_PI) * ANCHO_MAPA,
-        (0.5 - b.lat / Math.PI) * ALTO_MAPA + 6,
-      );
-    }
-  }
-  emisivoCtx.restore();
-
-  const nubesCanvas = document.createElement('canvas');
-  nubesCanvas.width = ANCHO_NUBES;
-  nubesCanvas.height = ALTO_NUBES;
-  const nubesCtx = nubesCanvas.getContext('2d');
-  if (!nubesCtx) throw new Error('Canvas 2D no disponible para nubes');
-  const nubesImg = nubesCtx.createImageData(ANCHO_NUBES, ALTO_NUBES);
-  for (let y = 0; y < ALTO_NUBES; y += 1) {
-    const lat = (0.5 - (y + 0.5) / ALTO_NUBES) * Math.PI;
-    for (let x = 0; x < ANCHO_NUBES; x += 1) {
-      const lon = ((x + 0.5) / ANCHO_NUBES) * DOS_PI - Math.PI;
-      const n = alturaTierra(lon, lat, { ...OPCIONES_MASCARA, semilla: 20261021 + 71, escala: 2.6 });
-      const v = Math.round(suave((n - 0.47) / 0.25) * 255);
-      const p = (y * ANCHO_NUBES + x) * 4;
-      nubesImg.data[p] = v;
-      nubesImg.data[p + 1] = v;
-      nubesImg.data[p + 2] = v;
-      nubesImg.data[p + 3] = 255;
-    }
-  }
-  nubesCtx.putImageData(nubesImg, 0, 0);
-
-  return {
-    color: colorCanvas,
-    normal: normalCanvas,
-    rough: roughCanvas,
-    emisivo: emisivoCanvas,
-    nubes: nubesCanvas,
-    hubs,
-    ms: performance.now() - inicio,
-  };
 }
 
 function leerPaleta() {
@@ -460,72 +246,6 @@ function crearFondo() {
   return grupo;
 }
 
-function crearEdificios(hubs, anchoEscena) {
-  const total = anchoEscena < 640 ? 700 : 1200;
-  const tipos = [
-    { fraccion: 0.36, alto: [0.014, 0.032], ancho: [0.003, 0.006], fondo: [0.003, 0.006], color: 0x27405f, emisivo: 0x0a2a55 },
-    { fraccion: 0.29, alto: [0.007, 0.016], ancho: [0.006, 0.012], fondo: [0.005, 0.009], color: 0x1c334d, emisivo: 0x07203d },
-    { fraccion: 0.2, alto: [0.003, 0.007], ancho: [0.01, 0.018], fondo: [0.007, 0.012], color: 0x2a3850, emisivo: 0x0b3b6b },
-    { fraccion: 0.15, alto: [0.018, 0.04], ancho: [0.0015, 0.003], fondo: [0.0015, 0.003], color: 0x4a5a70, emisivo: 0x1a4a7a },
-  ];
-  const rng = azar(20261021 + 51);
-  const dummy = new THREE.Object3D();
-  const colorTmp = new THREE.Color();
-  const mallas = [];
-  const geometria = new THREE.BoxGeometry(1, 1, 1);
-  for (const tipo of tipos) {
-    const cantidad = Math.max(1, Math.round(total * tipo.fraccion));
-    const material = new THREE.MeshStandardMaterial({
-      color: tipo.color,
-      roughness: 0.62,
-      metalness: 0.42,
-      emissive: tipo.emisivo,
-      emissiveIntensity: 0.3,
-    });
-    const malla = new THREE.InstancedMesh(geometria, material, cantidad);
-    malla.instanceMatrix.setUsage(THREE.StaticDrawUsage);
-    malla.frustumCulled = false;
-    let colocados = 0;
-    for (let i = 0; i < cantidad; i += 1) {
-      let lon = 0;
-      let lat = 0;
-      let vale = false;
-      for (let intento = 0; intento < 20; intento += 1) {
-        const hub = hubs[Math.floor(rng() * hubs.length)] || { lon: 0, lat: 0 };
-        lon = hub.lon + (rng() + rng() + rng() - 1.5) * 0.2;
-        lat = limitar(hub.lat + (rng() + rng() + rng() - 1.5) * 0.14, -1.35, 1.35);
-        if (mascaraTierra(lon, lat, OPCIONES_MASCARA)) {
-          vale = true;
-          break;
-        }
-      }
-      if (!vale) {
-        lon = rng() * DOS_PI - Math.PI;
-        lat = (rng() * 2 - 1) * 1.3;
-        if (!mascaraTierra(lon, lat, OPCIONES_MASCARA)) continue;
-      }
-      const alto = tipo.alto[0] + rng() * (tipo.alto[1] - tipo.alto[0]);
-      const ancho = tipo.ancho[0] + rng() * (tipo.ancho[1] - tipo.ancho[0]);
-      const fondo = tipo.fondo[0] + rng() * (tipo.fondo[1] - tipo.fondo[0]);
-      const [x, y, z] = puntoEsfera(lon, lat, 1);
-      const normal = new THREE.Vector3(x, y, z).normalize();
-      dummy.position.set(x, y, z).addScaledVector(normal, alto / 2 + 0.001);
-      dummy.quaternion.setFromUnitVectors(UP, normal);
-      dummy.rotateY(rng() * DOS_PI);
-      dummy.scale.set(ancho, alto, fondo);
-      dummy.updateMatrix();
-      malla.setMatrixAt(colocados, dummy.matrix);
-      colorTmp.setHSL(0.56 + rng() * 0.08, 0.35 + rng() * 0.2, 0.35 + rng() * 0.2);
-      malla.setColorAt(colocados, colorTmp);
-      colocados += 1;
-    }
-    malla.count = colocados;
-    malla.instanceMatrix.needsUpdate = true;
-    if (malla.instanceColor) malla.instanceColor.needsUpdate = true;
-    mallas.push(malla);
-  }
-  return mallas;
-}
 
 function crearCuerpos(herramientas, paleta) {
   const indices = { blue: [], red: [], purple: [] };
@@ -628,8 +348,8 @@ function crearCuerpos(herramientas, paleta) {
       const angulo = (i / 128) * DOS_PI;
       const p = i * 3;
       puntos[p] = orbita.radio * Math.cos(angulo);
-      puntos[p + 1] = orbita.radio * orbita.achatado * Math.sin(angulo);
-      puntos[p + 2] = 0;
+      puntos[p + 1] = 0;
+      puntos[p + 2] = orbita.radio * Math.sin(angulo);
     }
     const geoAnillo = new THREE.BufferGeometry();
     geoAnillo.setAttribute('position', new THREE.BufferAttribute(puntos, 3));
@@ -719,11 +439,18 @@ function crearHalo() {
 /**
  * @param {{ nucleo: any, alFallar?: (motivo?: string) => void }} opciones
  */
-export function crearPlaneta3D({ nucleo, alFallar } = {}) {
+export async function crearPlaneta3D({ nucleo, alFallar } = {}) {
   const escenaEl = nucleo && nucleo.escenaEl;
   if (!(escenaEl instanceof HTMLElement)) throw new Error('Falta el contenedor del planeta');
   const herramientas = Array.isArray(nucleo.herramientas) ? nucleo.herramientas : [];
   if (herramientas.length === 0) throw new Error('No hay herramientas para dibujar');
+
+  // Se cargan antes de crear el canvas: si una textura falla, el 2D sigue
+  // funcionando sin dejar un renderer a medio montar.
+  let msMapas = 0;
+  const inicioTexturas = performance.now();
+  const texturasTierra = await cargarTexturasTierra();
+  msMapas = performance.now() - inicioTexturas;
 
   let ancho = Math.max(1, Math.round(escenaEl.getBoundingClientRect().width || escenaEl.clientWidth || 720));
   let alto = Math.max(1, Math.round(escenaEl.getBoundingClientRect().height || escenaEl.clientHeight || 540));
@@ -734,7 +461,6 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
   let raf = 0;
   let visible = true;
   let t = 0;
-  let msMapas = 0;
   let indiceResaltado = null;
   let arrastre = null;
   let muestrasTotal = 0;
@@ -790,25 +516,17 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
   camara.updateMatrixWorld(true);
   escena.add(camara);
 
-  const mapas = crearMapas();
-  msMapas = mapas.ms;
-  const texturaColor = texturaCanvas(mapas.color, true);
-  const texturaNormal = texturaCanvas(mapas.normal, false);
-  const texturaRugosidad = texturaCanvas(mapas.rough, false);
-  const texturaEmisiva = texturaCanvas(mapas.emisivo, true);
-  const texturaNubes = texturaCanvas(mapas.nubes, false);
-
-  const materialPlaneta = new THREE.MeshStandardMaterial({
+  const materialPlaneta = new THREE.MeshPhongMaterial({
     color: 0xffffff,
-    map: texturaColor,
-    normalMap: texturaNormal,
-    normalScale: new THREE.Vector2(0.85, 0.85),
-    roughnessMap: texturaRugosidad,
-    roughness: 1,
-    metalness: 0.06,
+    map: texturasTierra.dia,
+    normalMap: texturasTierra.normal,
+    normalScale: new THREE.Vector2(0.9, 0.9),
+    specularMap: texturasTierra.specular,
+    specular: new THREE.Color(0x334455),
+    shininess: 24,
     emissive: 0xffffff,
-    emissiveMap: texturaEmisiva,
-    emissiveIntensity: 1.35,
+    emissiveMap: texturasTierra.noche,
+    emissiveIntensity: 1.3,
   });
   materialPlaneta.customProgramCacheKey = () => 'joanix-planeta-noche';
   materialPlaneta.onBeforeCompile = (shader) => {
@@ -825,11 +543,11 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
 
   const grupoSuperficie = new THREE.Group();
   escena.add(grupoSuperficie);
-  const esfera = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 48), materialPlaneta);
+  const esfera = new THREE.Mesh(new THREE.SphereGeometry(1, 128, 64), materialPlaneta);
   grupoSuperficie.add(esfera);
 
   const grupoNubes = new THREE.Group();
-  const nubes = crearNubes(texturaNubes, paleta);
+  const nubes = crearNubes(texturasTierra.nubes, paleta);
   grupoNubes.add(nubes);
   escena.add(grupoNubes);
 
@@ -845,9 +563,6 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
   luzContorno.position.set(-4, -2, -5);
   escena.add(luzContorno);
 
-  const edificios = crearEdificios(mapas.hubs, ancho);
-  for (const malla of edificios) grupoSuperficie.add(malla);
-
   const creados = crearCuerpos(herramientas, paleta);
   const cuerpos = creados.cuerpos;
   for (const grupo of creados.grupos) escena.add(grupo);
@@ -856,6 +571,26 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
   escena.add(rayos.lineas);
   const halo = crearHalo();
   escena.add(halo);
+
+  // Los tres drones HTML/CSS (uno por equipo) giran en las mismas órbitas que
+  // los cuerpos 3D, pero se pintan en el DOM para conservar su detalle.
+  const overlayDrones = escenaEl.querySelector('[data-planeta-drones]');
+  const dronesHTML = {};
+  if (overlayDrones instanceof HTMLElement) {
+    for (const equipo of ['red', 'blue', 'purple']) {
+      const item = overlayDrones.querySelector(`[data-dron-equipo="${equipo}"]`);
+      if (!(item instanceof HTMLElement)) continue;
+      const orbita = ORBITAS[equipo];
+      const grupo = new THREE.Group();
+      grupo.rotation.x = orbita.inclinacion;
+      grupo.rotation.z = orbita.inclinacion * 0.25;
+      const ancla = new THREE.Object3D();
+      ancla.position.set(orbita.radio, 0, 0);
+      grupo.add(ancla);
+      escena.add(grupo);
+      dronesHTML[equipo] = { item, grupo, ancla, orbita, visible: false, ancho: 0, x: 0, y: 0, radio: 0 };
+    }
+  }
 
   const etiquetasOverlay = document.createElement('div');
   etiquetasOverlay.className = 'planeta-etiquetas';
@@ -949,6 +684,22 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
         }
         const x = (proyeccion.x * 0.5 + 0.5) * ancho;
         const y = (-proyeccion.y * 0.5 + 0.5) * alto - 12;
+        // Las etiquetas no deben tapar los tres drones HTML, que son el
+        // elemento decorativo principal. La seleccionada siempre se respeta.
+        let tapadaPorDron = false;
+        if (!esSeleccionado) {
+          for (const dron of Object.values(dronesHTML)) {
+            if (!dron.visible) continue;
+            if (Math.hypot(x - dron.x, y - dron.y) < dron.radio) {
+              tapadaPorDron = true;
+              break;
+            }
+          }
+        }
+        if (tapadaPorDron) {
+          etiqueta.hidden = true;
+          continue;
+        }
         const anchoEtiqueta = anchosEtiqueta[cuerpo.indice] || 64;
         const altoEtiqueta = 18;
         const cajaX = x - anchoEtiqueta / 2;
@@ -1001,8 +752,8 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
   } catch {
     gpu = 'n/d';
   }
-  const memoriaMapas = ((ANCHO_MAPA * ALTO_MAPA * 4 * 4) + (ANCHO_NUBES * ALTO_NUBES * 4)) / 1048576;
-  let reducidoEdificios = false;
+  // Estimación sin comprimir de las cinco texturas reales (RGBA).
+  const memoriaMapas = (2048 * 1024 * 4 * 4 + 1024 * 512 * 4) / 1048576;
 
   function actualizarCuerpos() {
     for (const cuerpo of cuerpos) {
@@ -1084,6 +835,57 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
     halo.visible = true;
   }
 
+  function actualizarDronesHTML(tiempo) {
+    if (!(overlayDrones instanceof HTMLElement)) return;
+    const indice = nucleo.seleccionIndice;
+    const equipoActivo = indice === null || indice === undefined ? null : herramientas[indice]?.equipo ?? null;
+    for (const [equipo, dron] of Object.entries(dronesHTML)) {
+      const { item, grupo, ancla, orbita } = dron;
+      const angulo = orbita.offset + orbita.giro * tiempo;
+      ancla.position.set(
+        orbita.radio * Math.cos(angulo),
+        0,
+        orbita.radio * Math.sin(angulo),
+      );
+      grupo.updateMatrixWorld(true);
+      ancla.getWorldPosition(tempoA);
+      proyeccion.copy(tempoA).project(camara);
+      const fuera =
+        proyeccion.z < -1 ||
+        proyeccion.z > 1 ||
+        Math.abs(proyeccion.x) > 1.12 ||
+        Math.abs(proyeccion.y) > 1.12;
+      if (fuera) {
+        item.style.visibility = 'hidden';
+        dron.visible = false;
+        continue;
+      }
+      rayoOclusion.origin.copy(camara.position);
+      rayoOclusion.direction.copy(tempoA).sub(camara.position);
+      const distancia = rayoOclusion.direction.length();
+      rayoOclusion.direction.normalize();
+      const corte = rayoOclusion.intersectSphere(esferaOclusion, puntoInterseccion);
+      if (corte && camara.position.distanceTo(corte) < distancia - 0.02) {
+        item.style.visibility = 'hidden';
+        dron.visible = false;
+        continue;
+      }
+      const x = (proyeccion.x * 0.5 + 0.5) * ancho;
+      const y = (-proyeccion.y * 0.5 + 0.5) * alto;
+      const escala = limitar(8.4 / distancia, 0.55, 1.05);
+      if (dron.ancho < 10) dron.ancho = item.offsetWidth || 140;
+      item.style.visibility = '';
+      item.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${escala})`;
+      item.style.zIndex = String(Math.round(1000 - distancia * 100));
+      item.style.opacity = String(limitar(0.55 + escala * 0.45, 0.6, 1));
+      item.classList.toggle('planeta-drones__item--activo', equipo === equipoActivo);
+      dron.visible = true;
+      dron.x = x;
+      dron.y = y;
+      dron.radio = dron.ancho * escala * 0.5 + 8;
+    }
+  }
+
   function render(tiempo, dt = 1 / 60) {
     grupoSuperficie.rotation.y = tiempo * DOS_PI * GIRO_PLANETA;
     grupoNubes.rotation.y = tiempo * DOS_PI * GIRO_PLANETA * 1.2;
@@ -1092,8 +894,8 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
       const angulo = cuerpo.a0 + cuerpo.orbita.giro * tiempo;
       cuerpo.objeto.position.set(
         cuerpo.orbita.radio * Math.cos(angulo),
-        cuerpo.orbita.radio * cuerpo.orbita.achatado * Math.sin(angulo),
         0,
+        cuerpo.orbita.radio * Math.sin(angulo),
       );
       if (cuerpo.escala !== cuerpo.objetivo) {
         cuerpo.escala += (cuerpo.objetivo - cuerpo.escala) * paso;
@@ -1106,6 +908,7 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
     actualizarRayos();
     actualizarHalo();
     camara.updateMatrixWorld();
+    actualizarDronesHTML(tiempo);
     renderer.render(escena, camara);
     actualizarEtiquetas();
     actualizarHud();
@@ -1129,11 +932,6 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
         pixelRatio = nuevo;
         renderer.setPixelRatio(pixelRatio);
         renderer.setSize(ancho, alto, false);
-      }
-      if (!reducidoEdificios && pixelRatio <= 1 && percentil(95) > 24) {
-        reducidoEdificios = true;
-        const factor = 900 / 1200;
-        for (const malla of edificios) malla.count = Math.max(1, Math.floor(malla.count * factor));
       }
     }
     if (hud instanceof HTMLElement && muestrasTotal % 30 === 0) actualizarHud();
@@ -1168,6 +966,10 @@ export function crearPlaneta3D({ nucleo, alFallar } = {}) {
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(ancho, alto, false);
     encuadrar();
+    for (const dron of Object.values(dronesHTML)) {
+      const anchoDron = dron.item.offsetWidth;
+      if (anchoDron > 0) dron.ancho = anchoDron;
+    }
     actualizarSolView();
     render(t);
   }
